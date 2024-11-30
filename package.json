@@ -3,10 +3,13 @@
   "private": true,
   "version": "5.0.0",
   "type": "module",
+  "homepage": "https://himanshu31shr.github.io/labelMerger/",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@emotion/react": "latest",
@@ -14,6 +17,7 @@
     "@mui/icons-material": "^6.1.9",
     "@mui/material": "latest",
     "@mui/styled-engine-sc": "^6.1.9",
+    "gh-pages": "^6.2.0",
     "pdf-lib": "^1.17.1",
     "react": "latest",
     "react-dom": "latest",

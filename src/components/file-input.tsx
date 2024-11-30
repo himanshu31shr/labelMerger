@@ -1,8 +1,8 @@
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { CheckBox, SquareOutlined } from "@mui/icons-material";
 import { Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-type FileInputProp = { name: string, buttonText: string, onChange: Function };
+type FileInputProp = { name: string; selected: boolean; onChange: Function };
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -19,15 +19,15 @@ const VisuallyHiddenInput = styled("input")({
 export const FileInput = (props: FileInputProp) => {
   return (
     <Button
-      variant="contained"
-      startIcon={<CloudUploadIcon />}
+      component="label"
+      color={props.selected ? 'success': 'primary'}
+      variant={props.selected ? "contained" : "outlined"}
+      tabIndex={-1}
+      startIcon={props.selected ? <CheckBox /> : <SquareOutlined />}
+      onChange={(e) => props.onChange(e)}
     >
       {props.name}
-      <VisuallyHiddenInput
-        type="file"
-        onChange={(event) => console.log(event.target.files)}
-        multiple
-      />
+      <VisuallyHiddenInput type="file" accept="application/pdf" />
     </Button>
   );
 };

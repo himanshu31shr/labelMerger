@@ -1,24 +1,13 @@
-import { Button } from "@mui/material";
+import { Download, MergeOutlined } from "@mui/icons-material";
+import { Alert, Button } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import { FileInput } from "./components/file-input";
+import Grid from "@mui/material/Grid2";
 import { ChangeEvent, useState } from "react";
+import { FileInput } from "./components/file-input";
 import { mergePdfs } from "./services/merge.service";
-
-const readFileFromInput = async (file?: File): Promise<Uint8Array | null> => {
-  if (!file) return null;
-
-  const fileReader = new FileReader();
-
-  // Wrap the file reading process in a promise to handle asynchronous operation
-  return await new Promise<Uint8Array>((resolve, reject) => {
-    fileReader.onload = () => {
-      resolve(new Uint8Array(fileReader.result as ArrayBuffer));
-    };
-    fileReader.onerror = reject;
-    fileReader.readAsArrayBuffer(file);
-  });
-};
+import { downloadFile, readFileFromInput } from "./utils";
+import { AppBar } from "./components/appbar";
 
 export default function App() {
   const [amazon, setAmazon] = useState<File>();
@@ -26,7 +15,7 @@ export default function App() {
   const [finalPdf, setFinal] = useState<string>();
 
   const handleSubmit = async () => {
-    if (!amazon || !flipkart) return;
+    if (!amazon && !flipkart) return;
 
     const pdf = await mergePdfs({
       amzon: await readFileFromInput(amazon),
@@ -44,46 +33,76 @@ export default function App() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ my: 4 }}>
-        <FileInput
-          buttonText="Select amazon labels"
-          name="amazon"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files) {
-              setAmazon(e.target.files[0]);
-            }
-          }}
-        />
-        {amazon && <div>{amazon?.name}</div>}
-      </Box>
-      <Box sx={{ my: 4 }}>
-        <FileInput
-          buttonText="Select flipkart labels"
-          name="flipkart"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files) {
-              setFlipkart(e.target?.files[0]);
-            }
-          }}
-        />
-        {flipkart && <div>{flipkart?.name}</div>}
-      </Box>
-      {finalPdf && (
-        <iframe src={finalPdf} width={"100%"} height={"600"}></iframe>
-      )}
-      <Box sx={{ my: 4 }}>
-        <Button
-          component="label"
-          variant="contained"
-          tabIndex={-1}
-          onClick={() => {
-            handleSubmit();
-          }}
-        >
-          Merge & Generate Pdf
-        </Button>
-      </Box>
-    </Container>
+    <>
+      <AppBar />
+      <Container maxWidth="sm">
+        <Alert sx={{ my: 4 }} severity="info">
+          Please select AMAZON and FLIPKART labels correctly to process and
+          merge the PDFs
+        </Alert>
+
+        <Grid container spacing={2} sx={{ my: 4 }}>
+          <Grid>
+            <Box>
+              <FileInput
+                name="amazon"
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) {
+                    setAmazon(e.target.files[0]);
+                  }
+                }}
+                selected={!!amazon}
+              />
+            </Box>
+          </Grid>
+          <Grid>
+            <Box>
+              <FileInput
+                name="flipkart"
+                selected={!!flipkart}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) {
+                    setFlipkart(e.target?.files[0]);
+                  }
+                }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+        <Box sx={{ my: 4 }}>
+          <Button
+            component="label"
+            variant="contained"
+            tabIndex={-1}
+            onClick={() => {
+              handleSubmit();
+            }}
+            startIcon={<MergeOutlined />}
+            disabled={!amazon && !flipkart}
+          >
+            Merge & Generate Pdf
+          </Button>
+        </Box>
+        {finalPdf && (
+          <>
+            <Box sx={{ my: 4 }}>
+              <Button
+                component="label"
+                variant="contained"
+                tabIndex={-1}
+                href={finalPdf}
+                startIcon={<Download />}
+                onClick={() => {
+                  downloadFile(finalPdf);
+                }}
+              >
+                Download Pdf
+              </Button>
+            </Box>
+            <iframe src={finalPdf} width={"100%"} height={"800"}></iframe>
+          </>
+        )}
+      </Container>
+    </>
   );
 }
