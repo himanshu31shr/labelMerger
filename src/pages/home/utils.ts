@@ -16,7 +16,7 @@ export const readFileFromInput = async (
 };
 
 export function downloadFile(finalPdf: string) {
-  let a = document.createElement("a");
+  const a = document.createElement("a");
   document.body.appendChild(a);
   a.style.display = 'none';
   a.href = finalPdf;

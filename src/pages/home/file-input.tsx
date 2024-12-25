@@ -2,7 +2,7 @@ import { CheckBox, SquareOutlined } from "@mui/icons-material";
 import { Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-type FileInputProp = { name: string; selected: boolean; onChange: Function };
+type FileInputProp = { name: string; selected: boolean; onChange: Function, accepts: string };
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -27,7 +27,7 @@ export const FileInput = (props: FileInputProp) => {
       onChange={(e) => props.onChange(e)}
     >
       {props.name}
-      <VisuallyHiddenInput type="file" accept="application/pdf" />
+      <VisuallyHiddenInput type="file" accept={props.accepts || "application/pdf"} />
     </Button>
   );
 };
