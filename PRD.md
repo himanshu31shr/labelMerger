@@ -110,6 +110,17 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 1. **db.ts**:
    - Handles IndexedDB operations (save, fetch, delete).
 
+### 4.6. Transaction Analytics
+1. **TransactionAnalyticsPage**:
+   - Allows users to upload transaction CSV files.
+   - Displays analytics such as total sales, total units, and total expenses.
+   - Provides a breakdown of expenses by category.
+   - Includes a price management modal for updating product prices.
+
+2. **TransactionAnalysisService**:
+   - Processes transaction data to calculate summaries (e.g., total sales, expenses).
+   - Supports dynamic price updates for analytics.
+
 ---
 
 ## 5. APIs and Libraries

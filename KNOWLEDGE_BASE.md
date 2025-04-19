@@ -74,6 +74,12 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Use `papaparse` for parsing CSV files.
    - Validate and sanitize input data before processing.
 
+5. **Transaction Analytics**:
+   - Use the `TransactionAnalyticsPage` for uploading and analyzing transaction data.
+   - Ensure the `TransactionAnalysisService` is used for processing and summarizing transaction data.
+   - Validate uploaded CSV files for correct formatting and required fields.
+   - Use the price management modal to update product prices dynamically.
+
 ---
 
 ## 4. Testing Guidelines
