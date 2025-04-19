@@ -36,11 +36,32 @@ exports[`renders label merger link 1`] = `
         >
           Label Merger
         </div>
+        <span
+          class="MuiSwitch-root MuiSwitch-sizeMedium css-rehya9-MuiSwitch-root"
+        >
+          <span
+            class="MuiButtonBase-root MuiSwitch-switchBase MuiSwitch-colorPrimary PrivateSwitchBase-root MuiSwitch-switchBase MuiSwitch-colorPrimary css-161ms7l-MuiButtonBase-root-MuiSwitch-switchBase"
+          >
+            <input
+              aria-label="dark mode toggle"
+              class="PrivateSwitchBase-input MuiSwitch-input css-j8yymo"
+              type="checkbox"
+            />
+            <span
+              class="MuiSwitch-thumb css-17jyosd-MuiSwitch-thumb"
+            />
+          </span>
+          <span
+            class="MuiSwitch-track css-tj8d99-MuiSwitch-track"
+          />
+        </span>
       </div>
     </header>
   </div>
   <div
     class="MuiContainer-root MuiContainer-maxWidthLg css-5c1adp-MuiContainer-root"
-  />
+  >
+    <div />
+  </div>
 </div>
 `;

@@ -7,34 +7,36 @@ import { HomePage } from "../src/pages/home/home.page";
 import { OrderAnalyticsPage } from "../src/pages/orderAnalytics/orderAnalytics.page";
 
 test("renders label merger link", () => {
-  const { container } = render(<App />);
+  const { container } = render(<App mode="light" toggleTheme={() => {}} />);
   const linkElement = screen.getByText(/label merger/i);
   expect(linkElement).toBeInTheDocument();
   expect(container).toMatchSnapshot();
 });
 
 test("renders navigation links", () => {
-  render(<App />);
+  render(<App mode="light" toggleTheme={() => {}} />);
 
   const menu = screen.getByTestId("menu-button");
   expect(menu).toBeInTheDocument();
   fireEvent.click(menu);
   const mergeLabelsLink = screen.getByText(/merge labels/i);
-  const analyticsLink = screen.getByText(/analytics/i);
+  const analyticsLink = screen.getByText(/order analytics/ig);
   expect(mergeLabelsLink).toBeInTheDocument();
   expect(analyticsLink).toBeInTheDocument();
 });
 
 test("routing works correctly", async () => {
-  render(<App />);
+  render(<App mode="light" toggleTheme={() => {}} />);
 
   const menu = screen.getByTestId("menu-button");
   expect(menu).toBeInTheDocument();
   fireEvent.click(menu);
-  const mergeLabelsLink = screen.getByText(/merge labels/i);
-  const analyticsLink = screen.getByText(/analytics/i);
+  const mergeLabelsLink = screen.getByText(/merge labels/ig);
+  const analyticsLink = screen.getByText(/order analytics/ig);
+  const analyticstLink = screen.getByText(/transaction analytics/ig);
   expect(mergeLabelsLink).toBeInTheDocument();
   expect(analyticsLink).toBeInTheDocument();
+  expect(analyticstLink).toBeInTheDocument();
 
   fireEvent.click(mergeLabelsLink);
   const homePageElement = await screen.findByText(

@@ -1,4 +1,6 @@
 import InboxIcon from "@mui/icons-material/MoveToInbox";
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 import {
   Box,
   Container,
@@ -44,12 +46,23 @@ export const DefaultContainer = ({
         </Link>
 
         <Link component={RouterLink} to={"/labelMerger/analytics/"} data-testid="analytics">
-          <ListItem key={"Analytics"} disablePadding>
+          <ListItem key={"Order Analytics"} disablePadding>
             <ListItemButton>
               <ListItemIcon>
-                <InboxIcon />
+                <AnalyticsIcon />
               </ListItemIcon>
-              <ListItemText primary={"Analytics"} />
+              <ListItemText primary={"Order Analytics"} />
+            </ListItemButton>
+          </ListItem>
+        </Link>
+
+        <Link component={RouterLink} to={"/labelMerger/transactions/"} data-testid="transactions">
+          <ListItem key={"Transaction Analytics"} disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary={"Transaction Analytics"} />
             </ListItemButton>
           </ListItem>
         </Link>

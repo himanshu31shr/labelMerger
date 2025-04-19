@@ -15,6 +15,12 @@ const OrderAnalytics = React.lazy(() =>
   }))
 );
 
+const TransactionAnalytics = React.lazy(() =>
+  import("./pages/transactionAnalytics/transactionAnalytics.page").then((module) => ({
+    default: module.TransactionAnalytics,
+  }))
+);
+
 export default function App({ toggleTheme, mode }: { 
   toggleTheme: () => void;
   mode: 'light' | 'dark';
@@ -27,6 +33,7 @@ export default function App({ toggleTheme, mode }: {
             <Routes>
               <Route path="/labelMerger/" element={<HomePage />} />
               <Route path="/labelMerger/analytics/" element={<OrderAnalytics />} />
+              <Route path="/labelMerger/transactions/" element={<TransactionAnalytics />} />
             </Routes>
           </Suspense>
         </div>
