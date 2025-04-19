@@ -1,15 +1,34 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
-import theme from './theme';
+import { useState, useMemo } from 'react';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { CssBaseline, Paper } from '@mui/material';
+import getDesignTokens from './theme';
 import App from './App';
+
+const AppWrapper = () => {
+  const [mode, setMode] = useState<'light' | 'dark'>(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+
+  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
+  const toggleTheme = () => {
+    const newMode = mode === 'light' ? 'dark' : 'light';
+    setMode(newMode);
+    localStorage.setItem('theme', newMode);
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline enableColorScheme />
+      <Paper sx={{ minHeight: '100vh' }}>
+        <App toggleTheme={toggleTheme} mode={mode} />
+      </Paper>
+    </ThemeProvider>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+    <AppWrapper />
   </React.StrictMode>,
 );

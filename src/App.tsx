@@ -15,16 +15,21 @@ const OrderAnalytics = React.lazy(() =>
   }))
 );
 
-export default function App() {
+export default function App({ toggleTheme, mode }: { 
+  toggleTheme: () => void;
+  mode: 'light' | 'dark';
+}) {
   return (
     <Router>
-      <DefaultContainer>
-        <Suspense fallback={<CircularProgress />}>
-          <Routes>
-            <Route path="/labelMerger/" element={<HomePage />} />
-            <Route path="/labelMerger/analytics/" element={<OrderAnalytics />} />
-          </Routes>
-        </Suspense>
+      <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
+        <div>
+          <Suspense fallback={<CircularProgress />}>
+            <Routes>
+              <Route path="/labelMerger/" element={<HomePage />} />
+              <Route path="/labelMerger/analytics/" element={<OrderAnalytics />} />
+            </Routes>
+          </Suspense>
+        </div>
       </DefaultContainer>
     </Router>
   );

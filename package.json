@@ -28,6 +28,7 @@
     "react-dom": "latest",
     "react-router-dom": "^7.1.1",
     "styled-components": "^6.1.13",
+    "vite-plugin-mcp": "^0.1.2",
     "vite-plugin-pwa": "^0.21.1"
   },
   "devDependencies": {
@@ -53,6 +54,6 @@
     "ts-jest": "^29.2.5",
     "typescript": "latest",
     "typescript-eslint": "^8.18.2",
-    "vite": "latest"
+    "vite": "^6.3.2"
   }
 }

@@ -44,6 +44,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 - **Framework**: React with TypeScript.
 - **Styling**: Material-UI for UI components.
 - **Routing**: React Router for navigation.
+- **Theming**: Material-UI ThemeProvider with light/dark mode support.
 
 ### 3.2. Backend (Browser-based)
 - **Data Storage**: IndexedDB for persistent storage.
@@ -155,14 +156,20 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ---
 
-## 7. Future Enhancements
+## 8. Future Enhancements
 - Add support for additional e-commerce platforms.
-- Provide export functionality for analytics data.
+- Provide export functionality for analytics data in multiple formats (CSV, PDF).
 - Implement user authentication for multi-user support.
+- Optimize performance for large datasets:
+  - Implement pagination for large tables
+  - Optimize IndexedDB operations
+  - Improve PDF generation performance
+- Add data visualization features for analytics
+- Implement data backup and restore functionality
 
 ---
 
-## 8. Glossary
+## 9. Glossary
 - **SKU**: Stock Keeping Unit, a unique identifier for products.
 - **IndexedDB**: A low-level API for client-side storage of significant amounts of structured data.
 - **PDF**: Portable Document Format, used for generating labels.

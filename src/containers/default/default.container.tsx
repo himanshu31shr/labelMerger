@@ -16,8 +16,12 @@ import { AppBar } from "../../components/appbar";
 
 export const DefaultContainer = ({
   children,
+  toggleTheme,
+  mode
 }: {
   children: React.ReactNode;
+  toggleTheme: () => void;
+  mode: 'light' | 'dark';
 }) => {
   const [open, setOpen] = React.useState(false);
 
@@ -55,7 +59,7 @@ export const DefaultContainer = ({
 
   return (
     <>
-      <AppBar toggleDrawer={toggleDrawer} />
+      <AppBar toggleDrawer={toggleDrawer} toggleTheme={toggleTheme} mode={mode} />
       <Drawer open={open} onClose={toggleDrawer(false)}>
         {DrawerList}
       </Drawer>
