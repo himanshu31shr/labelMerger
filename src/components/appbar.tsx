@@ -21,6 +21,7 @@ export const AppBar = ({ toggleDrawer }: {
           aria-label="menu"
           sx={{ mr: 2 }}
           onClick={toggleDrawer(true)}
+          data-testid="menu-button"
         >
           <MenuIcon />
         </IconButton>

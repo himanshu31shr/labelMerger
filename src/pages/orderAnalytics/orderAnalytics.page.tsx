@@ -13,7 +13,6 @@ import { OrderItem } from "./types/order.type";
 export const OrderAnalyticsPage = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [groupedData, setGroupedData] = useState<Group[]>([]);
-  const [openRow, setOpenRow] = useState<string | null>(null);
   const [timeline, setTimeLine] = useState<
     Partial<{ start: string; end: string }>
   >({});
@@ -71,10 +70,6 @@ export const OrderAnalyticsPage = () => {
     }
   };
 
-  const handleRowClick = (group: string) => {
-    setOpenRow(openRow === group ? null : group);
-  };
-
   return (
     <Loader showLoader={fetchingDb}>
       <Grid
@@ -93,7 +88,7 @@ export const OrderAnalyticsPage = () => {
           />
         </Box>
         <Box>
-          <IconButton onClick={() => deleteDb()}>
+          <IconButton onClick={() => deleteDb()} data-testid="delete-data">
             <CloseIcon />{" "}
           </IconButton>
         </Box>
@@ -109,8 +104,6 @@ export const OrderAnalyticsPage = () => {
       {groupedData.length > 0 && (
         <ProductGroupTable
           groupedData={groupedData}
-          openRow={openRow}
-          handleRowClick={handleRowClick}
         />
       )}
     </Loader>

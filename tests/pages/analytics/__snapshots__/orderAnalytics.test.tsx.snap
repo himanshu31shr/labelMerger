@@ -1,0 +1,92 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OrderAnalyticsPage renders without crashing 1`] = `
+<div>
+  <div
+    class="MuiGrid2-root MuiGrid2-direction-xs-row css-1ysf11g-MuiGrid2-root"
+  >
+    <span
+      class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
+      role="progressbar"
+      style="width: 16px; height: 16px;"
+    >
+      <svg
+        class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
+        viewBox="22 22 44 44"
+      >
+        <circle
+          class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-960umw-MuiCircularProgress-circle"
+          cx="44"
+          cy="44"
+          fill="none"
+          r="20.2"
+          stroke-width="3.6"
+        />
+      </svg>
+    </span>
+     
+    Building data...
+  </div>
+  <div
+    class="MuiGrid2-root MuiGrid2-container MuiGrid2-direction-xs-row MuiGrid2-spacing-xs-2 css-6q5qpn-MuiGrid2-root"
+  >
+    <div
+      class="MuiBox-root css-0"
+    >
+      <label
+        class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorPrimary css-1btmbba-MuiButtonBase-root-MuiButton-root"
+        role="button"
+        tabindex="-1"
+      >
+        <span
+          class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1jsm74t-MuiButton-startIcon"
+        >
+          <svg
+            aria-hidden="true"
+            class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+            data-testid="SquareOutlinedIcon"
+            focusable="false"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M3 3v18h18V3zm16 16H5V5h14z"
+            />
+          </svg>
+        </span>
+        Flipkart Report
+        <input
+          accept=".csv"
+          class="css-vwjrxt"
+          type="file"
+        />
+      </label>
+    </div>
+    <div
+      class="MuiBox-root css-0"
+    >
+      <button
+        class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium css-aixiz9-MuiButtonBase-root-MuiIconButton-root"
+        data-testid="delete-data"
+        tabindex="0"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+          data-testid="DeleteIcon"
+          focusable="false"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"
+          />
+        </svg>
+         
+      </button>
+    </div>
+    <div
+      class="MuiGrid2-root MuiGrid2-direction-xs-row MuiGrid2-grid-xs-12 css-1j0u08r-MuiGrid2-root"
+    />
+  </div>
+</div>
+`;

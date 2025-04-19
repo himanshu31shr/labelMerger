@@ -28,7 +28,7 @@ export const DefaultContainer = ({
   const DrawerList = (
     <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
       <List>
-        <Link component={RouterLink} to={"/labelMerger/"}>
+        <Link component={RouterLink} to={"/labelMerger/"} data-testid="merge-labels">
           <ListItem key={"Merge Labels"} disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -39,7 +39,7 @@ export const DefaultContainer = ({
           </ListItem>
         </Link>
 
-        <Link component={RouterLink} to={"/labelMerger/analytics/"}>
+        <Link component={RouterLink} to={"/labelMerger/analytics/"} data-testid="analytics">
           <ListItem key={"Analytics"} disablePadding>
             <ListItemButton>
               <ListItemIcon>

@@ -1,0 +1,342 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ProductGroupTable renders without crashing 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiTableContainer-root css-y2ff7i-MuiPaper-root-MuiTableContainer-root"
+    style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
+  >
+    <table
+      class="MuiTable-root css-1xwxv7r-MuiTable-root"
+    >
+      <thead
+        class="MuiTableHead-root css-1a7iywq-MuiTableHead-root"
+      >
+        <tr
+          class="MuiTableRow-root MuiTableRow-head css-1xtozoh-MuiTableRow-root"
+        >
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          />
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          >
+            <span
+              class="MuiButtonBase-root MuiTableSortLabel-root Mui-active MuiTableSortLabel-directionAsc css-7x9vt0-MuiButtonBase-root-MuiTableSortLabel-root"
+              data-testid="group-header"
+              role="button"
+              tabindex="0"
+            >
+              Group
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiTableSortLabel-icon MuiTableSortLabel-iconDirectionAsc css-7ojauk-MuiSvgIcon-root-MuiTableSortLabel-icon"
+                data-testid="ArrowDownwardIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                />
+              </svg>
+            </span>
+          </th>
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          >
+            <span
+              class="MuiButtonBase-root MuiTableSortLabel-root MuiTableSortLabel-directionAsc css-7x9vt0-MuiButtonBase-root-MuiTableSortLabel-root"
+              data-testid="order-header"
+              role="button"
+              tabindex="0"
+            >
+              Orders
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiTableSortLabel-icon MuiTableSortLabel-iconDirectionAsc css-7ojauk-MuiSvgIcon-root-MuiTableSortLabel-icon"
+                data-testid="ArrowDownwardIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                />
+              </svg>
+            </span>
+          </th>
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          >
+            <span
+              class="MuiButtonBase-root MuiTableSortLabel-root MuiTableSortLabel-directionAsc css-7x9vt0-MuiButtonBase-root-MuiTableSortLabel-root"
+              data-testid="return-header"
+              role="button"
+              tabindex="0"
+            >
+              Returns
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiTableSortLabel-icon MuiTableSortLabel-iconDirectionAsc css-7ojauk-MuiSvgIcon-root-MuiTableSortLabel-icon"
+                data-testid="ArrowDownwardIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                />
+              </svg>
+            </span>
+          </th>
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          >
+            <span
+              class="MuiButtonBase-root MuiTableSortLabel-root MuiTableSortLabel-directionAsc css-7x9vt0-MuiButtonBase-root-MuiTableSortLabel-root"
+              role="button"
+              tabindex="0"
+            >
+              Returns
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiTableSortLabel-icon MuiTableSortLabel-iconDirectionAsc css-7ojauk-MuiSvgIcon-root-MuiTableSortLabel-icon"
+                data-testid="ArrowDownwardIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                />
+              </svg>
+            </span>
+          </th>
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          >
+            <span
+              class="MuiButtonBase-root MuiTableSortLabel-root MuiTableSortLabel-directionAsc css-7x9vt0-MuiButtonBase-root-MuiTableSortLabel-root"
+              role="button"
+              tabindex="0"
+            >
+              Returns
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiTableSortLabel-icon MuiTableSortLabel-iconDirectionAsc css-7ojauk-MuiSvgIcon-root-MuiTableSortLabel-icon"
+                data-testid="ArrowDownwardIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                />
+              </svg>
+            </span>
+          </th>
+          <th
+            class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1orzuox-MuiTableCell-root"
+            scope="col"
+          >
+            <span
+              class="MuiButtonBase-root MuiTableSortLabel-root MuiTableSortLabel-directionAsc css-7x9vt0-MuiButtonBase-root-MuiTableSortLabel-root"
+              role="button"
+              tabindex="0"
+            >
+              Returns
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiTableSortLabel-icon MuiTableSortLabel-iconDirectionAsc css-7ojauk-MuiSvgIcon-root-MuiTableSortLabel-icon"
+                data-testid="ArrowDownwardIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                />
+              </svg>
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody
+        class="MuiTableBody-root css-gmh7jj-MuiTableBody-root"
+      >
+        <tr
+          class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+          data-testid="Group A-expand"
+        >
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            <button
+              class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium css-aixiz9-MuiButtonBase-root-MuiIconButton-root"
+              tabindex="0"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+                data-testid="KeyboardArrowDownIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"
+                />
+              </svg>
+            </button>
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            <strong>
+              Group A
+            </strong>
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            10
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            2
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            2
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            2
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            2
+          </td>
+        </tr>
+        <tr
+          class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+        >
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+            colspan="7"
+            style="padding-bottom: 0px; padding-top: 0px;"
+          />
+        </tr>
+        <tr
+          class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+          data-testid="Group B-expand"
+        >
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            <button
+              class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium css-aixiz9-MuiButtonBase-root-MuiIconButton-root"
+              tabindex="0"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+                data-testid="KeyboardArrowDownIcon"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"
+                />
+              </svg>
+            </button>
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            <strong>
+              Group B
+            </strong>
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            20
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            4
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            4
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            4
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+          >
+            4
+          </td>
+        </tr>
+        <tr
+          class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+        >
+          <td
+            class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-1dc80h3-MuiTableCell-root"
+            colspan="7"
+            style="padding-bottom: 0px; padding-top: 0px;"
+          />
+        </tr>
+      </tbody>
+      <tfoot
+        class="MuiTableFooter-root css-1mgfs7f-MuiTableFooter-root"
+      >
+        <tr
+          class="MuiTableRow-root MuiTableRow-footer css-1xtozoh-MuiTableRow-root"
+        >
+          <td
+            class="MuiTableCell-root MuiTableCell-footer MuiTableCell-sizeMedium css-134h4iv-MuiTableCell-root"
+            colspan="2"
+          >
+            <div
+              class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+            >
+              Totals
+            </div>
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-footer MuiTableCell-sizeMedium css-134h4iv-MuiTableCell-root"
+          >
+            <div
+              class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+            >
+              30
+            </div>
+          </td>
+          <td
+            class="MuiTableCell-root MuiTableCell-footer MuiTableCell-sizeMedium css-134h4iv-MuiTableCell-root"
+          >
+            <div
+              class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+            >
+              6
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+`;

@@ -18,19 +18,20 @@ import { Group } from "./types/group.type";
 
 type ProductGroupTableProps = {
   groupedData: Group[];
-  openRow: string | null;
-  handleRowClick: (group: string) => void;
 };
 
 type Order = "asc" | "desc";
 
 export const ProductGroupTable: React.FC<ProductGroupTableProps> = ({
   groupedData,
-  openRow,
-  handleRowClick,
 }) => {
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Group>("group");
+  const [openRow, setOpenRow] = useState<string | null>(null);
+
+  const handleRowClick = (group: string) => {
+    setOpenRow(openRow === group ? null : group);
+  };
 
   const handleRequestSort = (property: keyof Group) => {
     const isAsc = orderBy === property && order === "asc";
@@ -58,6 +59,7 @@ export const ProductGroupTable: React.FC<ProductGroupTableProps> = ({
             <TableCell />
             <TableCell>
               <TableSortLabel
+                data-testid="group-header"
                 active={orderBy === "group"}
                 direction={orderBy === "group" ? order : "asc"}
                 onClick={() => handleRequestSort("group")}
@@ -67,6 +69,7 @@ export const ProductGroupTable: React.FC<ProductGroupTableProps> = ({
             </TableCell>
             <TableCell>
               <TableSortLabel
+                data-testid="order-header"
                 active={orderBy === "orders"}
                 direction={orderBy === "orders" ? order : "asc"}
                 onClick={() => handleRequestSort("orders")}
@@ -76,6 +79,7 @@ export const ProductGroupTable: React.FC<ProductGroupTableProps> = ({
             </TableCell>
             <TableCell>
               <TableSortLabel
+                data-testid="return-header"
                 active={orderBy === "returns"}
                 direction={orderBy === "returns" ? order : "asc"}
                 onClick={() => handleRequestSort("returns")}
@@ -115,7 +119,7 @@ export const ProductGroupTable: React.FC<ProductGroupTableProps> = ({
         <TableBody>
           {sortedData.map((group) => (
             <React.Fragment key={group.group}>
-              <TableRow onClick={() => handleRowClick(group.group)}>
+              <TableRow onClick={() => handleRowClick(group.group)} data-testid={`${group.group}-expand`}>
                 <TableCell>
                   <IconButton>
                     {openRow === group.group ? (
