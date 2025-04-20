@@ -79,6 +79,13 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Ensure the `TransactionAnalysisService` is used for processing and summarizing transaction data.
    - Validate uploaded CSV files for correct formatting and required fields.
    - Use the price management modal to update product prices dynamically.
+   - Support both Amazon and Flipkart transaction formats.
+   - Implement market-specific calculations:
+     - Handle different fee structures for each marketplace
+     - Process marketplace-specific fields correctly
+     - Calculate profits based on marketplace rules
+   - Maintain separate summaries for each marketplace
+   - Support real-time price updates with dynamic calculation
 
 ---
 

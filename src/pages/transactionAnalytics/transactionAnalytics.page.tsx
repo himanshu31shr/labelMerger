@@ -12,8 +12,13 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Alert,
+  CircularProgress,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import {
   Transaction,
   ProductPrice,
@@ -22,6 +27,69 @@ import {
 import { TransactionAnalysisService } from "../../services/transactionAnalysis.service";
 import { PriceManagementModal } from "../../components/PriceManagementModal/PriceManagementModal";
 import { DEFAULT_PRODUCT_PRICES } from "../../constants/defaultPrices";
+
+interface FlipkartOrderData {
+  "Order ID": string;
+  "Order Date": string;
+  "SKU Name": string;
+  "Gross Units": number;
+  "Accounted Net Sales (INR)": string | number;
+  "Bank Settlement [Projected] (INR)": string | number;
+  "Order Status": string;
+  "Total Expenses (INR)": string | number;
+}
+
+interface FlipkartSkuData {
+  "SKU": string;
+  "Product Name": string;
+  "Base Price": string | number;
+  "Cost Price": string | number;
+}
+
+interface AmazonCsvData {
+  "date/time": string;
+  "settlement id": string;
+  "type": string;
+  "order id": string;
+  "Sku"?: string;
+  "sku"?: string;
+  "description": string;
+  "quantity": string;
+  "account type": string;
+  "fulfillment": string;
+  "order city": string;
+  "order state": string;
+  "order postal": string;
+  "product sales": string;
+  "shipping credits": string;
+  "gift wrap credits": string;
+  "promotional rebates": string;
+  "Total sales tax liable(GST before adjusting TCS)": string;
+  "TCS-CGST": string;
+  "TCS-SGST": string;
+  "TCS-IGST": string;
+  "TDS (Section 194-O)": string;
+  "selling fees": string;
+  "fba fees": string;
+  "other transaction fees": string;
+  "other": string;
+  "total": string;
+}
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div hidden={value !== index} {...other}>
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export const TransactionAnalytics: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -35,7 +103,13 @@ export const TransactionAnalytics: React.FC = () => {
   );
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   const availableProducts = useMemo(() => {
     if (!transactions.length) return [];
@@ -54,54 +128,185 @@ export const TransactionAnalytics: React.FC = () => {
     return Array.from(uniqueProducts.values());
   }, [transactions]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLoading(true);
-    const file = event.target.files?.[0];
-    if (file) {
-      Papa.parse(file, {
-        complete: (results) => {
-          const data = (results.data as any[])
-            .filter((row) => row && typeof row === "object")
-            .filter((row) => !row.type?.toLowerCase().includes("definition"))
-            .map((row) => ({
-              date: row["date/time"],
-              settlementId: row["settlement id"],
-              type: row["type"],
-              orderId: row["order id"],
-              sku: row["Sku"] || row["sku"],
-              description: row["description"],
-              quantity: row["quantity"],
-              marketplace: row["marketplace"],
-              accountType: row["account type"],
-              fulfillment: row["fulfillment"],
-              orderCity: row["order city"],
-              orderState: row["order state"],
-              orderPostal: row["order postal"],
-              productSales: row["product sales"],
-              shippingCredits: row["shipping credits"],
-              giftWrapCredits: row["gift wrap credits"],
-              promotionalRebates: row["promotional rebates"],
-              totalSalesTaxLiable:
-                row["Total sales tax liable(GST before adjusting TCS)"],
-              tcsCgst: row["TCS-CGST"],
-              tcsSgst: row["TCS-SGST"],
-              tcsIgst: row["TCS-IGST"],
-              tds: row["TDS (Section 194-O)"],
-              sellingFees: row["selling fees"],
-              fbaFees: row["fba fees"],
-              otherTransactionFees: row["other transaction fees"],
-              other: row["other"],
-              total: row["total"],
-            })) as Transaction[];
+  const processFlipkartExcel = async (
+    file: File
+  ): Promise<{
+    transactions: Transaction[];
+    prices: ProductPrice[];
+  }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: "binary" });
 
-          setTransactions(data);
-          const service = new TransactionAnalysisService(data, productPrices);
-          setSummary(service.analyze());
-          setLoading(false);
-        },
-        header: true,
-        skipEmptyLines: true,
-      });
+          const ordersSheet = workbook.Sheets["Orders P&L"];
+          const skuSheet = workbook.Sheets["SKU-level P&L"];
+
+          if (!ordersSheet) {
+            throw new Error("Required sheet 'Orders P&L' not found");
+          }
+
+          const ordersData = XLSX.utils.sheet_to_json<FlipkartOrderData>(ordersSheet);
+          let skuData: FlipkartSkuData[] = [];
+
+          if (skuSheet) {
+            skuData = XLSX.utils.sheet_to_json<FlipkartSkuData>(skuSheet);
+          }
+
+          const transactions: Transaction[] = ordersData
+            .filter((row) => row["Order ID"] && row["SKU Name"])
+            .map((row) => ({
+              date: row["Order Date"] || "",
+              type: "order",
+              orderId: row["Order ID"],
+              sku: row["SKU Name"],
+              description: row["SKU Name"] || "",
+              quantity: String(row["Gross Units"] || "0"),
+              productSales: String(row["Accounted Net Sales (INR)"] || "0"),
+              total: String(row["Bank Settlement [Projected] (INR)"] || "0"),
+              marketplace: "Flipkart",
+              orderStatus: row["Order Status"] || "",
+              accNetSales:
+                parseFloat(
+                  String(row["Accounted Net Sales (INR)"]).replace(/[₹,]/g, "")
+                ) || 0,
+              expenses:
+                parseFloat(
+                  String(row["Total Expenses (INR)"]).replace(/[₹,]/g, "")
+                ) || 0,
+              sellingFees: String(
+                parseFloat(
+                  String(row["Total Expenses (INR)"]).replace(/[₹,]/g, "")
+                ) || 0
+              ),
+              settlementId: "",
+              accountType: "",
+              fulfillment: "",
+              orderCity: "",
+              orderState: "",
+              orderPostal: "",
+              shippingCredits: "",
+              giftWrapCredits: "",
+              promotionalRebates: "",
+              totalSalesTaxLiable: "",
+              tcsCgst: "",
+              tcsSgst: "",
+              tcsIgst: "",
+              tds: "",
+              fbaFees: "",
+              otherTransactionFees: "",
+              other: "",
+            }));
+
+          const prices: ProductPrice[] = skuData
+            .filter(
+              (row) => row["SKU"] && (row["Base Price"] || row["Cost Price"])
+            )
+            .map((row) => ({
+              sku: row["SKU"],
+              description: row["Product Name"] || "",
+              basePrice:
+                parseFloat(String(row["Base Price"]).replace(/[₹,]/g, "")) || 0,
+              costPrice:
+                parseFloat(String(row["Cost Price"]).replace(/[₹,]/g, "")) || 0,
+            }));
+
+          resolve({ transactions, prices });
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsBinaryString(file);
+    });
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const file = event.target.files?.[0];
+      if (!file) throw new Error("No file selected");
+
+      let newTransactions: Transaction[] = [];
+      let newPrices: ProductPrice[] = [...productPrices];
+
+      if (file.name.endsWith(".xlsx")) {
+        const { transactions, prices } = await processFlipkartExcel(file);
+        newTransactions = transactions;
+
+        const priceMap = new Map(newPrices.map((p) => [p.sku, p]));
+        prices.forEach((p) => priceMap.set(p.sku, p));
+        newPrices = Array.from(priceMap.values());
+      } else if (file.name.endsWith(".csv")) {
+        const results = await new Promise<Papa.ParseResult<unknown>>(
+          (resolve) => {
+            Papa.parse(file, {
+              complete: resolve,
+              header: true,
+              skipEmptyLines: true,
+            });
+          }
+        );
+
+        newTransactions = (results.data as AmazonCsvData[])
+          .filter((row) => row && typeof row === "object")
+          .filter((row) => !row.type?.toLowerCase().includes("definition"))
+          .map((row) => ({
+            date: row["date/time"],
+            settlementId: row["settlement id"],
+            type: row["type"],
+            orderId: row["order id"],
+            sku: row["Sku"] || row["sku"] || "",
+            description: row["description"],
+            quantity: row["quantity"],
+            marketplace: "Amazon",
+            accountType: row["account type"],
+            fulfillment: row["fulfillment"],
+            orderCity: row["order city"],
+            orderState: row["order state"],
+            orderPostal: row["order postal"],
+            productSales: row["product sales"],
+            shippingCredits: row["shipping credits"],
+            giftWrapCredits: row["gift wrap credits"],
+            promotionalRebates: row["promotional rebates"],
+            totalSalesTaxLiable:
+              row["Total sales tax liable(GST before adjusting TCS)"],
+            tcsCgst: row["TCS-CGST"],
+            tcsSgst: row["TCS-SGST"],
+            tcsIgst: row["TCS-IGST"],
+            tds: row["TDS (Section 194-O)"],
+            sellingFees: row["selling fees"],
+            fbaFees: row["fba fees"],
+            otherTransactionFees: row["other transaction fees"],
+            other: row["other"],
+            total: row["total"],
+          }));
+      } else {
+        throw new Error(
+          "Unsupported file format. Please upload a CSV or XLSX file."
+        );
+      }
+
+      const mergedTransactions = [...transactions, ...newTransactions];
+      setTransactions(mergedTransactions);
+      setProductPrices(newPrices);
+
+      const service = new TransactionAnalysisService(
+        mergedTransactions,
+        newPrices
+      );
+      setSummary(service.analyze());
+    } catch (error) {
+      console.error("Error processing file:", error);
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,21 +318,34 @@ export const TransactionAnalytics: React.FC = () => {
     }
   };
 
+  const getMarketplaceSummary = (marketplace: "Amazon" | "Flipkart") => {
+    const filteredTransactions = transactions.filter(
+      (t) => t.marketplace === marketplace
+    );
+    if (filteredTransactions.length === 0) return null;
+
+    const service = new TransactionAnalysisService(
+      filteredTransactions,
+      productPrices
+    );
+    return service.analyze();
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Transaction Analytics
-              </Typography>
-              <Button variant="contained" component="label" sx={{ mr: 2 }}>
-                Upload Transactions
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h5" gutterBottom>
+              Transaction Analytics
+            </Typography>
+            <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center" }}>
+              <Button variant="contained" component="label" disabled={loading}>
+                Upload File
                 <input
                   type="file"
                   hidden
-                  accept=".csv"
+                  accept=".csv,.xlsx"
                   onChange={handleFileUpload}
                 />
               </Button>
@@ -138,14 +356,32 @@ export const TransactionAnalytics: React.FC = () => {
               >
                 Manage Prices
               </Button>
+              {loading && (
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <CircularProgress size={24} sx={{ mr: 1 }} />
+                  <Typography>Processing...</Typography>
+                </Box>
+              )}
             </Box>
+            {error && <Alert severity="error">{error}</Alert>}
+          </Paper>
+        </Grid>
 
-            {loading ? (
-              <Typography>Loading...</Typography>
-            ) : summary ? (
-              <>
-                <Grid container spacing={3} sx={{ mb: 3 }}>
-                  <Grid item xs={12} sm={6} md={4}>
+        {summary && (
+          <Grid item xs={12}>
+            <Paper>
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <Tabs value={tabValue} onChange={handleTabChange}>
+                  <Tab label="Combined Summary" />
+                  <Tab label="Amazon" />
+                  <Tab label="Flipkart" />
+                  <Tab label="Product Details" />
+                </Tabs>
+              </Box>
+
+              <TabPanel value={tabValue} index={0}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={3}>
                     <Paper sx={{ p: 2, textAlign: "center" }}>
                       <Typography variant="h6">Total Sales</Typography>
                       <Typography variant="h4">
@@ -153,15 +389,7 @@ export const TransactionAnalytics: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <Paper sx={{ p: 2, textAlign: "center" }}>
-                      <Typography variant="h6">Total Units</Typography>
-                      <Typography variant="h4">
-                        {summary.totalUnits}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Paper sx={{ p: 2, textAlign: "center" }}>
                       <Typography variant="h6">Total Expenses</Typography>
                       <Typography variant="h4">
@@ -169,7 +397,13 @@ export const TransactionAnalytics: React.FC = () => {
                       </Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item xs={12} md={3}>
+                    <Paper sx={{ p: 2, textAlign: "center" }}>
+                      <Typography variant="h6">Total Units</Typography>
+                      <Typography variant="h4">{summary.totalUnits}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
                     <Paper sx={{ p: 2, textAlign: "center" }}>
                       <Typography variant="h6">Total Profit</Typography>
                       <Typography variant="h4">
@@ -178,25 +412,114 @@ export const TransactionAnalytics: React.FC = () => {
                     </Paper>
                   </Grid>
                 </Grid>
+              </TabPanel>
 
-                <Typography variant="h6" gutterBottom>
-                  Expenses by Category
-                </Typography>
-                <TableContainer component={Paper} sx={{ mb: 3 }}>
+              <TabPanel value={tabValue} index={1}>
+                {(() => {
+                  const amazonSummary = getMarketplaceSummary("Amazon");
+                  return amazonSummary ? (
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, textAlign: "center" }}>
+                          <Typography variant="h6">Amazon Sales</Typography>
+                          <Typography variant="h4">
+                            ₹{amazonSummary.totalSales.toFixed(2)}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, textAlign: "center" }}>
+                          <Typography variant="h6">Amazon Expenses</Typography>
+                          <Typography variant="h4">
+                            ₹{amazonSummary.totalExpenses.toFixed(2)}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, textAlign: "center" }}>
+                          <Typography variant="h6">Amazon Profit</Typography>
+                          <Typography variant="h4">
+                            ₹{amazonSummary.totalProfit.toFixed(2)}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  ) : (
+                    <Typography>No Amazon transactions found</Typography>
+                  );
+                })()}
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={2}>
+                {(() => {
+                  const flipkartSummary = getMarketplaceSummary("Flipkart");
+                  return flipkartSummary ? (
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, textAlign: "center" }}>
+                          <Typography variant="h6">Flipkart Sales</Typography>
+                          <Typography variant="h4">
+                            ₹{flipkartSummary.totalSales.toFixed(2)}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, textAlign: "center" }}>
+                          <Typography variant="h6">
+                            Flipkart Expenses
+                          </Typography>
+                          <Typography variant="h4">
+                            ₹{flipkartSummary.totalExpenses.toFixed(2)}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Paper sx={{ p: 2, textAlign: "center" }}>
+                          <Typography variant="h6">Flipkart Profit</Typography>
+                          <Typography variant="h4">
+                            ₹{flipkartSummary.totalProfit.toFixed(2)}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  ) : (
+                    <Typography>No Flipkart transactions found</Typography>
+                  );
+                })()}
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={3}>
+                <TableContainer>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Category</TableCell>
-                        <TableCell align="right">Amount</TableCell>
+                        <TableCell>SKU</TableCell>
+                        <TableCell>Description</TableCell>
+                        <TableCell align="right">Units</TableCell>
+                        <TableCell align="right">Sales</TableCell>
+                        <TableCell align="right">Cost</TableCell>
+                        <TableCell align="right">Profit</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {Object.entries(summary.expensesByCategory).map(
-                        ([category, amount]) => (
-                          <TableRow key={category}>
-                            <TableCell>{category}</TableCell>
+                      {Object.entries(summary.salesByProduct).map(
+                        ([sku, data]) => (
+                          <TableRow key={sku}>
+                            <TableCell>{sku}</TableCell>
+                            <TableCell>{data.description}</TableCell>
+                            <TableCell align="right">{data.units}</TableCell>
                             <TableCell align="right">
-                              ₹{amount.toFixed(2)}
+                              ₹{data.amount.toFixed(2)}
+                            </TableCell>
+                            <TableCell align="right">
+                              ₹
+                              {(
+                                (productPrices.find((p) => p.sku === sku)
+                                  ?.costPrice || 0) * data.units
+                              ).toFixed(2)}
+                            </TableCell>
+                            <TableCell align="right">
+                              ₹{data.profit.toFixed(2)}
                             </TableCell>
                           </TableRow>
                         )
@@ -204,72 +527,10 @@ export const TransactionAnalytics: React.FC = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
-
-                <Typography variant="h6" gutterBottom>
-                  Sales by Product
-                </Typography>
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>SKU</TableCell>
-                        <TableCell>Description</TableCell>
-                        <TableCell align="right">Units</TableCell>
-                        <TableCell align="right">Cost Price</TableCell>
-                        <TableCell align="right">Total Cost</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {Object.entries(summary.salesByProduct).map(
-                        ([sku, data]) => {
-                          const price = productPrices.find(
-                            (p) => p.sku === sku
-                          );
-                          const totalCost =
-                            (price?.costPrice || 0) * data.units;
-                          return (
-                            <TableRow key={sku}>
-                              <TableCell>{sku}</TableCell>
-                              <TableCell>{data.description}</TableCell>
-                              <TableCell align="right">{data.units}</TableCell>
-                              <TableCell align="right">
-                                ₹{(price?.costPrice || 0).toFixed(2)}
-                              </TableCell>
-                              <TableCell align="right">₹{totalCost}</TableCell>
-                            </TableRow>
-                          );
-                        }
-                      )}
-                      <TableRow>
-                        <TableCell colSpan={2} align="right">
-                          <strong>Total</strong>
-                        </TableCell>
-                        <TableCell align="right">
-                          <strong>
-                            {summary.totalUnits}
-                            {/* {Object.entries(summary.salesByProduct)
-                              .map(([, data]) => data.units)
-                              .reduce((prev, next) => prev + next, 0)} */}
-                          </strong>
-                        </TableCell>
-                        <TableCell align="right"></TableCell>
-                        <TableCell align="right">
-                          <strong>
-                            ₹{summary.totalCost}
-                          </strong>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </>
-            ) : (
-              <Typography>
-                Upload a transaction file to see analytics
-              </Typography>
-            )}
-          </Paper>
-        </Grid>
+              </TabPanel>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
 
       <PriceManagementModal

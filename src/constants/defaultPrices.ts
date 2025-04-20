@@ -1,4 +1,3 @@
-import { ProductPrice } from "../types/transaction.type";
 
 export const DEFAULT_PRODUCT_PRICES = [
   {

@@ -112,14 +112,29 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ### 4.6. Transaction Analytics
 1. **TransactionAnalyticsPage**:
-   - Allows users to upload transaction CSV files.
-   - Displays analytics such as total sales, total units, and total expenses.
-   - Provides a breakdown of expenses by category.
-   - Includes a price management modal for updating product prices.
+   - Allows users to upload transaction CSV files from Amazon and Flipkart.
+   - Displays analytics in multiple views:
+     - Combined Summary: Shows total sales, expenses, units, and profit
+     - Amazon Summary: Platform-specific analytics for Amazon transactions
+     - Flipkart Summary: Platform-specific analytics for Flipkart transactions
+     - Product Details: SKU-wise breakdown of sales and profitability
+   - Provides a price management modal for updating product prices
+   - Supports real-time recalculation of analytics when prices are updated
+   - Handles different data formats for each marketplace
 
 2. **TransactionAnalysisService**:
-   - Processes transaction data to calculate summaries (e.g., total sales, expenses).
-   - Supports dynamic price updates for analytics.
+   - Processes transaction data to calculate comprehensive summaries
+   - Supports marketplace-specific calculations:
+     - Amazon: Handles selling fees, FBA fees, and other transaction fees
+     - Flipkart: Processes accounted net sales and total expenses
+   - Maintains product-wise analytics including:
+     - Units sold
+     - Total sales amount
+     - Cost calculations
+     - Profit per unit
+     - Total profit
+   - Provides dynamic price update capability
+   - Categorizes expenses by type and marketplace
 
 ---
 
