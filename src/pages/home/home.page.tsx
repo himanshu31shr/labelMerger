@@ -175,6 +175,7 @@ export const HomePage = () => {
             <Table stickyHeader={true}>
               <TableHead>
                 <TableRow>
+                  <TableCell>#</TableCell>
                   <TableCell>SKU</TableCell>
                   <TableCell>Product</TableCell>
                   <TableCell>Quantity</TableCell>
@@ -183,6 +184,7 @@ export const HomePage = () => {
               <TableBody>
                 {summary.map((item, index) => (
                   <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.SKU}</TableCell>
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
