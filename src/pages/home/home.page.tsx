@@ -1,55 +1,81 @@
-import { Download, MergeOutlined } from "@mui/icons-material";
+import React, { ChangeEvent, useState } from "react";
+import { MergeOutlined } from "@mui/icons-material";
 import {
   Alert,
+  Box,
   Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  Grid,
+  Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid2";
-import { ChangeEvent, useState } from "react";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FileInput } from "./file-input";
 import { ProductSummary } from "./services/base.transformer";
 import { PDFMergerService } from "./services/merge.service";
-import { downloadFile, readFileFromInput } from "./utils";
-import React from "react";
+import { readFileFromInput } from "./utils";
 import html2Pdf from "html2pdf.js";
+import { SummaryTable } from "./components/SummaryTable";
+import { PDFViewer } from "./components/PDFViewer";
+import { DownloadButtons } from "./components/DownloadButtons";
 
 export const HomePage = () => {
   const [amazon, setAmazon] = useState<File>();
   const [flipkart, setFlipkart] = useState<File>();
   const [finalPdf, setFinal] = useState<string>();
   const [summary, setSummary] = useState<ProductSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
 
   const handleSubmit = async () => {
     if (!amazon && !flipkart) return;
-    const mergePdfs = new PDFMergerService();
-    const pdf = await mergePdfs.mergePdfs({
-      amzon: await readFileFromInput(amazon),
-      flp: await readFileFromInput(flipkart),
-    });
-    setSummary(mergePdfs.summary);
+    setIsLoading(true);
+    try {
+      const mergePdfs = new PDFMergerService();
+      const pdf = await mergePdfs.mergePdfs({
+        amzon: await readFileFromInput(amazon),
+        flp: await readFileFromInput(flipkart),
+      });
+      setSummary(mergePdfs.summary);
 
-    if (!pdf) return;
+      if (!pdf) return;
 
-    const outputPdfBytes = await pdf.save();
-    const blob = new Blob([outputPdfBytes], { type: "application/pdf" });
-
-    // Create a Blob URL for the PDF
-    const pdfUrl = URL.createObjectURL(blob);
-    setFinal(pdfUrl);
-    setAmazon(undefined);
-    setFlipkart(undefined);
+      const outputPdfBytes = await pdf.save();
+      const blob = new Blob([outputPdfBytes], { type: "application/pdf" });
+      const pdfUrl = URL.createObjectURL(blob);
+      setFinal(pdfUrl);
+      setAmazon(undefined);
+      setFlipkart(undefined);
+      setActiveSection("pdfViewer"); // Open PDF viewer section after processing
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const exportTableToPDF = () => {
     const element = document.getElementById("summary-table");
     if (!element) return;
+
+    const tableStyles = {
+      backgroundColor: '#ffffff',
+      padding: '8px 16px',
+      color: '#000000',
+    };
+
+    element.style.backgroundColor = tableStyles.backgroundColor;
+    const cells = [...element.getElementsByTagName('td'), ...element.getElementsByTagName('th')];
+    cells.forEach(cell => {
+      cell.style.padding = tableStyles.padding;
+      cell.style.backgroundColor = tableStyles.backgroundColor;
+      cell.style.color = tableStyles.color;
+    });
 
     const worker = html2Pdf();
 
@@ -63,138 +89,124 @@ export const HomePage = () => {
       })
       .from(element)
       .save();
+
+    setTimeout(() => {
+      element.style.backgroundColor = '';
+      cells.forEach(cell => {
+        cell.style.padding = '';
+        cell.style.backgroundColor = '';
+        cell.style.color = '';
+      });
+    }, 1000);
   };
 
   return (
-    <>
-      <Alert sx={{ my: 4 }} severity="info">
-        Please select AMAZON and FLIPKART labels correctly to process and merge
-        the PDFs
-      </Alert>
-
-      <Grid container spacing={2} sx={{ my: 4 }}>
-        <Grid>
-          <Box>
-            <FileInput
-              accepts="application/pdf"
-              name="amazon"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files) {
-                  setAmazon(e.target.files[0]);
-                }
-              }}
-              selected={!!amazon}
-            />
-          </Box>
-        </Grid>
-        <Grid>
-          <Box>
-            <FileInput
-              accepts="application/pdf"
-              name="flipkart"
-              selected={!!flipkart}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files) {
-                  setFlipkart(e.target?.files[0]);
-                }
-              }}
-            />
-          </Box>
-        </Grid>
-      </Grid>
+    <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
-        <Button
-          component="label"
-          variant="contained"
-          tabIndex={-1}
-          onClick={() => {
-            handleSubmit();
-          }}
-          startIcon={<MergeOutlined />}
-          disabled={!amazon && !flipkart}
-        >
-          Merge & Generate Pdf
-        </Button>
-      </Box>
-      {finalPdf && (
-        <>
-          <Box sx={{ my: 4 }} gap={2} display="flex">
-            <Button
-              component="label"
-              variant="contained"
-              tabIndex={-1}
-              href={finalPdf}
-              startIcon={<Download />}
-              onClick={() => {
-                downloadFile(finalPdf);
-              }}
-            >
-              Download Pdf
-            </Button>
-            <Button
-              component="label"
-              variant="contained"
-              tabIndex={-1}
-              onClick={() => {
-                exportTableToPDF();
-              }}
-              startIcon={<MergeOutlined />}
-              disabled={!summary.length}
-            >
-              Export Summary
-            </Button>
-          </Box>
-          <iframe src={finalPdf} width="100%" height={"800"}></iframe>
-        </>
-      )}
+        <Typography variant="h4" component="h1" gutterBottom>
+          PDF Label Merger
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+          Merge Amazon and Flipkart shipping labels into a single PDF and get a summary of all products
+        </Typography>
 
-      {summary.length > 0 && (
-        <Box sx={{ my: 4 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            <h3>Summary</h3>
+        <Alert sx={{ my: 4 }} severity="info">
+          Please select AMAZON and FLIPKART labels correctly to process and merge the PDFs
+        </Alert>
 
-            <Button
-              variant="contained"
-              startIcon={<Download />}
-              onClick={exportTableToPDF}
-            >
-              Export Table
-            </Button>
-          </Box>
-          <TableContainer
-            component={Paper}
-            id="summary-table"
+        <Grid container spacing={3} sx={{ my: 4 }}>
+          <Grid item xs={12} md={6}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Amazon Label
+                </Typography>
+                <FileInput
+                  accepts="application/pdf"
+                  name="amazon"
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    if (e.target.files) {
+                      setAmazon(e.target.files[0]);
+                    }
+                  }}
+                  selected={!!amazon}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Flipkart Label
+                </Typography>
+                <FileInput
+                  accepts="application/pdf"
+                  name="flipkart"
+                  selected={!!flipkart}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    if (e.target.files) {
+                      setFlipkart(e.target?.files[0]);
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ my: 4, display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleSubmit}
+            startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <MergeOutlined />}
+            disabled={(!amazon && !flipkart) || isLoading}
           >
-            <Table stickyHeader={true}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>SKU</TableCell>
-                  <TableCell>Product</TableCell>
-                  <TableCell>Quantity</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {summary.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{item.SKU}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+            {isLoading ? 'Processing...' : 'Merge & Generate PDF'}
+          </Button>
         </Box>
-      )}
-    </>
+
+        {(finalPdf || summary.length > 0) && (
+          <DownloadButtons 
+            pdfUrl={finalPdf}
+            onExportSummary={exportTableToPDF}
+            hasSummary={summary.length > 0}
+          />
+        )}
+
+        {finalPdf && (
+          <Box sx={{ my: 4 }}>
+            <Accordion 
+              expanded={activeSection === 'pdfViewer'}
+              onChange={(_, isExpanded) => setActiveSection(isExpanded ? 'pdfViewer' : '')}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">Merged PDF Preview</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <PDFViewer pdfUrl={finalPdf} />
+              </AccordionDetails>
+            </Accordion>
+          </Box>
+        )}
+
+        {summary.length > 0 && (
+          <Box sx={{ my: 4 }}>
+            <Accordion 
+              expanded={activeSection === 'summary'}
+              onChange={(_, isExpanded) => setActiveSection(isExpanded ? 'summary' : '')}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">Product Summary</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <SummaryTable summary={summary} />
+              </AccordionDetails>
+            </Accordion>
+          </Box>
+        )}
+      </Box>
+    </Container>
   );
 };
