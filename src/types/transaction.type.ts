@@ -9,7 +9,7 @@ export interface Transaction {
   type?: string;
   marketplace?: string;
   orderStatus?: string;
-  total?: string | number;
+  total?: number;
   productSales?: string | number;
   accNetSales?: number;
   sellingFees?: string | number;
@@ -30,15 +30,15 @@ export interface Transaction {
     createdAt: string;
     updatedAt: string;
   };
+  hash: string;
 }
 
 export interface ProductPrice {
   sku: string;
-  name: string;
+  name?: string;
   description?: string;
-  costPrice: number;
-  basePrice: number;
-  updatedAt: string;
+  costPrice?: number;
+  basePrice?: number;
 }
 
 export interface TransactionSummary {

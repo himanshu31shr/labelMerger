@@ -1,5 +1,4 @@
 import InboxIcon from "@mui/icons-material/MoveToInbox";
-import AnalyticsIcon from "@mui/icons-material/Analytics";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import {
   Box,
