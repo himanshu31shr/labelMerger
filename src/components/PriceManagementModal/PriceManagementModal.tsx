@@ -50,18 +50,14 @@ export const PriceManagementModal: React.FC<Props> = ({
   useEffect(() => {
     if (open) {
       // Initialize with default prices for products that don't have prices set
-      const defaultedPrices = availableProducts.map(product => {
-        const existingPrice = initialPrices.find((p) => p.sku === product.sku);
-        if (existingPrice) return existingPrice;
-
-        const defaultPrice = DEFAULT_PRODUCT_PRICES.find(p => p.sku === product.sku);
-        return {
-          sku: product.sku,
-          description: product.description,
-          basePrice: defaultPrice?.costPrice || 0,
-          costPrice: defaultPrice?.costPrice || 0
-        };
-      });
+      const defaultedPrices = DEFAULT_PRODUCT_PRICES.map((p) => ({
+        sku: p.sku,
+        name: p.description || p.sku,
+        description: p.description || "",
+        costPrice: p.costPrice || 0,
+        basePrice: p.costPrice || 0,
+        updatedAt: new Date().toISOString()
+      }));
       setPrices(defaultedPrices);
     }
   }, [open, initialPrices, availableProducts]);

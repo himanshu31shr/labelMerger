@@ -9,12 +9,14 @@ export class TransactionAnalysisService {
   private productPrices: Map<string, ProductPrice>;
 
   constructor(transactions: Transaction[], productPrices: ProductPrice[] = []) {
-    this.transactions = transactions;
+    // Only include transactions that have a valid type
+    this.transactions = transactions.filter(transaction => transaction && transaction.type !== undefined);
     this.productPrices = new Map(productPrices.map((p) => [p.sku, p]));
   }
 
-  private parseNumber(value: string | null | undefined): number {
-    if (!value) return 0;
+  private parseNumber(value: string | number | null | undefined): number {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'number') return value;
     const num = Number(value.replace(/[,₹]/g, ""));
     return isNaN(num) ? 0 : num;
   }
@@ -66,44 +68,40 @@ export class TransactionAnalysisService {
     };
 
     for (const transaction of this.transactions) {
-      if (!transaction || !transaction.type) continue;
-
-      const type = transaction.type;
+      // Type safety is guaranteed by the filter in constructor
+      const transactionType = transaction.type || '';
       const sku = transaction.sku;
-      const amount = this.parseNumber(transaction.productSales);
-      const quantity = this.parseNumber(transaction.quantity);
-      const total = this.parseNumber(transaction.total);
-      const sellingFees = this.parseNumber(transaction.sellingFees);
-      const otherFees = this.parseNumber(transaction.otherTransactionFees);
-      const fbaFees = this.parseNumber(transaction.fbaFees);
-      const other = this.parseNumber(transaction.other);
+      const quantity = transaction.quantity;
+      const amount = transaction.sellingPrice;
 
-      if (this.isExpense(type)) {
-        const category = type.toLowerCase();
-        const expenseAmount = Math.abs(total);
-        summary.expensesByCategory[category] =
-          (summary.expensesByCategory[category] || 0) + expenseAmount;
-        summary.totalExpenses += expenseAmount;
+      if (this.isExpense(transactionType)) {
+        const category = transactionType.toLowerCase();
+        const totalExpenses = 
+          transaction.expenses.shippingFee + 
+          transaction.expenses.marketplaceFee + 
+          transaction.expenses.otherFees;
+        summary.expensesByCategory[category] = (summary.expensesByCategory[category] || 0) + totalExpenses;
+        summary.totalExpenses += totalExpenses;
       }
 
-      if (this.isSale(type) && sku) {
+      if (this.isSale(transactionType) && sku) {
         summary.totalSales += amount;
 
-        // Sum up all fees for this sale
-        const totalFees =
-          Math.abs(sellingFees) +
-          Math.abs(otherFees) +
-          Math.abs(fbaFees) +
-          Math.abs(other);
-        summary.totalExpenses += totalFees;
+        // Add expenses for this sale
+        const totalExpenses = 
+          transaction.expenses.shippingFee + 
+          transaction.expenses.marketplaceFee + 
+          transaction.expenses.otherFees;
+        summary.totalExpenses += totalExpenses;
 
         if (!summary.salesByProduct[sku]) {
+          const productPrice = this.productPrices.get(sku);
           summary.salesByProduct[sku] = {
             units: 0,
             amount: 0,
             profit: 0,
             profitPerUnit: 0,
-            description: transaction.description,
+            name: productPrice?.name || sku
           };
         }
 
@@ -111,8 +109,10 @@ export class TransactionAnalysisService {
         productSummary.units += quantity;
         productSummary.amount += amount;
         summary.totalUnits += quantity;
-        summary.totalCost +=
-          (this.productPrices.get(sku)?.costPrice || 0) * quantity;
+
+        const costPrice = this.productPrices.get(sku)?.costPrice || 0;
+        const totalCost = costPrice * quantity;
+        summary.totalCost += totalCost;
       }
     }
 

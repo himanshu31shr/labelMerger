@@ -1,53 +1,44 @@
 export interface Transaction {
-  date: string;
-  settlementId: string;
-  type: string;
-  orderId: string;
+  transactionId: string;
+  platform: 'amazon' | 'flipkart';
+  orderDate: string;
   sku: string;
-  description: string;
-  quantity: string;
-  marketplace: string;
-  accountType: string;
-  fulfillment: string;
-  orderCity: string;
-  orderState: string;
-  orderPostal: string;
-  productSales: string;
-  shippingCredits: string;
-  giftWrapCredits: string;
-  promotionalRebates: string;
-  totalSalesTaxLiable: string;
-  tcsCgst: string;
-  tcsSgst: string;
-  tcsIgst: string;
-  tds: string;
-  sellingFees: string;
-  fbaFees: string;
-  otherTransactionFees: string;
-  other: string;
-  total: string;
+  quantity: number;
+  sellingPrice: number;
+  description?: string;
+  type?: string;
+  marketplace?: string;
+  orderStatus?: string;
+  total?: string | number;
+  productSales?: string | number;
+  accNetSales?: number;
+  sellingFees?: string | number;
+  fbaFees?: string | number;
+  otherTransactionFees?: string | number;
+  other?: string | number;
+  expenses: {
+    shippingFee: number;
+    marketplaceFee: number;
+    otherFees: number;
+  };
+  product: {
+    name: string;
+    costPrice: number;
+    basePrice: number;
+  };
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 export interface ProductPrice {
   sku: string;
-  basePrice: number;
-  costPrice: number;
+  name: string;
   description?: string;
-}
-
-export interface ProductPriceFormData {
-  sku: string;
-  basePrice: string;
-  costPrice: string;
-  description: string;
-}
-
-export interface PriceManagementModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSave: (prices: ProductPrice[]) => void;
-  initialPrices: ProductPrice[];
-  availableProducts: { sku: string; description: string }[];
+  costPrice: number;
+  basePrice: number;
+  updatedAt: string;
 }
 
 export interface TransactionSummary {
@@ -62,6 +53,7 @@ export interface TransactionSummary {
       amount: number;
       profit: number;
       profitPerUnit: number;
+      name: string;
       description?: string;
     };
   };

@@ -1,49 +1,48 @@
 export interface Transaction {
-  date: string;
-  type: string;
-  orderId: string;
+  transactionId: string;
+  platform: 'amazon' | 'flipkart';
+  orderDate: string;
   sku: string;
-  description: string;
-  quantity: string;
-  marketplace: 'Amazon' | 'Flipkart';
+  quantity: number;
+  sellingPrice: number;
+  description?: string;
+  type?: string;
+  marketplace?: string;
   orderStatus?: string;
+  total?: string | number;
+  productSales?: string | number;
   accNetSales?: number;
-  expenses?: number;
-  // Amazon specific fields
-  settlementId?: string;
-  accountType?: string;
-  fulfillment?: string;
-  orderCity?: string;
-  orderState?: string;
-  orderPostal?: string;
-  productSales?: string;
-  shippingCredits?: string;
-  giftWrapCredits?: string;
-  promotionalRebates?: string;
-  totalSalesTaxLiable?: string;
-  tcsCgst?: string;
-  tcsSgst?: string;
-  tcsIgst?: string;
-  tds?: string;
-  sellingFees?: string;
-  fbaFees?: string;
-  otherTransactionFees?: string;
-  other?: string;
-  total?: string;
+  sellingFees?: string | number;
+  fbaFees?: string | number;
+  otherTransactionFees?: string | number;
+  other?: string | number;
+  expenses: {
+    shippingFee: number;
+    marketplaceFee: number;
+    otherFees: number;
+  };
+  product: {
+    name: string;
+    costPrice: number;
+    basePrice: number;
+  };
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 export interface ProductPrice {
   sku: string;
-  description?: string;
-  basePrice: number;
+  name: string;
   costPrice: number;
+  basePrice: number;
+  updatedAt: string;
 }
 
 export interface TransactionSummary {
   totalSales: number;
   totalExpenses: number;
-  totalUnits: number;
-  totalCost: number;
   expensesByCategory: {
     [key: string]: number;
   };
@@ -53,8 +52,10 @@ export interface TransactionSummary {
       amount: number;
       profit: number;
       profitPerUnit: number;
-      description?: string;
+      name: string;
     };
   };
   totalProfit: number;
+  totalUnits: number;
+  totalCost: number;
 }

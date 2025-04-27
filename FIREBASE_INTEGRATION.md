@@ -1,191 +1,140 @@
 # Firebase Integration Action Plan
 
 ## Overview
-This document outlines the step-by-step plan for integrating Firebase into the Label Merger and Analytics Tool, including authentication and database features.
+This document outlines the step-by-step plan for integrating Firebase into the Transaction Analytics feature of the Label Merger and Analytics Tool, focusing on storing and visualizing transaction data.
 
 ## Phase 1: Firebase Setup and Configuration
 
 ### Task 1.1: Project Setup
 1. Install required dependencies:
    ```bash
-   npm install firebase @firebase/app @firebase/auth @firebase/firestore
+   npm install firebase @firebase/app @firebase/firestore
    ```
 2. Create Firebase configuration file
 3. Initialize Firebase in the application
 4. Set up environment variables for Firebase config
 
-### Task 1.2: Firebase Context Setup
-1. Create Firebase context provider
-2. Implement Firebase service class
-3. Set up error handling utilities
-4. Add Firebase initialization to app startup
+## Phase 2: Transaction Data Structure
 
-## Phase 2: Authentication Implementation
-
-### Task 2.1: Authentication Setup
-1. Create authentication service class
-2. Implement sign-in methods (email/password)
-3. Add user registration functionality
-4. Set up password reset flow
-
-### Task 2.2: Authentication UI
-1. Create login page component
-2. Implement registration form
-3. Add password reset form
-4. Create protected route wrapper
-
-### Task 2.3: Auth State Management
-1. Create user context
-2. Implement auth state observer
-3. Add authentication persistence
-4. Setup auth loading states
-
-## Phase 3: Database Integration
-
-### Task 3.1: Database Structure
+### Task 2.1: Database Schema Design
 1. Design Firestore collections:
-   - users
-   - orders
    - transactions
+     - transactionId: string
+     - platform: 'amazon' | 'flipkart'
+     - orderDate: timestamp
+     - sku: string
+     - quantity: number
+     - sellingPrice: number
+     - shippingFee: number
+     - marketplaceFee: number
+     - otherFees: number
+     - product: {
+       name: string
+       purchasePrice: number
+       currentPrice: number
+     }
+     - createdAt: timestamp
+     - updatedAt: timestamp
+
    - productPrices
+     - sku: string
+     - name: string
+     - purchasePrice: number
+     - currentPrice: number
+     - updatedAt: timestamp
+
 2. Set up database rules
-3. Create database indexes
-4. Plan data migration strategy
+3. Create database indexes for efficient queries
+4. Plan data migration strategy for existing data
 
-### Task 3.2: Data Service Implementation
-1. Create base database service
-2. Implement CRUD operations for orders
-3. Add transaction handling
-4. Set up batch operations
+## Phase 3: Transaction Analytics Integration
 
-### Task 3.3: Order Data Integration
-1. Modify OrderAggregationService to use Firebase
-2. Update order save operations
-3. Implement real-time order updates
-4. Add offline data support
+### Task 3.1: Data Service Implementation
+1. Create TransactionFirebaseService:
+   - saveTransactions(transactions: Transaction[]): Promise<void>
+   - getTransactions(filters: TransactionFilter): Promise<Transaction[]>
+   - updateProductPrices(prices: ProductPrice[]): Promise<void>
+   - getProductPrices(): Promise<ProductPrice[]>
 
-### Task 3.4: Transaction Data Integration
-1. Update TransactionAnalysisService
-2. Implement transaction save operations
-3. Add real-time transaction updates
-4. Set up data pagination
+2. Update TransactionAnalysisService:
+   - Modify to use Firebase for data persistence
+   - Implement caching for better performance
+   - Add real-time updates for price changes
+
+### Task 3.2: Transaction Analytics Page Updates
+1. Modify file upload flow:
+   - Parse CSV data
+   - Save transactions to Firebase
+   - Update UI to show upload progress
+
+2. Update visualization components:
+   - Fetch data from Firebase instead of memory
+   - Implement pagination for large datasets
+   - Add real-time updates when data changes
+
+3. Enhance price management:
+   - Store price updates in Firebase
+   - Reflect price changes in real-time across all views
+   - Implement optimistic updates for better UX
 
 ## Phase 4: Testing Implementation
 
 ### Task 4.1: Unit Tests
-1. Authentication tests:
-   - Login functionality
-   - Registration process
-   - Password reset
-   - Protected routes
+1. Firebase service tests:
+   - Test CRUD operations for transactions
+   - Test price update operations
+   - Test data transformation
+   - Test error handling
 
-2. Database tests:
-   - CRUD operations
-   - Data validation
-   - Error handling
-   - Batch operations
-
-3. Service tests:
-   - Firebase service
-   - Auth service
-   - Data services
+2. Component tests:
+   - Test file upload with Firebase integration
+   - Test visualization with Firebase data
+   - Test price management updates
 
 ### Task 4.2: Integration Tests
-1. Auth flow testing
-2. Database operations
-3. Real-time updates
-4. Offline functionality
-
-### Task 4.3: E2E Tests
-1. Complete user flows
-2. Cross-browser testing
-3. Performance testing
-4. Error scenario testing
-
-## Phase 5: Application Updates
-
-### Task 5.1: UI Updates
-1. Add login/logout buttons
-2. Implement user profile section
-3. Add loading states
-4. Update error handling
-
-### Task 5.2: Route Protection
-1. Implement AuthGuard component
-2. Update existing routes
-3. Add redirect logic
-4. Handle unauthorized access
-
-### Task 5.3: Data Migration
-1. Create migration scripts
-2. Test data migration
-3. Implement rollback mechanism
-4. Document migration process
+1. End-to-end flow testing:
+   - File upload to Firebase storage
+   - Data retrieval and visualization
+   - Real-time updates
+   - Price management
 
 ## Implementation Notes
 
-### Code Organization
-- Keep Firebase-specific code in separate modules
-- Use dependency injection for services
-- Implement proper error boundaries
-- Follow existing project structure
-
 ### Best Practices
-- Use batch operations for multiple updates
-- Implement proper security rules
+- Use batch writes for uploading multiple transactions
+- Implement proper error handling and retries
 - Cache frequently accessed data
-- Use offline persistence
-- Implement proper cleanup
+- Use Firebase offline persistence
+- Implement proper cleanup for subscriptions
 
-### Security Considerations
-- Implement proper authentication checks
-- Set up database rules
-- Validate all user input
-- Handle sensitive data appropriately
-- Use environment variables for secrets
+### Performance Considerations
+- Implement pagination for large datasets
+- Use compound queries for efficient filtering
+- Cache product prices locally
+- Optimize real-time updates
 
-### Testing Strategy
-1. Unit Tests:
-   - Use Jest for testing
-   - Mock Firebase services
-   - Test edge cases
-   - Ensure error handling
-
-2. Integration Tests:
-   - Test component interaction
-   - Verify data flow
-   - Test authentication flow
-   - Check real-time updates
-
-3. E2E Tests:
-   - Test complete user flows
-   - Verify data persistence
-   - Test offline functionality
-   - Check error scenarios
-
-### Documentation Requirements
-- Update README.md
-- Update API documentation
-- Add setup instructions
-- Include testing guidelines
-- Document security rules
-
-## Dependencies
-- firebase
-- @firebase/app
-- @firebase/auth
-- @firebase/firestore
-- jest-mock-firebase (for testing)
-
-## Migration Strategy
-1. Implement parallel data storage
-2. Validate new implementation
-3. Gradually migrate existing data
-4. Add rollback capability
+### Security Rules
+```typescript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /productPrices/{priceId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
+```
 
 ## Success Criteria
-1. All features working with Firebase
-2. Tests passing with good coverage
-3. Documentation updated
-4. Security rules implemented
-5. Performance metrics met
+1. Transaction data successfully stored in Firebase
+2. Visualization components working with Firebase data
+3. Real-time price updates reflected in UI
+4. Performance metrics meet requirements:
+   - Initial load time < 2s
+   - Update latency < 500ms
+5. All tests passing with good coverage

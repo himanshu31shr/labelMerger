@@ -31,12 +31,21 @@ import { DEFAULT_PRODUCT_PRICES } from "../../constants/defaultPrices";
 interface FlipkartOrderData {
   "Order ID": string;
   "Order Date": string;
+  "SKU": string;
   "SKU Name": string;
   "Gross Units": number;
   "Accounted Net Sales (INR)": string | number;
   "Bank Settlement [Projected] (INR)": string | number;
   "Order Status": string;
   "Total Expenses (INR)": string | number;
+  "Type": string;
+  "Description"?: string;
+  "Total": string | number;
+  "Product Sales"?: string | number;
+  "Selling Fees"?: string | number;
+  "FBA Fees"?: string | number;
+  "Other Transaction Fees"?: string | number;
+  "Other"?: string | number;
 }
 
 interface FlipkartSkuData {
@@ -96,9 +105,11 @@ export const TransactionAnalytics: React.FC = () => {
   const [productPrices, setProductPrices] = useState<ProductPrice[]>(
     DEFAULT_PRODUCT_PRICES.map((p) => ({
       sku: p.sku,
+      name: p.description || p.sku,
       description: p.description,
       costPrice: p.costPrice,
       basePrice: p.costPrice,
+      updatedAt: new Date().toISOString()
     }))
   );
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
@@ -118,11 +129,13 @@ export const TransactionAnalytics: React.FC = () => {
       { sku: string; description: string }
     >();
     transactions.forEach((transaction) => {
-      if (transaction.sku && transaction.type.toLowerCase() === "order") {
-        uniqueProducts.set(transaction.sku, {
-          sku: transaction.sku,
-          description: transaction.description,
-        });
+      if (transaction.sku && transaction.type?.toLowerCase() === "order") {
+        if (!uniqueProducts.has(transaction.sku)) {
+          uniqueProducts.set(transaction.sku, {
+            sku: transaction.sku,
+            description: transaction.description || transaction.sku,
+          });
+        }
       }
     });
     return Array.from(uniqueProducts.values());
@@ -155,62 +168,45 @@ export const TransactionAnalytics: React.FC = () => {
             skuData = XLSX.utils.sheet_to_json<FlipkartSkuData>(skuSheet);
           }
 
-          const transactions: Transaction[] = ordersData
-            .filter((row) => row["Order ID"] && row["SKU Name"])
-            .map((row) => ({
-              date: row["Order Date"] || "",
-              type: "order",
-              orderId: row["Order ID"],
-              sku: row["SKU Name"],
-              description: row["SKU Name"] || "",
-              quantity: String(row["Gross Units"] || "0"),
-              productSales: String(row["Accounted Net Sales (INR)"] || "0"),
-              total: String(row["Bank Settlement [Projected] (INR)"] || "0"),
-              marketplace: "Flipkart",
-              orderStatus: row["Order Status"] || "",
-              accNetSales:
-                parseFloat(
-                  String(row["Accounted Net Sales (INR)"]).replace(/[₹,]/g, "")
-                ) || 0,
-              expenses:
-                parseFloat(
-                  String(row["Total Expenses (INR)"]).replace(/[₹,]/g, "")
-                ) || 0,
-              sellingFees: String(
-                parseFloat(
-                  String(row["Total Expenses (INR)"]).replace(/[₹,]/g, "")
-                ) || 0
-              ),
-              settlementId: "",
-              accountType: "",
-              fulfillment: "",
-              orderCity: "",
-              orderState: "",
-              orderPostal: "",
-              shippingCredits: "",
-              giftWrapCredits: "",
-              promotionalRebates: "",
-              totalSalesTaxLiable: "",
-              tcsCgst: "",
-              tcsSgst: "",
-              tcsIgst: "",
-              tds: "",
-              fbaFees: "",
-              otherTransactionFees: "",
-              other: "",
-            }));
+          const transactions: Transaction[] = ordersData.map(order => ({
+            transactionId: order["Order ID"],
+            platform: 'flipkart',
+            orderDate: order["Order Date"],
+            sku: order["SKU"],
+            quantity: Number(order["Gross Units"]),
+            sellingPrice: Number(order["Accounted Net Sales (INR)"]),
+            description: order["SKU Name"],
+            type: order["Type"],
+            marketplace: "Flipkart",
+            orderStatus: order["Order Status"],
+            total: order["Total"],
+            productSales: order["Accounted Net Sales (INR)"],
+            accNetSales: Number(order["Bank Settlement [Projected] (INR)"]),
+            expenses: {
+              shippingFee: 0,
+              marketplaceFee: 0,
+              otherFees: Number(order["Total Expenses (INR)"] || 0)
+            },
+            product: {
+              name: order["SKU Name"] || order["SKU"],
+              costPrice: 0,
+              basePrice: 0
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          }));
 
           const prices: ProductPrice[] = skuData
-            .filter(
-              (row) => row["SKU"] && (row["Base Price"] || row["Cost Price"])
-            )
+            .filter((row) => row["SKU"] && (row["Base Price"] || row["Cost Price"]))
             .map((row) => ({
               sku: row["SKU"],
+              name: row["Product Name"] || row["SKU"],
               description: row["Product Name"] || "",
-              basePrice:
-                parseFloat(String(row["Base Price"]).replace(/[₹,]/g, "")) || 0,
-              costPrice:
-                parseFloat(String(row["Cost Price"]).replace(/[₹,]/g, "")) || 0,
+              basePrice: parseFloat(String(row["Base Price"]).replace(/[₹,]/g, "")) || 0,
+              costPrice: parseFloat(String(row["Cost Price"]).replace(/[₹,]/g, "")) || 0,
+              updatedAt: new Date().toISOString()
             }));
 
           resolve({ transactions, prices });
@@ -258,34 +254,35 @@ export const TransactionAnalytics: React.FC = () => {
           .filter((row) => row && typeof row === "object")
           .filter((row) => !row.type?.toLowerCase().includes("definition"))
           .map((row) => ({
-            date: row["date/time"],
-            settlementId: row["settlement id"],
-            type: row["type"],
-            orderId: row["order id"],
+            transactionId: row["order id"],
+            platform: 'amazon',
+            orderDate: row["date/time"],
             sku: row["Sku"] || row["sku"] || "",
+            quantity: Number(row["quantity"]),
+            sellingPrice: Number(row["product sales"].replace(/[₹,]/g, "")),
             description: row["description"],
-            quantity: row["quantity"],
+            type: row["type"],
             marketplace: "Amazon",
-            accountType: row["account type"],
-            fulfillment: row["fulfillment"],
-            orderCity: row["order city"],
-            orderState: row["order state"],
-            orderPostal: row["order postal"],
+            total: row["total"],
             productSales: row["product sales"],
-            shippingCredits: row["shipping credits"],
-            giftWrapCredits: row["gift wrap credits"],
-            promotionalRebates: row["promotional rebates"],
-            totalSalesTaxLiable:
-              row["Total sales tax liable(GST before adjusting TCS)"],
-            tcsCgst: row["TCS-CGST"],
-            tcsSgst: row["TCS-SGST"],
-            tcsIgst: row["TCS-IGST"],
-            tds: row["TDS (Section 194-O)"],
             sellingFees: row["selling fees"],
             fbaFees: row["fba fees"],
             otherTransactionFees: row["other transaction fees"],
             other: row["other"],
-            total: row["total"],
+            expenses: {
+              shippingFee: Number(row["shipping credits"].replace(/[₹,]/g, "") || 0),
+              marketplaceFee: Number(row["selling fees"].replace(/[₹,]/g, "") || 0),
+              otherFees: Number(row["other transaction fees"].replace(/[₹,]/g, "") || 0)
+            },
+            product: {
+              name: row["description"],
+              costPrice: 0,
+              basePrice: 0
+            },
+            metadata: {
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
           }));
       } else {
         throw new Error(

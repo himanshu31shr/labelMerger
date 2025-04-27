@@ -20,46 +20,33 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 - Support for both Amazon and Flipkart data formats
 
 ### Data Persistence
-- Store transaction data persistently in the browser using IndexedDB
+- Store transaction data in Firebase Firestore
+- Real-time updates across all connected clients
+- Offline support with automatic sync
 - Dynamic price management with real-time updates
 
-## Dark Mode Support
+## Tech Stack
+- **Frontend**: React with TypeScript
+- **UI Framework**: Material-UI
+- **Data Storage**: Firebase Firestore
+- **PDF Processing**: pdf-lib
+- **Data Parsing**: papaparse, xlsx
+- **Build Tool**: Vite
 
-### Overview
-The application supports a dark mode toggle, allowing users to switch between light and dark themes dynamically.
-
-### How to Use
-- A toggle switch is available in the application header
-- Switching the toggle enables or disables dark mode instantly
-
-### Implementation Details
-- Integrated using Material-UI's `ThemeProvider` and `createTheme`
-- The toggle state is managed using React's `useState` hook
-
-## Installation
+## Getting Started
 
 ### Prerequisites
-- Node.js (>= 14.x)
-- npm (>= 6.x)
+- Node.js (v14 or higher)
+- npm (v6 or higher)
+- A Firebase project with Firestore enabled
 
-### Steps
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd material-ui-vite-ts
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-5. Open the application in your browser at `http://localhost:3000`
+### Installation
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Configure Firebase:
+   - Create a `.env` file with your Firebase configuration
+   - Set up Firestore rules and indexes
+4. Start development server: `npm run dev`
 
 ## Scripts
 - `npm run dev`: Start the development server
@@ -77,15 +64,15 @@ material-ui-vite-ts/
 │   ├── pages/            # Application pages
 │   │   ├── home/         # Home page components and services
 │   │   ├── transactionAnalytics/ # Transaction analytics components and services
-│   ├── storage/          # IndexedDB operations
+│   ├── services/         # Application services
 │   ├── theme.tsx         # Theme configuration
-│   ├── App.tsx           # Main application component
+│   ├── App.tsx          # Main application component
 │   ├── main.tsx         # Application entry point
-├── tests/                # Unit tests
-├── public/               # Static assets
-├── package.json         # Project metadata and dependencies
-├── tsconfig.json        # TypeScript configuration
-├── vite.config.ts       # Vite configuration
+├── tests/               # Unit tests
+├── public/             # Static assets
+├── package.json       # Project metadata and dependencies
+├── tsconfig.json     # TypeScript configuration
+└── vite.config.ts    # Vite configuration
 ```
 
 ## Key Components
@@ -101,15 +88,15 @@ material-ui-vite-ts/
 ### Services
 - **merge.service.ts**: Merges Amazon and Flipkart labels into a single PDF
 - **transactionAnalysis.service.ts**: Processes and analyzes transaction data
-
-### Storage
-- **db.ts**: Handles IndexedDB operations (save, fetch, delete)
+- **firebase.service.ts**: Handles all Firebase operations and data persistence
 
 ## Future Enhancements
 - Add support for additional e-commerce platforms
 - Provide export functionality for analytics data
 - Implement user authentication for multi-user support
 - Add data visualization features
+- Enhanced offline capabilities
+- Batch processing for large datasets
 
 ## License
 This project is licensed under the MIT License.

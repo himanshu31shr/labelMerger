@@ -21,7 +21,7 @@ This file serves as a centralized repository for common knowledge, recurring ins
 
 4. **Testing Standards:**
    - Use Jest and `@testing-library/react` for unit and integration tests.
-   - Mock external dependencies (e.g., IndexedDB, `pdf-lib`, `papaparse`) as needed.
+   - Mock external dependencies (e.g., `pdf-lib`, `papaparse`) as needed.
    - Ensure 100% test coverage for critical components and services.
 
 5. **Version Control:**
@@ -38,8 +38,9 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Use Material-UI for consistent styling and theming.
 
 2. **State Management:**
-   - Use React's `useState` and `useContext` for local and shared state.
-   - Avoid unnecessary re-renders by optimizing state updates.
+   - Use React's `useState` and `useContext` for local and shared state
+   - Use Firebase Firestore for persistent storage
+   - Implement proper cleanup for Firebase listeners
 
 3. **Theming:**
    - Use Material-UI's `ThemeProvider` and `createTheme` for theming.
@@ -62,9 +63,11 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Provide a toggle switch for users to switch between light and dark modes.
    - Ensure the toggle state is persistent across sessions (e.g., using localStorage).
 
-2. **IndexedDB Operations:**
-   - Use the `idb` library for IndexedDB operations.
-   - Ensure data integrity and handle edge cases (e.g., empty or corrupted data).
+2. **Firebase Operations:**
+   - Use the Firebase service for data persistence
+   - Handle offline/online states appropriately
+   - Implement proper error handling
+   - Clean up listeners when components unmount
 
 3. **PDF Generation:**
    - Use `pdf-lib` for PDF generation and manipulation.
@@ -139,10 +142,6 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Support team collaboration features.
 
 4. **Performance Optimization:**
-   - IndexedDB operations:
-     - Implement bulk operations for better performance
-     - Use indices for faster queries
-     - Implement data chunking for large datasets
    - PDF generation:
      - Implement worker threads for PDF processing
      - Add progress tracking for large PDF operations
@@ -181,6 +180,138 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Deploy to staging
    - Perform regression testing
    - Deploy to production
+
+---
+
+## 8. Firebase Integration Guidelines
+
+1. **Data Storage**:
+   - Use Firestore for storing transaction data
+   - Implement batch operations for bulk uploads
+   - Follow the defined schema for collections
+   - Use timestamps for tracking data changes
+
+2. **Real-time Updates**:
+   - Implement Firestore listeners for price changes
+   - Handle subscription cleanup properly
+   - Use optimistic updates for better UX
+   - Cache frequently accessed data
+
+3. **Performance Guidelines**:
+   - Use pagination for large datasets
+   - Implement compound queries
+   - Enable offline persistence
+   - Cache product prices locally
+
+4. **Testing Requirements**:
+   - Mock Firebase in unit tests
+   - Test real-time update functionality
+   - Verify data consistency
+   - Test error scenarios
+
+5. **Security Considerations**:
+   - Follow principle of least privilege
+   - Implement proper authentication
+   - Regular security rules review
+   - Monitor usage patterns
+
+---
+
+## 9. Data Storage Guidelines
+
+### 9.1 Firebase Firestore
+1. **Collection Structure**:
+   - `transactions/`: Main collection for transaction data
+   - `productPrices/`: Collection for product pricing data
+
+2. **Data Models**:
+   ```typescript
+   // Transaction Document
+   interface TransactionDoc {
+     transactionId: string;
+     platform: 'amazon' | 'flipkart';
+     orderDate: Timestamp;
+     sku: string;
+     quantity: number;
+     sellingPrice: number;
+     expenses: {
+       shippingFee: number;
+       marketplaceFee: number;
+       otherFees: number;
+     };
+     product: {
+       name: string;
+       costPrice: number;
+       basePrice: number;
+     };
+     metadata: {
+       createdAt: Timestamp;
+       updatedAt: Timestamp;
+     };
+   }
+
+   // Product Price Document
+   interface ProductPriceDoc {
+     sku: string;
+     name: string;
+     costPrice: number;
+     basePrice: number;
+     updatedAt: Timestamp;
+   }
+   ```
+
+3. **Query Patterns**:
+   - Get transactions by date range
+   - Get transactions by platform
+   - Get product prices by SKU list
+   - Get latest price updates
+
+4. **Indexing**:
+   - Single-field indexes:
+     - transactions/orderDate
+     - transactions/platform
+     - transactions/sku
+     - productPrices/sku
+   - Compound indexes:
+     - transactions/platform + orderDate
+     - transactions/sku + orderDate
+
+### 9.2 Performance Optimization
+1. **Batch Operations**:
+   - Use batched writes for multiple documents
+   - Group related updates
+   - Monitor batch size limits
+
+2. **Query Optimization**:
+   - Use pagination
+   - Implement cursor-based pagination
+   - Limit query result sizes
+
+3. **Real-time Updates**:
+   - Use snapshot listeners efficiently
+   - Detach listeners when not needed
+   - Implement debouncing
+
+4. **Caching Strategy**:
+   - Cache frequently accessed data
+   - Implement LRU cache
+   - Clear cache periodically
+
+### 9.3 Error Handling
+1. **Network Errors**:
+   - Implement exponential backoff
+   - Queue failed operations
+   - Show appropriate user feedback
+
+2. **Data Validation Errors**:
+   - Validate data before write
+   - Show detailed error messages
+   - Log validation failures
+
+3. **Concurrency Issues**:
+   - Use transactions for atomic operations
+   - Handle conflicts gracefully
+   - Implement optimistic updates
 
 ---
 
