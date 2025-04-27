@@ -91,21 +91,20 @@ This file serves as a centralized repository for common knowledge, recurring ins
 
 ## 4. Testing Guidelines
 
-1. **Unit Tests:**
-   - Test individual components and functions in isolation.
-   - Use mocks and stubs for external dependencies.
+1. **Unit Testing:**
+   - Test components in isolation.
+   - Use meaningful test descriptions.
+   - Follow the Arrange-Act-Assert pattern.
 
-2. **Integration Tests:**
-   - Test interactions between components and services.
-   - Ensure end-to-end functionality for critical workflows.
+2. **Integration Testing:**
+   - Test component interactions.
+   - Test data flow between components.
+   - Test routing functionality.
 
-3. **Mocking:**
-   - Use `fake-indexeddb` for mocking IndexedDB.
-   - Mock `pdf-lib` and `papaparse` for PDF and CSV-related tests.
-
-4. **Coverage:**
-   - Ensure 100% test coverage for critical components and services.
-   - Use the `lcov` report to identify uncovered lines of code.
+3. **Mock Testing:**
+   - Mock external dependencies.
+   - Create meaningful test data.
+   - Handle asynchronous operations properly.
 
 ---
 

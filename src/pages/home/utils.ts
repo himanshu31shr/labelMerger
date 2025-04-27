@@ -1,3 +1,5 @@
+import { SyntheticEvent } from "react";
+
 export const readFileFromInput = async (
   file?: File
 ): Promise<Uint8Array | null> => {
@@ -15,13 +17,17 @@ export const readFileFromInput = async (
   });
 };
 
-export function downloadFile(finalPdf: string) {
+export function downloadFile(e: SyntheticEvent<MouseEvent>, finalPdf: string) {
+  const blob = URL.createObjectURL(new Blob([finalPdf], { type: "application/pdf" }));
   const a = document.createElement("a");
   document.body.appendChild(a);
   a.style.display = 'none';
-  a.href = finalPdf;
+  a.href = blob;
   a.target = "_blank";
   a.download = "pdf-merged-" + Date.now();
   a.click();
+  URL.revokeObjectURL(blob);
   document.body.removeChild(a);
+  e.preventDefault();
+  return;
 }

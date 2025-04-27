@@ -5,7 +5,7 @@
 ---
 
 ## 1. Overview
-The Label Merger and Analytics Tool is a web-based application designed to process, merge, and analyze order data from two e-commerce platforms: Amazon and Flipkart. The application provides functionality to upload CSV files, merge PDF labels, and analyze order data grouped by product categories.
+The Label Merger and Analytics Tool is a web-based application designed to process, merge, and analyze data from two e-commerce platforms: Amazon and Flipkart. The application provides functionality to merge PDF labels and analyze transaction data from both platforms.
 
 ---
 
@@ -19,22 +19,15 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Transform Amazon and Flipkart-specific data into a unified format.
   - Generate a merged PDF with labels for both platforms.
 
-### 2.2. Order Analytics
-- **Input**: Order data from uploaded CSV files or preloaded IndexedDB data.
-- **Output**: Analytics grouped by product categories.
+### 2.2. Transaction Analytics
+- **Input**: Transaction data from uploaded CSV files
+- **Output**: Comprehensive financial analytics
 - **Key Functionalities**:
-  - Display grouped data in a table format.
-  - Show total orders and returns for each product group.
-  - Expandable rows to display SKU-level details (orders, returns, and titles).
-  - Sorting functionality for columns (e.g., group, orders, returns).
-  - Display timeline of the data (start and end dates).
-
-### 2.3. Data Persistence
-- **Storage**: IndexedDB for storing order data persistently in the browser.
-- **Key Functionalities**:
-  - Save uploaded data to IndexedDB.
-  - Fetch data from IndexedDB on page load.
-  - Delete all stored data from IndexedDB.
+  - Process and analyze transaction data from both platforms
+  - Calculate sales, expenses, and profits
+  - Display marketplace-specific analytics
+  - Manage product prices dynamically
+  - Generate SKU-wise performance reports
 
 ---
 
@@ -64,77 +57,41 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ### 4.1. Pages
 1. **Home Page**:
-   - File input for uploading Amazon and Flipkart CSV files.
-   - Button to generate and download merged PDF labels.
+   - File input for uploading Amazon and Flipkart CSV files
+   - Button to generate and download merged PDF labels
 
-2. **Order Analytics Page**:
-   - File input for uploading order data.
-   - Table displaying grouped analytics.
-   - Delete button to clear stored data.
-   - Loader for asynchronous operations.
+2. **Transaction Analytics Page**:
+   - File input for uploading transaction data
+   - Multiple views for different analytics perspectives
+   - Price management functionality
+   - Detailed product-wise analysis
 
 ### 4.2. Components
 1. **FileInput**:
-   - Reusable component for file uploads.
-   - Props: `onChange`, `name`, `accepts`, `selected`.
+   - Reusable component for file uploads
+   - Props: `onChange`, `name`, `accepts`, `selected`
 
-2. **ProductGroupTable**:
-   - Displays grouped data in a table format.
-   - Expandable rows for SKU-level details.
-   - Sorting functionality for columns.
-
-3. **SkuTable**:
-   - Sub-table for displaying SKU-level details (orders, returns, titles).
-
-4. **Loader**:
-   - Displays a loading spinner during asynchronous operations.
+2. **PriceManagementModal**:
+   - Modal for managing product prices
+   - Dynamic price updates with real-time calculations
 
 ### 4.3. Services
 1. **merge.service.ts**:
-   - Merges Amazon and Flipkart labels into a single PDF.
+   - Merges Amazon and Flipkart labels into a single PDF
 
 2. **TrasformAmazonPages.ts**:
-   - Processes Amazon-specific data for PDF generation.
+   - Processes Amazon-specific data for PDF generation
 
 3. **TrasformFlipkartPages.ts**:
-   - Processes Flipkart-specific data for PDF generation.
+   - Processes Flipkart-specific data for PDF generation
 
-4. **orderAggregation.service.ts**:
-   - Aggregates order data by product groups and SKUs.
+4. **transactionAnalysis.service.ts**:
+   - Processes and analyzes transaction data
+   - Calculates sales, expenses, and profits
 
-### 4.4. Constants
-1. **product.ts**:
-   - Defines product groups and their associated SKUs.
-
-### 4.5. Storage
+### 4.4. Storage
 1. **db.ts**:
    - Handles IndexedDB operations (save, fetch, delete).
-
-### 4.6. Transaction Analytics
-1. **TransactionAnalyticsPage**:
-   - Allows users to upload transaction CSV files from Amazon and Flipkart.
-   - Displays analytics in multiple views:
-     - Combined Summary: Shows total sales, expenses, units, and profit
-     - Amazon Summary: Platform-specific analytics for Amazon transactions
-     - Flipkart Summary: Platform-specific analytics for Flipkart transactions
-     - Product Details: SKU-wise breakdown of sales and profitability
-   - Provides a price management modal for updating product prices
-   - Supports real-time recalculation of analytics when prices are updated
-   - Handles different data formats for each marketplace
-
-2. **TransactionAnalysisService**:
-   - Processes transaction data to calculate comprehensive summaries
-   - Supports marketplace-specific calculations:
-     - Amazon: Handles selling fees, FBA fees, and other transaction fees
-     - Flipkart: Processes accounted net sales and total expenses
-   - Maintains product-wise analytics including:
-     - Units sold
-     - Total sales amount
-     - Cost calculations
-     - Profit per unit
-     - Total profit
-   - Provides dynamic price update capability
-   - Categorizes expenses by type and marketplace
 
 ---
 
@@ -199,5 +156,3 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 - **SKU**: Stock Keeping Unit, a unique identifier for products.
 - **IndexedDB**: A low-level API for client-side storage of significant amounts of structured data.
 - **PDF**: Portable Document Format, used for generating labels.
-
----

@@ -19,7 +19,7 @@ export const DownloadButtons = ({ pdfUrl, onExportSummary, hasSummary }: Downloa
             color="primary"
             href={pdfUrl}
             startIcon={<Download />}
-            onClick={() => downloadFile(pdfUrl)}
+            onClick={(e) => downloadFile(e, pdfUrl)}
           >
             Download Merged PDF
           </Button>

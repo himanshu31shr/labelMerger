@@ -9,12 +9,6 @@ const HomePage = React.lazy(() =>
   }))
 );
 
-const OrderAnalytics = React.lazy(() =>
-  import("./pages/orderAnalytics/orderAnalytics.page").then((module) => ({
-    default: module.OrderAnalyticsPage,
-  }))
-);
-
 const TransactionAnalytics = React.lazy(() =>
   import("./pages/transactionAnalytics/transactionAnalytics.page").then((module) => ({
     default: module.TransactionAnalytics,
@@ -32,7 +26,6 @@ export default function App({ toggleTheme, mode }: {
           <Suspense fallback={<CircularProgress />}>
             <Routes>
               <Route path="/labelMerger/" element={<HomePage />} />
-              <Route path="/labelMerger/analytics/" element={<OrderAnalytics />} />
               <Route path="/labelMerger/transactions/" element={<TransactionAnalytics />} />
             </Routes>
           </Suspense>

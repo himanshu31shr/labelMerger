@@ -1,89 +1,72 @@
 import { PDFDocument } from "pdf-lib";
-import { TrasformAmazonPages } from "../../../../src/pages/home/services/TrasformAmazonPages";
-import { TrasformFlipkartPages } from "../../../../src/pages/home/services/TrasformFlipkartPages";
+import { AmazonPDFTransformer } from "../../../../src/pages/home/services/TrasformAmazonPages";
 
-// Mock the dependencies
+// Mock pdf-lib
 jest.mock("pdf-lib", () => ({
   PDFDocument: {
-    load: jest.fn().mockResolvedValue({
-      getPages: jest.fn().mockReturnValue([
-        {
-          setWidth: jest.fn(),
-          setCropBox: jest.fn(),
-          setHeight: jest.fn(),
-          getMediaBox: jest.fn().mockReturnValue({
-            width: 100,
-            height: 100,
-          }),
-        },
-        {
-          setWidth: jest.fn(),
-          setCropBox: jest.fn(),
-          setHeight: jest.fn(),
-          getMediaBox: jest.fn().mockReturnValue({
-            width: 100,
-            height: 100,
-          }),
-        },
-        {
-          setWidth: jest.fn(),
-          setCropBox: jest.fn(),
-          setHeight: jest.fn(),
-          getMediaBox: jest.fn().mockReturnValue({
-            width: 100,
-            height: 100,
-          }),
-        },
-        {
-          setWidth: jest.fn(),
-          setCropBox: jest.fn(),
-          setHeight: jest.fn(),
-          getMediaBox: jest.fn().mockReturnValue({
-            width: 100,
-            height: 100,
-          }),
-        },
-      ]), // Mock 4 pages
-    }),
     create: jest.fn().mockResolvedValue({
       addPage: jest.fn(),
-      copyPages: jest.fn().mockResolvedValue([{}]),
+      copyPages: jest.fn().mockResolvedValue([{
+        drawText: jest.fn(),
+        getWidth: jest.fn().mockReturnValue(100),
+        getHeight: jest.fn().mockReturnValue(100)
+      }]),
+      getPages: jest.fn().mockReturnValue([{}]),
+      getPageIndices: jest.fn().mockReturnValue([0]),
+      removePage: jest.fn(),
+      embedFont: jest.fn().mockResolvedValue({})
     }),
+    load: jest.fn().mockResolvedValue({
+      getPages: jest.fn().mockReturnValue([{}, {}]),
+      getPageIndices: jest.fn().mockReturnValue([0, 1]),
+      copyPages: jest.fn().mockResolvedValue([{
+        drawText: jest.fn(),
+        getWidth: jest.fn().mockReturnValue(100),
+        getHeight: jest.fn().mockReturnValue(100)
+      }])
+    })
   },
+  rgb: jest.fn(),
+  StandardFonts: { Helvetica: 'Helvetica' }
 }));
 
-describe("TrasformAmazonPages", () => {
-  test("returns a PDF document", async () => {
-    const filePath = new Uint8Array([1, 2, 3]);
-    const result = await TrasformAmazonPages(filePath);
+// Mock pdf-worker
+jest.mock("../../../../src/utils/pdf-worker", () => ({
+  pdfjsLib: {
+    getDocument: jest.fn().mockReturnValue({
+      promise: Promise.resolve({
+        getPage: jest.fn().mockResolvedValue({
+          getTextContent: jest.fn().mockResolvedValue({
+            items: [
+              { str: "1 Test Product", transform: [0, 0, 0, 0, 0, 100] },
+              { str: "| ₹500 2", transform: [0, 0, 0, 0, 0, 100] }
+            ]
+          })
+        })
+      })
+    }),
+    version: "2.12.313"
+  }
+}));
+
+describe("AmazonPDFTransformer", () => {
+  let transformer: AmazonPDFTransformer;
+  
+  beforeEach(() => {
+    transformer = new AmazonPDFTransformer(new Uint8Array([1, 2, 3]));
+  });
+
+  test("transforms PDF pages correctly", async () => {
+    const result = await transformer.transform();
     expect(result).toBeDefined();
   });
 
-  test("processes the pages correctly", async () => {
-    const filePath = new Uint8Array([1, 2, 3]);
-    const result = await TrasformAmazonPages(filePath);
-    const pdfDoc = await PDFDocument.load(filePath);
-    const pages = pdfDoc.getPages();
-    expect(pages).toHaveLength(4); // Mock 4 pages
-    expect(result.copyPages).toHaveBeenCalled(); // Only even-indexed pages
-    expect(result.addPage).toHaveBeenCalled(); // Only even-indexed pages
+  test("extracts product information correctly", async () => {
+    await transformer.transform();
+    expect(transformer.getSummary()).toEqual([{
+      name: "Test Product",
+      quantity: 2,
+      type: "amazon"
+    }]);
   });
 });
-
-// describe("TrasformFlipkartPages", () => {
-//   test("returns a PDF document", async () => {
-//     const filePath = new Uint8Array([1, 2, 3]);
-//     const result = await TrasformFlipkartPages(filePath);
-//     expect(result).toBeDefined();
-//   });
-
-//   test("processes the pages correctly", async () => {
-//     const filePath = new Uint8Array([1, 2, 3]);
-//     const result = await TrasformFlipkartPages(filePath);
-//     const pdfDoc = await PDFDocument.load(filePath);
-//     const pages = pdfDoc.getPages();
-//     expect(pages).toHaveLength(4); // Mock 4 pages
-//     expect(result.copyPages).toHaveBeenCalled(); // Only even-indexed pages
-//     expect(result.addPage).toHaveBeenCalled(); // Only even-indexed pages
-//   });
-// });

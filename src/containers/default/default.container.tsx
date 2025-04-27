@@ -45,17 +45,6 @@ export const DefaultContainer = ({
           </ListItem>
         </Link>
 
-        <Link component={RouterLink} to={"/labelMerger/analytics/"} data-testid="analytics">
-          <ListItem key={"Order Analytics"} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                <AnalyticsIcon />
-              </ListItemIcon>
-              <ListItemText primary={"Order Analytics"} />
-            </ListItemButton>
-          </ListItem>
-        </Link>
-
         <Link component={RouterLink} to={"/labelMerger/transactions/"} data-testid="transactions">
           <ListItem key={"Transaction Analytics"} disablePadding>
             <ListItemButton>
