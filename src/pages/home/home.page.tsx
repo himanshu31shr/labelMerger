@@ -1,6 +1,7 @@
 import { MergeOutlined } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Container } from "@mui/material";
+import { Box, Button, CircularProgress } from "@mui/material";
 import { useState } from "react";
+import { FirebaseService } from "../../services/firebase.service";
 import { AccordionSection } from "./components/AccordionSection";
 import { DownloadButtons } from "./components/DownloadButtons";
 import { FileUploadSection } from "./components/FileUploadSection";
@@ -11,13 +12,14 @@ import { PDFMergerService } from "./services/merge.service";
 import { exportTableToPDF, readFileFromInput } from "./utils";
 import React from "react";
 
-export const HomePage = () => {
+export const HomePage: React.FC = () => {
   const [amazon, setAmazon] = useState<File>();
   const [flipkart, setFlipkart] = useState<File>();
   const [finalPdf, setFinal] = useState<string>();
   const [summary, setSummary] = useState<ProductSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
+  new FirebaseService();
 
   const handleSubmit = async () => {
     if (!amazon && !flipkart) return;

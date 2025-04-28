@@ -2,12 +2,8 @@
 
 ## Project Name: Label Merger and Analytics Tool
 
----
-
 ## 1. Overview
 The Label Merger and Analytics Tool is a web-based application designed to process, merge, and analyze data from two e-commerce platforms: Amazon and Flipkart. The application provides functionality to merge PDF labels and analyze transaction data from both platforms.
-
----
 
 ## 2. Core Features
 
@@ -19,7 +15,21 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Transform Amazon and Flipkart-specific data into a unified format.
   - Generate a merged PDF with labels for both platforms.
 
-### 2.2. Transaction Analytics
+### 2.2. Product Management
+- **Input**: 
+  - XLSX files containing product data from Amazon and Flipkart
+  - Manual product entries and updates
+- **Output**: 
+  - Organized product catalog with pricing and details
+  - Product data integrated with transaction analysis
+- **Key Functionalities**:
+  - Import products from platform-specific XLSX files
+  - Edit product details (cost price, name, description)
+  - Map products to transactions using SKUs
+  - Real-time product data updates
+  - Product search and filtering
+
+### 2.3. Transaction Analytics
 - **Input**: Transaction data from uploaded CSV files
 - **Output**: Comprehensive financial analytics
 - **Key Functionalities**:
@@ -28,8 +38,6 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Display marketplace-specific analytics
   - Manage product prices dynamically
   - Generate SKU-wise performance reports
-
----
 
 ## 3. Technical Requirements
 
@@ -41,9 +49,10 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ### 3.2. Backend (Browser-based)
 - **Data Storage**: 
-  - Firebase Firestore for transaction data and product prices
+  - Firebase Firestore for transaction data, product prices, and product catalog
   - Real-time updates and offline support via Firebase
 - **Libraries**:
+  - `xlsx` for parsing Excel files
   - `pdf-lib` for PDF generation and manipulation
   - `papaparse` for parsing CSV files
   - `firebase` for cloud data storage and real-time updates
@@ -55,6 +64,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ### 3.4. Data Persistence
 - **Firebase Collections**:
+  - products: Store product catalog with platform-specific details
   - transactions: Store all transaction data from both platforms
   - productPrices: Store and manage product pricing information
 - **Real-time Updates**:
@@ -64,8 +74,6 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Firebase offline persistence
   - Automatic sync when connection is restored
 
----
-
 ## 4. Key Components
 
 ### 4.1. Pages
@@ -73,11 +81,20 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
    - File input for uploading Amazon and Flipkart CSV files
    - Button to generate and download merged PDF labels
 
-2. **Transaction Analytics Page**:
+2. **Product Management Page**:
+   - XLSX file upload for product imports
+   - DataTable for product listing
+   - Product edit functionality
+   - Search and filter capabilities
+   - Real-time updates
+
+3. **Transaction Analytics Page**:
    - File input for uploading transaction data
    - Multiple views for different analytics perspectives
    - Price management functionality
    - Detailed product-wise analysis
+   - Enhanced with product details from product catalog
+   - SKU-based product mapping
 
 ### 4.2. Components
 1. **FileInput**:
@@ -94,6 +111,17 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
    - Handle offline/online synchronization
    - Cache management for better performance
 
+4. **ProductTable**:
+   - Based on DataTable component
+   - Sortable and filterable columns
+   - Inline editing capabilities
+   - Real-time updates
+
+5. **ProductEditModal**:
+   - Form for editing product details
+   - Validation and error handling
+   - Real-time preview
+
 ### 4.3. Services
 1. **merge.service.ts**:
    - Merges Amazon and Flipkart labels into a single PDF
@@ -108,7 +136,11 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
    - Processes and analyzes transaction data
    - Calculates sales, expenses, and profits
 
----
+5. **ProductService**:
+   - Handles XLSX file parsing
+   - Manages product data in Firestore
+   - Provides product-transaction mapping
+   - Real-time data synchronization
 
 ## 5. APIs and Libraries
 
@@ -162,8 +194,6 @@ service cloud.firestore {
 }
 ```
 
----
-
 ## 6. Testing Requirements
 
 ### 6.1. Unit Tests
@@ -193,8 +223,6 @@ service cloud.firestore {
 - Mock `firebase` for Firestore operations tests
 - Mock `xlsx` for Excel file processing tests
 
----
-
 ## 8. Future Enhancements
 - Add support for additional e-commerce platforms.
 - Provide export functionality for analytics data in multiple formats (CSV, PDF).
@@ -214,8 +242,6 @@ service cloud.firestore {
   - Implement concurrent edit resolution
   - Enhance offline capabilities
   - Add batch processing for large datasets
-
----
 
 ## 9. Glossary
 - **SKU**: Stock Keeping Unit, a unique identifier for products.

@@ -44,9 +44,35 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Configure Firebase:
-   - Create a `.env` file with your Firebase configuration
-   - Set up Firestore rules and indexes
+   - Copy `.env.example` to `.env.local`
+   - Fill in your Firebase configuration values:
+     ```
+     VITE_FIREBASE_API_KEY=your-api-key
+     VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+     VITE_FIREBASE_PROJECT_ID=your-project-id
+     VITE_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+     VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+     VITE_FIREBASE_APP_ID=your-app-id
+     ```
+   - Set up Firestore rules and indexes (see FIREBASE_INTEGRATION.md)
 4. Start development server: `npm run dev`
+
+### Firebase Integration Features
+- Offline data persistence
+- Batch operations support
+- Real-time updates
+- Comprehensive error handling
+- Type-safe operations
+- Automated testing
+
+### Theme Customization
+The application uses Material-UI with a custom theme supporting:
+- Light and dark mode
+- Responsive design
+- Consistent component styling
+- Custom color palette
+- Enhanced typography
+- Smooth transitions and animations
 
 ## Scripts
 - `npm run dev`: Start the development server

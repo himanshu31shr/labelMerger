@@ -416,4 +416,100 @@ try {
 
 ---
 
+## 13. Product Management Guidelines
+
+### 13.1 XLSX File Processing
+1. **File Format Handling**:
+   - Support both Amazon and Flipkart XLSX formats
+   - Validate required columns presence
+   - Handle empty rows and cells gracefully
+   - Process files in chunks for large datasets
+
+2. **Data Validation**:
+   - Validate SKUs for uniqueness
+   - Ensure required fields are present
+   - Validate numeric values (prices, quantities)
+   - Handle special characters in text fields
+
+3. **Import Process**:
+   - Use batch operations for Firebase writes
+   - Implement progress tracking
+   - Handle duplicate SKUs
+   - Maintain import history
+
+### 13.2 Product Data Management
+1. **CRUD Operations**:
+   - Implement optimistic updates
+   - Validate data before saves
+   - Use transactions for related updates
+   - Handle concurrent edits
+
+2. **Real-time Updates**:
+   - Use Firebase listeners efficiently
+   - Update UI immediately on changes
+   - Handle offline scenarios
+   - Implement proper cleanup
+
+3. **Performance Optimization**:
+   - Cache frequently accessed products
+   - Use pagination for large lists
+   - Implement efficient search
+   - Optimize Firebase queries
+
+### 13.3 Product-Transaction Integration
+1. **SKU Mapping**:
+   - Map products to transactions in real-time
+   - Handle missing product scenarios
+   - Update transaction analysis with product data
+   - Maintain referential integrity
+
+2. **Data Consistency**:
+   - Ensure price history is maintained
+   - Track product changes
+   - Handle product deletions properly
+   - Validate cross-references
+
+---
+
+## 14. Firebase Service Implementation Guide
+
+### 14.1 Base Firebase Service
+- Extend `FirebaseService` class for specific collection implementations
+- Use type-safe operations with proper generic constraints
+- Implement error handling with context
+
+```typescript
+class YourService extends FirebaseService {
+  // Collection-specific operations
+  async getYourDocuments(): Promise<YourType[]> {
+    return this.getDocuments<YourType>('your-collection');
+  }
+}
+```
+
+### 14.2 Error Handling Pattern
+- Use the `handleError` method for consistent error handling
+- Include operation context in error messages
+- Handle Firebase-specific error codes appropriately
+
+### 14.3 Batch Operations
+- Use the `batchOperation` method for bulk operations
+- Respect the 500 document limit per batch
+- Implement proper ID generation strategy
+- Handle batch failures gracefully
+
+### 14.4 Query Operations
+- Use type-safe query constraints
+- Implement proper pagination
+- Use compound queries for complex filters
+- Cache frequently accessed data
+
+### 14.5 Testing Firebase Services
+- Mock Firebase operations in tests
+- Test error handling scenarios
+- Verify batch operation behavior
+- Test type safety of operations
+
+---
+
 This knowledge base will be updated as the project evolves. Always refer to this document before starting any new task or feature implementation.
