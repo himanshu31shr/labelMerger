@@ -315,4 +315,105 @@ This file serves as a centralized repository for common knowledge, recurring ins
 
 ---
 
+## 10. Performance Optimization Guidelines
+
+### 10.1 Firebase Operations
+1. **Batch Processing**:
+   ```typescript
+   // Example batch operation
+   const batch = db.batch();
+   transactions.forEach(tx => {
+     const ref = db.collection('transactions').doc();
+     batch.set(ref, tx);
+   });
+   await batch.commit();
+   ```
+
+2. **Query Optimization**:
+   - Use composite indexes for complex queries
+   - Implement cursor-based pagination
+   - Cache frequently accessed data locally
+
+### 10.2 React Component Optimization
+1. **Memoization**:
+   - Use React.memo for expensive components
+   - Implement useMemo for complex calculations
+   - Use useCallback for event handlers
+
+2. **Data Loading**:
+   - Implement skeleton loading states
+   - Use progressive loading for large datasets
+   - Prefetch data based on user behavior
+
+### 10.3 PDF Generation
+1. **Worker Implementation**:
+   ```typescript
+   // Example worker usage
+   const worker = new Worker('/pdf-worker.ts');
+   worker.postMessage({ type: 'generate', data: labels });
+   worker.onmessage = (e) => {
+     if (e.data.type === 'progress') {
+       updateProgress(e.data.progress);
+     } else if (e.data.type === 'complete') {
+       downloadPDF(e.data.pdf);
+     }
+   };
+   ```
+
+2. **Memory Management**:
+   - Release resources after PDF generation
+   - Implement chunked processing for large files
+   - Monitor memory usage during generation
+
+## 11. Error Handling Standards
+
+### 11.1 Firebase Errors
+```typescript
+// Standard error handling pattern
+try {
+  await saveTransactions(data);
+} catch (error) {
+  if (error.code === 'permission-denied') {
+    handleAuthError(error);
+  } else if (error.code === 'unavailable') {
+    queueForRetry(data);
+  } else {
+    logError(error);
+  }
+}
+```
+
+### 11.2 User Feedback
+1. **Progress Indicators**:
+   - Show progress for long operations
+   - Implement cancelable operations
+   - Provide detailed error messages
+
+2. **Recovery Actions**:
+   - Offer retry options for failed operations
+   - Implement auto-save for form data
+   - Provide offline capabilities
+
+## 12. Monitoring and Analytics
+
+### 12.1 Performance Metrics
+- Track initial load time
+- Monitor Firebase operation latency
+- Measure PDF generation time
+- Record offline sync success rate
+
+### 12.2 Error Tracking
+- Log all Firebase operation errors
+- Track PDF generation failures
+- Monitor network connectivity issues
+- Record user interaction errors
+
+### 12.3 Usage Analytics
+- Track feature adoption rates
+- Monitor resource usage patterns
+- Record user navigation flows
+- Measure response times
+
+---
+
 This knowledge base will be updated as the project evolves. Always refer to this document before starting any new task or feature implementation.
