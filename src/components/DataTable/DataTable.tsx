@@ -1,147 +1,108 @@
-import React, { useState, useMemo, useCallback } from 'react';
 import {
+  Paper,
   Table,
   TableBody,
+  TableCell,
   TableContainer,
-  TablePagination,
-  Paper,
+  TableHead,
+  TableRow,
+  TableSortLabel,
 } from '@mui/material';
-import { TableHeader } from './TableHeader';
-import { TableRowComponent } from './TableRowComponent';
+import React from 'react';
 
 export interface Column<T> {
-  id: keyof T;
+  id: keyof T | string;
   label: string;
-  align?: 'right' | 'left' | 'center';
-  format?: (value: T[keyof T], row: T) => React.ReactNode;
   filter?: boolean;
+  align?: 'right' | 'left' | 'center';
+  format?: (value: unknown, row: T | undefined) => React.ReactNode;
 }
 
-interface DataTableProps<T> {
+export interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
-  defaultSortColumn?: keyof T;
-  defaultSortDirection?: 'asc' | 'desc';
+  defaultSortColumn: string;
+  defaultSortDirection: 'asc' | 'desc';
+  onRowClick?: (row: T) => void;
 }
 
-function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-  const aValue = a[orderBy];
-  const bValue = b[orderBy];
-  
-  if (typeof bValue === 'string' && typeof aValue === 'string') {
-    return bValue.localeCompare(aValue);
-  }
-  
-  if (bValue < aValue) {
-    return -1;
-  }
-  if (bValue > aValue) {
-    return 1;
-  }
-  return 0;
-}
+export function DataTable<T>({ 
+  columns, 
+  data, 
+  defaultSortColumn,
+  defaultSortDirection,
+  onRowClick
+}: DataTableProps<T>) {
+  const [orderBy, setOrderBy] = React.useState(defaultSortColumn);
+  const [order, setOrder] = React.useState<'asc' | 'desc'>(defaultSortDirection);
 
-function getComparator<T>(
-  order: 'asc' | 'desc',
-  orderBy: keyof T,
-): (a: T, b: T) => number {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-export function DataTable<T extends { [K in keyof T]: T[K] }>(props: DataTableProps<T>) {
-  const { columns, data, defaultSortColumn, defaultSortDirection = 'asc' } = props;
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [orderBy, setOrderBy] = useState<keyof T>(defaultSortColumn || columns[0].id);
-  const [order, setOrder] = useState<'asc' | 'desc'>(defaultSortDirection);
-  const [filters, setFilters] = useState<{ [key in keyof T]?: string }>({});
-
-  const handleRequestSort = useCallback((property: keyof T) => {
+  const handleRequestSort = (property: string) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
-  }, [order, orderBy]);
+  };
 
-  const handleChangePage = useCallback((event: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split('.').reduce((acc, part) => acc?.[part], obj);
+  };
 
-  const handleChangeRowsPerPage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  }, []);
+  const sortedData = React.useMemo(() => {
+    const comparator = (a: T, b: T) => {
+      const aValue = getNestedValue(a, orderBy);
+      const bValue = getNestedValue(b, orderBy);
+      
+      if (order === 'desc') {
+        return (bValue < aValue ? -1 : bValue > aValue ? 1 : 0);
+      } else {
+        return (aValue < bValue ? -1 : aValue > bValue ? 1 : 0);
+      }
+    };
 
-  const handleFilterChange = useCallback((column: keyof T, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [column]: value
-    }));
-    setPage(0);
-  }, []);
-
-  const filteredData = useMemo(() => {
-    return data.filter(row => {
-      return Object.entries(filters).every(([column, filterValue]) => {
-        if (!filterValue) return true;
-        const cellValue = row[column as keyof T];
-        const stringValue = String(cellValue ?? '');
-        const filterString = String(filterValue);
-        return stringValue.toLowerCase().includes(filterString.toLowerCase());
-      });
-    });
-  }, [data, filters]);
-
-  const sortedData = useMemo(() => {
-    const comparator = getComparator(order, orderBy);
-    return [...filteredData].sort(comparator);
-  }, [filteredData, order, orderBy]);
-
-  const paginatedData = useMemo(() => {
-    return sortedData.slice(
-      page * rowsPerPage,
-      page * rowsPerPage + rowsPerPage
-    );
-  }, [sortedData, page, rowsPerPage]);
-
-  const tableContent = useMemo(() => (
-    <TableBody>
-      {paginatedData.map((row, index) => (
-        <TableRowComponent
-          key={index}
-          row={row}
-          columns={columns}
-          index={index}
-        />
-      ))}
-    </TableBody>
-  ), [paginatedData, columns]);
+    return [...data].sort(comparator);
+  }, [data, order, orderBy]);
 
   return (
-    <Paper>
-      <TableContainer sx={{ maxHeight: 800 }}>
-        <Table stickyHeader>
-          <TableHeader
-            columns={columns}
-            orderBy={orderBy}
-            order={order}
-            filters={filters}
-            onRequestSort={handleRequestSort}
-            onFilterChange={handleFilterChange}
-          />
-          {tableContent}
-        </Table>
-      </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        component="div"
-        count={sortedData.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-    </Paper>
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            {columns.map((column) => (
+              <TableCell
+                key={column.id as string}
+                align={column.align || 'left'}
+                sortDirection={orderBy === column.id ? order : false}
+              >
+                <TableSortLabel
+                  active={orderBy === column.id}
+                  direction={orderBy === column.id ? order : 'asc'}
+                  onClick={() => handleRequestSort(column.id as string)}
+                >
+                  {column.label}
+                </TableSortLabel>
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sortedData.map((row, index) => (
+            <TableRow
+              key={index}
+              onClick={() => onRowClick?.(row)}
+              hover={!!onRowClick}
+              style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+            >
+              {columns.map((column) => {
+                const value = getNestedValue(row, column.id as string);
+                return (
+                  <TableCell key={column.id as string} align={column.align}>
+                    {column.format ? column.format(value, row) : value}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }

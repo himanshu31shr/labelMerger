@@ -1,18 +1,18 @@
 import {
-    collection,
-    deleteDoc,
-    doc,
-    DocumentData,
-    FirestoreError,
-    getDocs,
-    query,
-    QueryConstraint,
-    setDoc,
-    updateDoc,
-    WithFieldValue,
-    writeBatch
-} from 'firebase/firestore';
-import { db } from './firebase.config';
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  FirestoreError,
+  getDocs,
+  query,
+  QueryConstraint,
+  setDoc,
+  updateDoc,
+  WithFieldValue,
+  writeBatch,
+} from "firebase/firestore";
+import { db } from "./firebase.config";
 
 export class FirebaseService {
   protected handleError(error: FirestoreError, context: string): never {
@@ -23,7 +23,7 @@ export class FirebaseService {
   protected async batchOperation<T extends DocumentData>(
     items: T[],
     collectionName: string,
-    operation: 'create' | 'update' | 'delete',
+    operation: "create" | "update" | "delete",
     getDocId: (item: T) => string
   ): Promise<void> {
     const batch = writeBatch(db);
@@ -31,23 +31,28 @@ export class FirebaseService {
 
     for (let i = 0; i < items.length; i += MAX_BATCH_SIZE) {
       const chunk = items.slice(i, i + MAX_BATCH_SIZE);
-      
+
       for (const item of chunk) {
+        Object.keys(item).forEach((key) => {
+          if (item[key] === undefined) {
+            delete item[key];
+          }
+        });
         const docRef = doc(db, collectionName, getDocId(item));
-        
+
         switch (operation) {
-          case 'create':
+          case "create":
             batch.set(docRef, item as WithFieldValue<T>);
             break;
-          case 'update':
+          case "update":
             batch.update(docRef, item as WithFieldValue<T>);
             break;
-          case 'delete':
+          case "delete":
             batch.delete(docRef);
             break;
         }
       }
-      
+
       try {
         await batch.commit();
       } catch (error) {
@@ -63,12 +68,15 @@ export class FirebaseService {
     try {
       const q = query(collection(db, collectionName), ...queryConstraints);
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as T & { id: string }));
+      return querySnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          } as T & { id: string })
+      );
     } catch (error) {
-      return this.handleError(error as FirestoreError, 'getDocuments');
+      return this.handleError(error as FirestoreError, "getDocuments");
     }
   }
 
@@ -80,7 +88,7 @@ export class FirebaseService {
     try {
       await setDoc(doc(db, collectionName, docId), data);
     } catch (error) {
-      this.handleError(error as FirestoreError, 'setDocument');
+      this.handleError(error as FirestoreError, "setDocument");
     }
   }
 
@@ -93,7 +101,7 @@ export class FirebaseService {
       const docRef = doc(db, collectionName, docId);
       await updateDoc(docRef, data as WithFieldValue<DocumentData>);
     } catch (error) {
-      this.handleError(error as FirestoreError, 'updateDocument');
+      this.handleError(error as FirestoreError, "updateDocument");
     }
   }
 
@@ -104,7 +112,11 @@ export class FirebaseService {
     try {
       await deleteDoc(doc(db, collectionName, docId));
     } catch (error) {
-      this.handleError(error as FirestoreError, 'deleteDocument');
+      this.handleError(error as FirestoreError, "deleteDocument");
     }
+  }
+
+  protected async createIndex() {
+    
   }
 }

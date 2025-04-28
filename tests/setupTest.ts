@@ -1,63 +1,62 @@
 import '@testing-library/jest-dom';
+import { testEnv } from './setup/testEnv';
 
-// TextEncoder/TextDecoder polyfill for React Router
-const { TextEncoder, TextDecoder } = require('util');
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+// Mock import.meta.env
+global.import = {
+  meta: {
+    env: {
+      VITE_FIREBASE_API_KEY: 'test-api-key',
+      VITE_FIREBASE_AUTH_DOMAIN: 'test-domain',
+      VITE_FIREBASE_PROJECT_ID: 'test-project',
+      VITE_FIREBASE_STORAGE_BUCKET: 'test-bucket',
+      VITE_FIREBASE_MESSAGING_SENDER_ID: 'test-sender',
+      VITE_FIREBASE_APP_ID: 'test-app-id',
+      MODE: 'test'
+    }
+  }
+};
 
-// Mock html2pdf.js
-jest.mock('html2pdf.js', () => ({
-  __esModule: true,
-  default: () => ({
-    from: jest.fn().mockReturnThis(),
-    set: jest.fn().mockReturnThis(),
-    save: jest.fn().mockResolvedValue(undefined),
-  }),
+// Store original env
+const originalEnv = process.env;
+
+beforeAll(() => {
+  // Set up test environment variables
+  process.env = {
+    ...originalEnv,
+    NODE_ENV: 'test',
+    ...testEnv
+  };
+});
+
+afterAll(() => {
+  // Restore original env
+  process.env = originalEnv;
+});
+
+// Mock Firebase methods
+const mockCollection = jest.fn();
+const mockDoc = jest.fn();
+const mockGetDocs = jest.fn();
+const mockAddDoc = jest.fn();
+const mockUpdateDoc = jest.fn();
+const mockWriteBatch = jest.fn();
+const mockWhere = jest.fn();
+const mockOrderBy = jest.fn();
+
+jest.mock('firebase/firestore', () => ({
+  collection: (...args) => mockCollection(...args),
+  doc: (...args) => mockDoc(...args),
+  getDocs: (...args) => mockGetDocs(...args),
+  addDoc: (...args) => mockAddDoc(...args),
+  updateDoc: (...args) => mockUpdateDoc(...args),
+  writeBatch: (...args) => mockWriteBatch(...args),
+  getFirestore: jest.fn(),
+  enableIndexedDbPersistence: jest.fn(),
+  where: (...args) => mockWhere(...args),
+  orderBy: (...args) => mockOrderBy(...args),
+  query: jest.fn()
 }));
 
-// Mock pdfjs-dist
-jest.mock('pdfjs-dist/legacy/build/pdf', () => ({
-  getDocument: jest.fn().mockReturnValue({
-    promise: Promise.resolve({
-      getPage: jest.fn().mockResolvedValue({
-        getTextContent: jest.fn().mockResolvedValue({
-          items: [
-            { str: '1 Test Product', transform: [0, 0, 0, 0, 0, 100] },
-            { str: '| ₹500 2', transform: [0, 0, 0, 0, 0, 100] }
-          ]
-        })
-      })
-    })
-  }),
-  GlobalWorkerOptions: {
-    workerSrc: 'mocked-worker-src'
-  },
-  version: '2.12.313'
-}));
-
-// Mock canvas context since jsdom doesn't implement it
-HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
-  fillRect: jest.fn(),
-  clearRect: jest.fn(),
-  getImageData: jest.fn(() => ({
-    data: new Array(4),
-  })),
-  putImageData: jest.fn(),
-  createImageData: jest.fn(() => []),
-  setTransform: jest.fn(),
-  drawImage: jest.fn(),
-  save: jest.fn(),
-  restore: jest.fn(),
-  scale: jest.fn(),
-  rotate: jest.fn(),
-  translate: jest.fn(),
-  transform: jest.fn(),
-  arc: jest.fn(),
-  fill: jest.fn(),
-  stroke: jest.fn(),
-  beginPath: jest.fn(),
-  moveTo: jest.fn(),
-  lineTo: jest.fn(),
-  closePath: jest.fn(),
-  fillText: jest.fn(),
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn()
 }));

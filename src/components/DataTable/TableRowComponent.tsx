@@ -14,7 +14,7 @@ function TableRowComponentBase<T>(props: TableRowComponentProps<T>) {
   return (
     <TableRow hover key={index}>
       {columns.map((column) => {
-        const value = row[column.id];
+        const value = row[column.id as keyof T];
         return (
           <TableCell key={String(column.id)} align={column.align}>
             {column.format 

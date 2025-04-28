@@ -17,6 +17,12 @@ const TransactionAnalytics = React.lazy(() =>
   )
 );
 
+const ProductsPage = React.lazy(() =>
+  import("./pages/products/products.page").then((module) => ({
+    default: module.ProductsPage,
+  }))
+);
+
 export default function App({
   toggleTheme,
   mode,
@@ -30,6 +36,7 @@ export default function App({
         <Suspense fallback={<CircularProgress />}>
           <Routes>
             <Route path="/labelMerger/" element={<HomePage />} />
+            <Route path="/labelMerger/products/" element={<ProductsPage />} />
             <Route
               path="/labelMerger/transactions/"
               element={<TransactionAnalytics />}

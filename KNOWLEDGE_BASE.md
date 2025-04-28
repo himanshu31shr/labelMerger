@@ -313,6 +313,120 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Handle conflicts gracefully
    - Implement optimistic updates
 
+## 9. DataTable Component Guidelines
+
+### 9.1. Component Structure
+```typescript
+interface Column<T> {
+  id: keyof T | string;
+  label: string;
+  filter?: boolean;
+  align?: 'right' | 'left' | 'center';
+  format?: (value: unknown, row: T | undefined) => React.ReactNode;
+}
+
+interface DataTableProps<T> {
+  columns: Column<T>[];
+  data: T[];
+  defaultSortColumn: string;
+  defaultSortDirection: 'asc' | 'desc';
+  onRowClick?: (row: T) => void;
+}
+```
+
+### 9.2. Usage Patterns
+1. **Basic Table**:
+   ```tsx
+   const columns: Column<YourType>[] = [
+     { id: 'field', label: 'Field Name', filter: true },
+     { id: 'numericField', label: 'Number', align: 'right' }
+   ];
+
+   <DataTable
+     columns={columns}
+     data={yourData}
+     defaultSortColumn="field"
+     defaultSortDirection="asc"
+   />
+   ```
+
+2. **Formatted Values**:
+   ```tsx
+   {
+     id: 'price',
+     label: 'Price',
+     align: 'right',
+     format: (value) => <FormattedCurrency value={value as number} />
+   }
+   ```
+
+3. **Interactive Cells**:
+   ```tsx
+   {
+     id: 'actions',
+     label: 'Actions',
+     format: (_, row) => (
+       <Grid container>
+         <Grid item>
+           <EditIcon onClick={() => handleEdit(row)} />
+         </Grid>
+         <Grid item>
+           <ViewIcon onClick={() => handleView(row)} />
+         </Grid>
+       </Grid>
+     )
+   }
+   ```
+
+### 9.3. Best Practices
+1. **Column Configuration**:
+   - Use descriptive label names
+   - Enable filters only for searchable columns
+   - Right-align numeric values
+   - Use formatting for consistent display
+
+2. **Performance**:
+   - Implement pagination for large datasets
+   - Use memoization for formatted values
+   - Optimize sort operations
+   - Cache filtered results
+
+3. **User Experience**:
+   - Provide clear sort indicators
+   - Show loading states
+   - Handle empty states gracefully
+   - Maintain consistent column widths
+
+4. **Customization**:
+   - Use theme-aware styling
+   - Implement custom cell renderers
+   - Support keyboard navigation
+   - Handle row selection
+
+### 9.4. Platform-Specific Features
+1. **Amazon Integration**:
+   - Direct product link using SKU
+   - Status indicators
+   - Price formatting
+
+2. **Flipkart Integration**:
+   - View/Edit actions
+   - Serial number handling
+   - Platform-specific metadata
+
+### 9.5. Testing Requirements
+1. **Unit Tests**:
+   - Sort functionality
+   - Filter operations
+   - Custom formatters
+   - Row click handlers
+
+2. **Integration Tests**:
+   - Data loading
+   - Real-time updates
+   - Platform-specific features
+   - Error states
+
 ---
 
 ## 10. Performance Optimization Guidelines

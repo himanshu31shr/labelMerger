@@ -54,14 +54,14 @@ export const PriceManagementModal: React.FC<Props> = ({
         ...availableProducts.map((product) => ({
           sku: product.sku,
           name: product.description || product.sku,
-          description: product.description || "",
+          description: product.description || product.sku, // Changed to use SKU as fallback
           costPrice: 0,
           basePrice: 0,
         })),
         ...DEFAULT_PRODUCT_PRICES.map((p) => ({
           sku: p.sku,
           name: p.description || p.sku,
-          description: p.description || "",
+          description: p.description || p.sku, // Changed to use SKU as fallback
           costPrice: p.costPrice || 0,
           basePrice: p.costPrice || 0,
         })),
@@ -93,7 +93,7 @@ export const PriceManagementModal: React.FC<Props> = ({
   const tableData: PriceTableData[] = useMemo(() => 
     prices.map(price => ({
       sku: price.sku,
-      description: price.description || '',
+      description: price.description || price.sku, // Added fallback here too
       basePrice: price.basePrice || 0,
       costPrice: price.costPrice || 0,
     }))
@@ -106,35 +106,43 @@ export const PriceManagementModal: React.FC<Props> = ({
       id: 'basePrice', 
       label: 'Base Price', 
       align: 'right',
-      format: (value, row) => (
-        <TextField
-          type="number"
-          value={value}
-          onChange={(e) => handlePriceChange(row.sku, "basePrice", e.target.value)}
-          size="small"
-          inputProps={{
-            style: { textAlign: "right" },
-            min: 0,
-          }}
-        />
-      )
+      format: (value,): React.ReactNode => {
+        const row = tableData.find(r => r.basePrice === value);
+        if (!row) return value as number;
+        return (
+          <TextField
+            type="number"
+            value={value}
+            onChange={(e) => handlePriceChange(row.sku, "basePrice", e.target.value)}
+            size="small"
+            inputProps={{
+              style: { textAlign: "right" },
+              min: 0,
+            }}
+          />
+        );
+      }
     },
     { 
       id: 'costPrice', 
       label: 'Cost Price', 
       align: 'right',
-      format: (value, row) => (
-        <TextField
-          type="number"
-          value={value}
-          onChange={(e) => handlePriceChange(row.sku, "costPrice", e.target.value)}
-          size="small"
-          inputProps={{
-            style: { textAlign: "right" },
-            min: 0,
-          }}
-        />
-      )
+      format: (value): React.ReactNode => {
+        const row = tableData.find(r => r.costPrice === value);
+        if (!row) return value as number;
+        return (
+          <TextField
+            type="number"
+            value={value}
+            onChange={(e) => handlePriceChange(row.sku, "costPrice", e.target.value)}
+            size="small"
+            inputProps={{
+              style: { textAlign: "right" },
+              min: 0,
+            }}
+          />
+        );
+      }
     },
   ];
 

@@ -26,7 +26,7 @@ function TableHeaderComponent<T>(props: TableHeaderProps<T>) {
             <TableSortLabel
               active={orderBy === column.id}
               direction={orderBy === column.id ? order : 'asc'}
-              onClick={() => onRequestSort(column.id)}
+              onClick={() => onRequestSort(column.id as keyof T)}
             >
               {column.label}
             </TableSortLabel>
@@ -35,8 +35,8 @@ function TableHeaderComponent<T>(props: TableHeaderProps<T>) {
                 <TextField
                   size="small"
                   placeholder={`Filter ${column.label}`}
-                  value={filters[column.id] || ''}
-                  onChange={(e) => onFilterChange(column.id, e.target.value)}
+                  value={filters[column.id as keyof T] || ''}
+                  onChange={(e) => onFilterChange(column.id as keyof T, e.target.value)}
                   fullWidth
                 />
               </Box>

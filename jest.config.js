@@ -1,15 +1,22 @@
-
-/** @type {import('ts-jest').JestConfigWithTsJest} **/
-export default {
+module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'jest-environment-jsdom',
-  setupFilesAfterEnv: [
-    "<rootDir>/tests/setupTest.ts"
-  ],
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/tests/setupTest.ts'],
   moduleNameMapper: {
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^.+\\.(css|less|scss)$': 'identity-obj-proxy',
   },
   transform: {
-    "^.+.tsx?$": ["ts-jest", {}],
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      useESM: true,
+    }],
+  },
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+      useESM: true,
+    },
+  },
+  testEnvironmentOptions: {
+    customExportConditions: ['node', 'node-addons'],
   },
 };

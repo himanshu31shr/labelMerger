@@ -83,10 +83,24 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 2. **Product Management Page**:
    - XLSX file upload for product imports
-   - DataTable for product listing
-   - Product edit functionality
-   - Search and filter capabilities
-   - Real-time updates
+   - Enhanced DataTable for product listing with the following features:
+     - Platform-based filtering (Amazon/Flipkart/All)
+     - Global search functionality across all fields
+     - Sortable columns with clear visual indicators
+     - Direct product link integration:
+       - Amazon: Direct link to product page using SKU
+       - Flipkart: View and Edit actions with inline icons
+     - Columns display:
+       - SKU (sortable, filterable)
+       - Platform (sortable, filterable)
+       - Name (sortable, filterable)
+       - Status (sortable, filterable)
+       - Description (sortable, filterable)
+       - Cost Price (right-aligned with currency formatting)
+       - Product Link (platform-specific actions)
+   - Real-time updates with Firebase integration
+   - Material-UI components for consistent styling
+   - Responsive design for various screen sizes
 
 3. **Transaction Analytics Page**:
    - File input for uploading transaction data
