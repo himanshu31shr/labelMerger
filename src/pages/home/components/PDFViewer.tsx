@@ -1,5 +1,5 @@
 import React from "react";
-import { Box } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -7,8 +7,26 @@ interface PDFViewerProps {
 
 export const PDFViewer = ({ pdfUrl }: PDFViewerProps) => {
   return (
-    <Box sx={{ my: 4 }}>
-      <iframe src={pdfUrl} width="100%" height={800} style={{ border: "1px solid #eee" }} />
+    <Box>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          overflow: 'hidden',
+          borderRadius: 2,
+          border: theme => `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <iframe 
+          src={pdfUrl} 
+          width="100%" 
+          height={800} 
+          style={{ 
+            border: 'none',
+            display: 'block'
+          }} 
+          title="PDF Preview"
+        />
+      </Paper>
     </Box>
   );
 };

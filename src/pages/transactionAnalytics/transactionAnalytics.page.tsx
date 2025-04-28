@@ -132,61 +132,53 @@ export const TransactionAnalytics: React.FC = () => {
   // };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth={false} sx={{ mt: 4, mb: 4, maxWidth: "100%" }}>
       <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h5" gutterBottom>
-              Transaction Analytics
-            </Typography>
-            <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center" }}>
-              <Button variant="contained" component="label" disabled={loading}>
-                Upload File
-                <input
-                  type="file"
-                  hidden
-                  accept=".csv,.xlsx"
-                  onChange={handleFileUpload}
-                />
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => setIsPriceModalOpen(true)}
-                disabled={!availableProducts.length}
-              >
-                Manage Prices
-              </Button>
-              {loading && (
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CircularProgress size={24} sx={{ mr: 1 }} />
-                  <Typography>Processing...</Typography>
-                </Box>
-              )}
+        <Box sx={{ mb:4, display: "flex", gap: 2, alignItems: "center" }}>
+          <Button variant="contained" component="label" disabled={loading}>
+            Upload File
+            <input
+              type="file"
+              hidden
+              accept=".csv,.xlsx"
+              onChange={handleFileUpload}
+            />
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setIsPriceModalOpen(true)}
+            disabled={!availableProducts.length}
+          >
+            Manage Prices
+          </Button>
+          {loading && (
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <CircularProgress size={24} sx={{ mr: 1 }} />
+              <Typography>Processing...</Typography>
             </Box>
-            {error && <Alert severity="error">{error}</Alert>}
-          </Paper>
-        </Grid>
+          )}
+        </Box>
+        {error && <Alert severity="error">{error}</Alert>}
 
         {summary && (
           <>
             <SummaryTiles summary={summary} />
             <Grid item xs={12}>
-              <Paper>
-                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                  <Tabs value={tabValue} onChange={handleTabChange}>
-                    <Tab label="Orders" />
-                    <Tab label="Amazon" />
-                    <Tab label="Flipkart" />
-                    <Tab label="Product Details" />
-                  </Tabs>
-                </Box>
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <Tabs value={tabValue} onChange={handleTabChange}>
+                  <Tab label="Orders" />
+                  <Tab label="Amazon" />
+                  <Tab label="Flipkart" />
+                  <Tab label="Product Details" />
+                </Tabs>
+              </Box>
 
-                <TabPanel value={tabValue} index={0} key={'transactions'}>
-                  <OrderList transactions={transactions} />
-                </TabPanel>
+              <TabPanel value={tabValue} index={0} key={"transactions"}>
+                <OrderList transactions={transactions} />
+              </TabPanel>
 
-                <TabPanel value={tabValue} index={1} key={'asad'}>
-                  {/* {(() => {
+              <TabPanel value={tabValue} index={1} key={"asad"}>
+                {/* {(() => {
                     const amazonSummary = getMarketplaceSummary("Amazon");
                     return amazonSummary ? (
                       <Grid container spacing={3}>
@@ -221,10 +213,10 @@ export const TransactionAnalytics: React.FC = () => {
                       <Typography>No Amazon transactions found</Typography>
                     );
                   })()} */}
-                </TabPanel>
+              </TabPanel>
 
-                <TabPanel value={tabValue} index={2} key={'34354'}>
-                  {/* {(() => {
+              <TabPanel value={tabValue} index={2} key={"34354"}>
+                {/* {(() => {
                     const flipkartSummary = getMarketplaceSummary("Flipkart");
                     return flipkartSummary ? (
                       <Grid container spacing={3}>
@@ -261,15 +253,11 @@ export const TransactionAnalytics: React.FC = () => {
                       <Typography>No Flipkart transactions found</Typography>
                     );
                   })()} */}
-                </TabPanel>
+              </TabPanel>
 
-                <TabPanel value={tabValue} index={3} key={'product-list'}>
-                  <ProductList
-                    summary={summary}
-                    productPrices={productPrices}
-                  />
-                </TabPanel>
-              </Paper>
+              <TabPanel value={tabValue} index={3} key={"product-list"}>
+                <ProductList summary={summary} productPrices={productPrices} />
+              </TabPanel>
             </Grid>
           </>
         )}

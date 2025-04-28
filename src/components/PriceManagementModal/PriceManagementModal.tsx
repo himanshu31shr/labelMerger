@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Modal,
   Box,
   Typography,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   TextField,
 } from "@mui/material";
 import { ProductPrice } from "../../types/transaction.type";
 import { DEFAULT_PRODUCT_PRICES } from "../../constants/defaultPrices";
+import { DataTable, Column } from "../DataTable/DataTable";
 
 const style = {
   position: "absolute" as const,
@@ -38,6 +32,13 @@ interface Props {
   availableProducts: { sku: string; description: string }[];
 }
 
+interface PriceTableData {
+  sku: string;
+  description: string;
+  basePrice: number;
+  costPrice: number;
+}
+
 export const PriceManagementModal: React.FC<Props> = ({
   open,
   onClose,
@@ -49,7 +50,6 @@ export const PriceManagementModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (open) {
-      // Initialize with default prices for products that don't have prices set
       const defaultedPrices = [
         ...availableProducts.map((product) => ({
           sku: product.sku,
@@ -71,11 +71,7 @@ export const PriceManagementModal: React.FC<Props> = ({
     }
   }, [open, initialPrices, availableProducts]);
 
-  const handlePriceChange = (
-    sku: string,
-    field: "basePrice" | "costPrice",
-    value: string
-  ) => {
+  const handlePriceChange = (sku: string, field: "basePrice" | "costPrice", value: string) => {
     setPrices((prev) =>
       prev.map((price) => {
         if (price.sku === sku) {
@@ -94,6 +90,54 @@ export const PriceManagementModal: React.FC<Props> = ({
     onClose();
   };
 
+  const tableData: PriceTableData[] = useMemo(() => 
+    prices.map(price => ({
+      sku: price.sku,
+      description: price.description || '',
+      basePrice: price.basePrice || 0,
+      costPrice: price.costPrice || 0,
+    }))
+  , [prices]);
+
+  const columns: Column<PriceTableData>[] = [
+    { id: 'sku', label: 'SKU', filter: true },
+    { id: 'description', label: 'Description', filter: true },
+    { 
+      id: 'basePrice', 
+      label: 'Base Price', 
+      align: 'right',
+      format: (value, row) => (
+        <TextField
+          type="number"
+          value={value}
+          onChange={(e) => handlePriceChange(row.sku, "basePrice", e.target.value)}
+          size="small"
+          inputProps={{
+            style: { textAlign: "right" },
+            min: 0,
+          }}
+        />
+      )
+    },
+    { 
+      id: 'costPrice', 
+      label: 'Cost Price', 
+      align: 'right',
+      format: (value, row) => (
+        <TextField
+          type="number"
+          value={value}
+          onChange={(e) => handlePriceChange(row.sku, "costPrice", e.target.value)}
+          size="small"
+          inputProps={{
+            style: { textAlign: "right" },
+            min: 0,
+          }}
+        />
+      )
+    },
+  ];
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
@@ -101,65 +145,14 @@ export const PriceManagementModal: React.FC<Props> = ({
           Manage Product Prices
         </Typography>
 
-        <TableContainer
-          component={Paper}
-          sx={{ mb: 3, maxHeight: "calc(90vh - 200px)" }}
-        >
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>SKU</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell align="right">Base Price</TableCell>
-                <TableCell align="right">Cost Price</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {prices.map((price) => (
-                <TableRow key={price.sku}>
-                  <TableCell>{price.sku}</TableCell>
-                  <TableCell>{price.description}</TableCell>
-                  <TableCell align="right">
-                    <TextField
-                      type="number"
-                      value={price.basePrice}
-                      onChange={(e) =>
-                        handlePriceChange(
-                          price.sku,
-                          "basePrice",
-                          e.target.value
-                        )
-                      }
-                      size="small"
-                      inputProps={{
-                        style: { textAlign: "right" },
-                        min: 0,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <TextField
-                      type="number"
-                      value={price.costPrice}
-                      onChange={(e) =>
-                        handlePriceChange(
-                          price.sku,
-                          "costPrice",
-                          e.target.value
-                        )
-                      }
-                      size="small"
-                      inputProps={{
-                        style: { textAlign: "right" },
-                        min: 0,
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box sx={{ mb: 3 }}>
+          <DataTable
+            columns={columns}
+            data={tableData}
+            defaultSortColumn="sku"
+            defaultSortDirection="asc"
+          />
+        </Box>
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
           <Button onClick={onClose}>Cancel</Button>

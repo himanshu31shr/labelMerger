@@ -19,7 +19,7 @@ const AppWrapper = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline enableColorScheme />
+      <CssBaseline />
       <Paper sx={{ minHeight: '100vh' }}>
         <App toggleTheme={toggleTheme} mode={mode} />
       </Paper>

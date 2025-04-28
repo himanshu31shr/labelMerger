@@ -1,4 +1,5 @@
 import { ProductPrice, Transaction } from "../../../types/transaction.type";
+import { AmazonFactory } from "./AmazonFactory";
 import FlipkartFactory from "./FlipkartFactory";
 
 export interface ReportData {
@@ -55,6 +56,11 @@ export default class ReportExtractionFactory {
           await new FlipkartFactory(this.file).process()
         );
 
+      case "Amazon":
+        return this.transformReportData(
+          await new AmazonFactory(this.file).process()
+        );
+
       default:
         throw new Error("Unsupported file type");
     }
@@ -63,11 +69,11 @@ export default class ReportExtractionFactory {
   private transformReportData(reportData: ReportData): ReportData {
     const newPrices = new Map<string, ProductPrice>();
     reportData.prices.forEach(({ sku, ...rest }) => {
-      const existingPrice = this.productPrices.get(sku);
+      const existingPrice = this.productPrices.get(sku.trim());
       if (existingPrice) {
-        newPrices.set(sku, existingPrice);
+        newPrices.set(sku.trim(), existingPrice);
       } else {
-        newPrices.set(sku, { sku, ...rest });
+        newPrices.set(sku.trim(), { sku, ...rest });
       }
     });
 

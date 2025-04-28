@@ -98,7 +98,6 @@ export class TransactionAnalysisService {
         summary.totalUnits += quantity;
 
         const costPrice = this.productPrices?.get(sku)?.costPrice || 0;
-        console.log("🚀 ~ TransactionAnalysisService ~ analyze ~ this.productPrices?.get(sku):", this.productPrices?.get(sku))
 
         const totalCost = costPrice * quantity;
         summary.totalCost += totalCost;

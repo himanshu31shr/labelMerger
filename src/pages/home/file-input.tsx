@@ -1,8 +1,14 @@
-import { CheckBox, SquareOutlined } from "@mui/icons-material";
+import React, { ChangeEvent } from "react";
+import { CheckCircle, CloudUpload } from "@mui/icons-material";
 import { Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-type FileInputProp = { name: string; selected: boolean; onChange: Function, accepts: string };
+type FileInputProp = { 
+  name: string; 
+  selected: boolean; 
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  accepts: string;
+};
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -17,17 +23,34 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 export const FileInput = (props: FileInputProp) => {
+  const handleChange = (e: React.FormEvent<HTMLLabelElement>) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files) {
+      const event = {
+        target: target
+      } as ChangeEvent<HTMLInputElement>;
+      props.onChange(event);
+    }
+  };
+
   return (
     <Button
       component="label"
-      color={props.selected ? 'success': 'primary'}
+      color={props.selected ? 'success' : 'primary'}
       variant={props.selected ? "contained" : "outlined"}
       tabIndex={-1}
-      startIcon={props.selected ? <CheckBox /> : <SquareOutlined />}
-      onChange={(e) => props.onChange(e)}
+      startIcon={props.selected ? <CheckCircle /> : <CloudUpload />}
+      onChange={handleChange}
+      sx={{
+        transition: 'all 0.2s ease-in-out',
+        minWidth: 180,
+        '&:hover': {
+          transform: 'translateY(-2px)',
+        }
+      }}
     >
-      {props.name}
-      <VisuallyHiddenInput type="file" accept={props.accepts || "application/pdf"} />
+      {props.selected ? 'File Selected' : `Select ${props.name}`}
+      <VisuallyHiddenInput type="file" accept={props.accepts} />
     </Button>
   );
 };

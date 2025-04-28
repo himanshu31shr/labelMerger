@@ -19,26 +19,67 @@ interface SummaryTableProps {
 export const SummaryTable = ({ summary }: SummaryTableProps) => {
   return (
     <Paper sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <Typography variant="h5" component="h2">
+      <Box sx={{ mb: 3 }}>
+        <Typography 
+          variant="h6" 
+          component="h2" 
+          sx={{ 
+            color: 'primary.main',
+            fontWeight: 500
+          }}
+        >
           Product Summary
         </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Summary of all products from merged labels
+        </Typography>
       </Box>
+      
       <TableContainer id="summary-table">
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>SKU</TableCell>
-              <TableCell>Product</TableCell>
-              <TableCell align="right">Quantity</TableCell>
+              <TableCell 
+                sx={{ 
+                  fontWeight: 600,
+                  backgroundColor: theme => theme.palette.mode === 'dark' 
+                    ? 'background.paper' 
+                    : 'background.default'
+                }}
+              >
+                #
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  fontWeight: 600,
+                  backgroundColor: theme => theme.palette.mode === 'dark' 
+                    ? 'background.paper' 
+                    : 'background.default'
+                }}
+              >
+                SKU
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  fontWeight: 600,
+                  backgroundColor: theme => theme.palette.mode === 'dark' 
+                    ? 'background.paper' 
+                    : 'background.default'
+                }}
+              >
+                Product
+              </TableCell>
+              <TableCell 
+                align="right"
+                sx={{ 
+                  fontWeight: 600,
+                  backgroundColor: theme => theme.palette.mode === 'dark' 
+                    ? 'background.paper' 
+                    : 'background.default'
+                }}
+              >
+                Quantity
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -46,12 +87,22 @@ export const SummaryTable = ({ summary }: SummaryTableProps) => {
               <TableRow
                 key={index}
                 hover
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                sx={{ 
+                  '&:last-child td, &:last-child th': { border: 0 },
+                  transition: 'background-color 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: theme => theme.palette.mode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(0, 0, 0, 0.02)'
+                  }
+                }}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{item.SKU}</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>{item.SKU}</TableCell>
                 <TableCell>{item.name}</TableCell>
-                <TableCell align="right">{item.quantity}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 500 }}>
+                  {item.quantity}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

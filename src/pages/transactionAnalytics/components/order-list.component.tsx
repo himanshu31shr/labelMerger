@@ -1,51 +1,66 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from "@mui/material";
-import { Transaction } from "../../../types/transaction.type";
 import React from "react";
+import { Transaction } from "../../../types/transaction.type";
+import { DataTable, Column } from "../../../components/DataTable/DataTable";
 
 interface OrderListProps {
   transactions: Transaction[];
 }
-const OrderList: React.FC<OrderListProps> = ({
-  transactions,
-}: OrderListProps) => {
+
+interface OrderTableData {
+  transactionId: string;
+  sku: string;
+  platform: string;
+  sellingPrice: number;
+  total: number;
+  productCost: number;
+  type: string;
+}
+
+const OrderList: React.FC<OrderListProps> = ({ transactions }) => {
+  const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
+
+  const tableData: OrderTableData[] = transactions.map(transaction => ({
+    transactionId: transaction.transactionId,
+    sku: transaction.sku,
+    platform: transaction.platform,
+    sellingPrice: transaction.sellingPrice,
+    total: transaction.total || 0,
+    productCost: transaction.product.costPrice,
+    type: transaction.type || ''
+  }));
+
+  const columns: Column<OrderTableData>[] = [
+    { id: 'transactionId', label: '#', filter: true },
+    { id: 'sku', label: 'SKU', filter: true },
+    { id: 'platform', label: 'Platform', filter: true },
+    { 
+      id: 'sellingPrice', 
+      label: 'Selling Price', 
+      align: 'right',
+      format: (value) => formatCurrency(value as number)
+    },
+    { 
+      id: 'total', 
+      label: 'Earnings', 
+      align: 'right',
+      format: (value) => formatCurrency(value as number)
+    },
+    { 
+      id: 'productCost', 
+      label: 'Product Cost', 
+      align: 'right',
+      format: (value) => formatCurrency(value as number)
+    },
+    { id: 'type', label: 'Type', filter: true },
+  ];
+
   return (
-    <TableContainer style={{ maxHeight: "800px"}}>
-      <Table>
-        <TableHead style={{ position: "sticky", top: 0, zIndex: 1, width:'100%', backgroundColor: '#000' }}>
-          <TableRow>
-            <TableCell>#</TableCell>
-            <TableCell>SKU</TableCell>
-            <TableCell>Platform</TableCell>
-            <TableCell align="right">Selling Price</TableCell>
-            <TableCell align="right">Earnings</TableCell>
-            <TableCell align="right">Product Cost</TableCell>
-            <TableCell>Type</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody >
-          {transactions.map((transaction) => (
-            <TableRow key={transaction.hash}>
-              <TableCell>{transaction.transactionId}</TableCell>
-              <TableCell>{transaction.sku}</TableCell>
-              <TableCell>{transaction.platform}</TableCell>
-              <TableCell align="right">{transaction.sellingPrice}</TableCell>
-              <TableCell align="right">{transaction.total}</TableCell>
-              <TableCell align="right">
-                {transaction.product.costPrice}
-              </TableCell>
-              <TableCell>{transaction.type}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <DataTable
+      columns={columns}
+      data={tableData}
+      defaultSortColumn="transactionId"
+      defaultSortDirection="asc"
+    />
   );
 };
 

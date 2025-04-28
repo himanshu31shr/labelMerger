@@ -10,26 +10,32 @@ const HomePage = React.lazy(() =>
 );
 
 const TransactionAnalytics = React.lazy(() =>
-  import("./pages/transactionAnalytics/transactionAnalytics.page").then((module) => ({
-    default: module.TransactionAnalytics,
-  }))
+  import("./pages/transactionAnalytics/transactionAnalytics.page").then(
+    (module) => ({
+      default: module.TransactionAnalytics,
+    })
+  )
 );
 
-export default function App({ toggleTheme, mode }: { 
+export default function App({
+  toggleTheme,
+  mode,
+}: {
   toggleTheme: () => void;
-  mode: 'light' | 'dark';
+  mode: "light" | "dark";
 }) {
   return (
     <Router>
       <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
-        <div>
-          <Suspense fallback={<CircularProgress />}>
-            <Routes>
-              <Route path="/labelMerger/" element={<HomePage />} />
-              <Route path="/labelMerger/transactions/" element={<TransactionAnalytics />} />
-            </Routes>
-          </Suspense>
-        </div>
+        <Suspense fallback={<CircularProgress />}>
+          <Routes>
+            <Route path="/labelMerger/" element={<HomePage />} />
+            <Route
+              path="/labelMerger/transactions/"
+              element={<TransactionAnalytics />}
+            />
+          </Routes>
+        </Suspense>
       </DefaultContainer>
     </Router>
   );
