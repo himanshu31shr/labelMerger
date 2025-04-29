@@ -120,7 +120,7 @@ describe('ProductTable', () => {
     fireEvent.change(searchInput, { target: { value: 'test' } });
 
     expect(mockOnFilterChange).toHaveBeenCalledWith({
-      platform: '',
+      platform: undefined,
       search: 'test'
     });
   });
@@ -181,7 +181,7 @@ describe('ProductTable', () => {
     // Verify the last call clears the filter
     const lastCall = mockOnFilterChange.mock.calls[mockOnFilterChange.mock.calls.length - 1][0];
     expect(lastCall).toEqual({
-      platform: '',
+      platform: undefined,
       search: ''
     });
   });
