@@ -17,15 +17,14 @@ export const ProductTable: React.FC<Props> = ({
   onEdit,
   onFilterChange,
 }) => {
-  const [platform, setPlatform] = useState<"amazon" | "flipkart" | "">("");
+  const [platform, setPlatform] = useState<"amazon" | "flipkart" | undefined>(undefined);
   const [search, setSearch] = useState("");
 
   const handlePlatformChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value as "amazon" | "flipkart" | "";
-    setPlatform(value);
-    // Always trigger onChange with empty string values for unset filters
+    const value = event.target.value as "" | "amazon" | "flipkart";
+    setPlatform(value === "" ? undefined : value);
     onFilterChange({
-      platform: value,
+      platform: value === "" ? undefined : value,
       search
     });
   };

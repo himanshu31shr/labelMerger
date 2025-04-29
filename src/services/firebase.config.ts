@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'test-api-key',
@@ -12,7 +12,9 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'test-measurement-id'
 };
 
-let app, auth, db;
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
 
 // Check if we're in a test environment
 if (process.env.NODE_ENV === 'test') {
@@ -20,13 +22,15 @@ if (process.env.NODE_ENV === 'test') {
   app = {
     name: '[DEFAULT]',
     options: firebaseConfig
-  };
+  } as FirebaseApp;
+  
   auth = {
     currentUser: null,
     signInWithEmailAndPassword: jest.fn(),
     signOut: jest.fn(),
     onAuthStateChanged: jest.fn()
-  };
+  } as unknown as Auth;
+  
   db = {
     collection: jest.fn(() => ({
       doc: jest.fn(() => ({
@@ -39,7 +43,7 @@ if (process.env.NODE_ENV === 'test') {
       where: jest.fn(),
       orderBy: jest.fn()
     }))
-  };
+  } as unknown as Firestore;
 } else {
   // Real Firebase initialization for non-test environments
   app = initializeApp(firebaseConfig);

@@ -1,20 +1,27 @@
 import {
   collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  FirestoreError,
-  getDocs,
   query,
+  getDocs,
   QueryConstraint,
-  setDoc,
-  updateDoc,
-  WithFieldValue,
   writeBatch,
+  doc,
+  setDoc,
+  deleteDoc,
+  updateDoc,
+  Firestore,
+  FirestoreError,
+  DocumentData,
+  WithFieldValue
 } from "firebase/firestore";
-import { db } from "./firebase.config";
+import { db as firebaseDb } from "./firebase.config";
 
 export class FirebaseService {
+  protected db: Firestore;
+
+  constructor() {
+    this.db = firebaseDb;
+  }
+
   protected handleError(error: FirestoreError, context: string): never {
     console.error(`Firebase error in ${context}:`, error);
     throw error;
@@ -26,7 +33,7 @@ export class FirebaseService {
     operation: "create" | "update" | "delete",
     getDocId: (item: T) => string
   ): Promise<void> {
-    const batch = writeBatch(db);
+    const batch = writeBatch(this.db);
     const MAX_BATCH_SIZE = 500;
 
     for (let i = 0; i < items.length; i += MAX_BATCH_SIZE) {
@@ -38,7 +45,7 @@ export class FirebaseService {
             delete item[key];
           }
         });
-        const docRef = doc(db, collectionName, getDocId(item));
+        const docRef = doc(this.db, collectionName, getDocId(item));
 
         switch (operation) {
           case "create":
@@ -66,7 +73,7 @@ export class FirebaseService {
     queryConstraints: QueryConstraint[] = []
   ): Promise<(T & { id: string })[]> {
     try {
-      const q = query(collection(db, collectionName), ...queryConstraints);
+      const q = query(collection(this.db, collectionName), ...queryConstraints);
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(
         (doc) =>
@@ -86,7 +93,7 @@ export class FirebaseService {
     data: T
   ): Promise<void> {
     try {
-      await setDoc(doc(db, collectionName, docId), data);
+      await setDoc(doc(this.db, collectionName, docId), data);
     } catch (error) {
       this.handleError(error as FirestoreError, "setDocument");
     }
@@ -98,7 +105,7 @@ export class FirebaseService {
     data: Partial<T>
   ): Promise<void> {
     try {
-      const docRef = doc(db, collectionName, docId);
+      const docRef = doc(this.db, collectionName, docId);
       await updateDoc(docRef, data as WithFieldValue<DocumentData>);
     } catch (error) {
       this.handleError(error as FirestoreError, "updateDocument");
@@ -110,7 +117,7 @@ export class FirebaseService {
     docId: string
   ): Promise<void> {
     try {
-      await deleteDoc(doc(db, collectionName, docId));
+      await deleteDoc(doc(this.db, collectionName, docId));
     } catch (error) {
       this.handleError(error as FirestoreError, "deleteDocument");
     }
