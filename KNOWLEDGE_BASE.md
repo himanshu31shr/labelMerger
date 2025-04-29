@@ -331,11 +331,14 @@ interface DataTableProps<T> {
   defaultSortColumn: string;
   defaultSortDirection: 'asc' | 'desc';
   onRowClick?: (row: T) => void;
+  rowsPerPageOptions?: number[];
+  defaultRowsPerPage?: number;
 }
 ```
 
 ### 9.2. Usage Patterns
-1. **Basic Table**:
+
+1. **Basic Table with Pagination**:
    ```tsx
    const columns: Column<YourType>[] = [
      { id: 'field', label: 'Field Name', filter: true },
@@ -347,6 +350,8 @@ interface DataTableProps<T> {
      data={yourData}
      defaultSortColumn="field"
      defaultSortDirection="asc"
+     rowsPerPageOptions={[10, 25, 50]}
+     defaultRowsPerPage={25}
    />
    ```
 
@@ -360,72 +365,70 @@ interface DataTableProps<T> {
    }
    ```
 
-3. **Interactive Cells**:
+3. **Interactive Rows**:
    ```tsx
-   {
-     id: 'actions',
-     label: 'Actions',
-     format: (_, row) => (
-       <Grid container>
-         <Grid item>
-           <EditIcon onClick={() => handleEdit(row)} />
-         </Grid>
-         <Grid item>
-           <ViewIcon onClick={() => handleView(row)} />
-         </Grid>
-       </Grid>
-     )
-   }
+   <DataTable
+     columns={columns}
+     data={data}
+     onRowClick={(row) => handleRowClick(row)}
+     // ...other props
+   />
    ```
 
-### 9.3. Best Practices
-1. **Column Configuration**:
-   - Use descriptive label names
-   - Enable filters only for searchable columns
-   - Right-align numeric values
-   - Use formatting for consistent display
+### 9.3. Features
 
-2. **Performance**:
-   - Implement pagination for large datasets
-   - Use memoization for formatted values
-   - Optimize sort operations
-   - Cache filtered results
+1. **Pagination**:
+   - Configurable page sizes via `rowsPerPageOptions`
+   - Default page size setting with `defaultRowsPerPage`
+   - Automatic page reset on filter/sort changes
 
-3. **User Experience**:
-   - Provide clear sort indicators
-   - Show loading states
-   - Handle empty states gracefully
-   - Maintain consistent column widths
+2. **Filtering**:
+   - Column-level filtering with `filter: true`
+   - Case-insensitive text search
+   - Support for nested object properties
+   - Auto-resets to first page on filter change
+
+3. **Sorting**:
+   - Click column headers to sort
+   - Supports multiple data types (string, number, Date, boolean)
+   - Smart comparison for different data types
+   - Handles nested object properties
+   - Null/undefined handling
+
+### 9.4. Best Practices
+
+1. **Performance**:
+   - Use appropriate page sizes for data volume
+   - Enable filters only on searchable columns
+   - Memoized sorting and filtering
+   - Efficient data structure updates
+
+2. **User Experience**:
+   - Consistent column alignment (right for numbers)
+   - Clear filter input fields
+   - Responsive pagination controls
+   - Proper null value handling
+
+3. **Type Safety**:
+   - Properly typed column definitions
+   - Type-safe row click handlers
+   - Consistent data formatting
 
 4. **Customization**:
-   - Use theme-aware styling
-   - Implement custom cell renderers
-   - Support keyboard navigation
-   - Handle row selection
+   - Custom cell formatters
+   - Flexible alignment options
+   - Configurable page sizes
 
-### 9.4. Platform-Specific Features
-1. **Amazon Integration**:
-   - Direct product link using SKU
-   - Status indicators
-   - Price formatting
+### 9.5. Known Limitations
 
-2. **Flipkart Integration**:
-   - View/Edit actions
-   - Serial number handling
-   - Platform-specific metadata
+1. **Sorting**:
+   - Complex object comparisons may need custom formatters
+   - Date comparison requires proper Date objects
 
-### 9.5. Testing Requirements
-1. **Unit Tests**:
-   - Sort functionality
-   - Filter operations
-   - Custom formatters
-   - Row click handlers
-
-2. **Integration Tests**:
-   - Data loading
-   - Real-time updates
-   - Platform-specific features
-   - Error states
+2. **Filtering**:
+   - Basic text-based filtering only
+   - No advanced filter combinations
+   - Case-insensitive matching only
 
 ---
 

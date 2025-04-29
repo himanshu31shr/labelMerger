@@ -60,6 +60,8 @@ const OrderList: React.FC<OrderListProps> = ({ transactions }) => {
       data={tableData}
       defaultSortColumn="transactionId"
       defaultSortDirection="asc"
+      rowsPerPageOptions={[15, 30, 50]}
+      defaultRowsPerPage={30}
     />
   );
 };

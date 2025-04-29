@@ -6,13 +6,19 @@ interface TableRowComponentProps<T> {
   row: T;
   columns: Column<T>[];
   index: number;
+  onClick?: (row: T) => void;
 }
 
 function TableRowComponentBase<T>(props: TableRowComponentProps<T>) {
-  const { row, columns, index } = props;
+  const { row, columns, index, onClick } = props;
 
   return (
-    <TableRow hover key={index}>
+    <TableRow 
+      hover 
+      key={index}
+      onClick={() => onClick?.(row)}
+      sx={{ cursor: onClick ? 'pointer' : 'default' }}
+    >
       {columns.map((column) => {
         const value = row[column.id as keyof T];
         return (

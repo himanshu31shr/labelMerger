@@ -3,13 +3,13 @@ import React, { useState } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product, ProductFilter } from "../../../services/product.service";
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import EditIcon from "@mui/icons-material/Edit";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEyeOutlined";
 
 interface Props {
   products: Product[];
   onEdit: (product: Product) => void;
-  onFilterChange: (filters: ProductFilter) => void;
+  onFilterChange: (filter: ProductFilter) => void;
 }
 
 export const ProductTable: React.FC<Props> = ({
@@ -40,10 +40,8 @@ export const ProductTable: React.FC<Props> = ({
 
   const columns: Column<Product>[] = [
     { id: "sku", label: "SKU", filter: true },
-    { id: "platform", label: "Platform", filter: true },
-    { id: "name", label: "Name", filter: true },
-    { id: "metadata.listingStatus", label: "Status", filter: true },
     { id: "description", label: "Description", filter: true },
+    { id: "platform", label: "Platform", filter: true },
     {
       id: "costPrice",
       label: "Cost Price",
@@ -51,50 +49,40 @@ export const ProductTable: React.FC<Props> = ({
       format: (value) => <FormattedCurrency value={value as number} />,
     },
     {
-      id: "link",
-      label: "Product Link",
+      id: "sellingPrice",
+      label: "Selling Price",
+      align: "right",
+      format: (value) => <FormattedCurrency value={value as number} />,
+    },
+    {
+      id: "actions",
+      label: "Actions",
       align: "center",
-      format: (value, row?: Product) => {
-        if (row?.platform === "amazon") {
-          return (
+      format: (_, row) => (
+        <Grid container spacing={0} justifyContent="center" alignItems={'center'}>
+          <Grid item>
+            <EditIcon
+              sx={{ cursor: "pointer" }}
+              onClick={() => row && onEdit(row)}
+            />
+          </Grid>
+          <Grid item xs={6} md={6} lg={6}>
             <a
-              href={`https://www.amazon.in/dp/${row.sku}`}
+              href={`https://www.flipkart.com/product/p/itme?pid=${row?.metadata.flipkartSerialNumber}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              View
+              <RemoveRedEyeIcon fontSize="small" color="primary" />
             </a>
-          );
-        }
-        if (row?.platform === "flipkart") {
-          return (
-            <Grid container>
-              <Grid item xs={6} md={6} lg={6}>
-                <a
-                  href={`https://www.flipkart.com/product/p/itme?pid=${row.metadata.flipkartSerialNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <RemoveRedEyeIcon fontSize="small" color="primary" />
-                </a>
-              </Grid>
-              <Grid item xs={6} md={6} lg={6}>
-                <a href="#" onClick={() => onEdit(row)}>
-                  <EditIcon fontSize="small" color="primary" />
-                </a>
-              </Grid>
-            </Grid>
-          );
-        }
-
-        return null;
-      },
+          </Grid>
+        </Grid>
+      ),
     },
   ];
 
   return (
-    <Box>
-      <Box display="flex" gap={2} mb={2}>
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
         <TextField
           select
           label="Platform"
@@ -120,6 +108,8 @@ export const ProductTable: React.FC<Props> = ({
         data={products}
         defaultSortColumn="sku"
         defaultSortDirection="asc"
+        rowsPerPageOptions={[10, 25, 50]}
+        defaultRowsPerPage={25}
       />
     </Box>
   );

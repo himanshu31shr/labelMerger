@@ -1,14 +1,6 @@
 import React from "react";
-import {
-  ProductPrice,
-  TransactionSummary,
-} from "../../../types/transaction.type";
 import { DataTable, Column } from "../../../components/DataTable/DataTable";
-
-interface ProductListProps {
-  summary: TransactionSummary;
-  productPrices: Map<string, ProductPrice>;
-}
+import { ProductPrice, TransactionSummary } from "../../../types/transaction.type";
 
 interface ProductTableData {
   sku: string;
@@ -19,20 +11,24 @@ interface ProductTableData {
   profit: number;
 }
 
-const ProductList: React.FC<ProductListProps> = ({
-  summary: { salesByProduct },
-  productPrices,
-}) => {
-  const productArray: ProductTableData[] = Array.from(productPrices).map(([sku, data]) => ({
-    sku,
-    description: data.description || '',
-    units: salesByProduct[sku] ? salesByProduct[sku]?.units : 0,
-    sales: salesByProduct[sku]?.amount || 0,
-    cost: (productPrices.get(sku)?.costPrice || 0) * (salesByProduct[sku]?.units || 0),
-    profit: salesByProduct[sku]?.profit || 0
-  }));
+interface Props {
+  summary: TransactionSummary;
+  productPrices: Map<string, ProductPrice>;
+}
 
+const ProductList: React.FC<Props> = ({ summary, productPrices }) => {
   const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
+
+  const productArray: ProductTableData[] = Object.entries(summary.salesByProduct).map(
+    ([sku, data]) => ({
+      sku,
+      description: data.name,
+      units: data.units,
+      sales: data.amount,
+      cost: (productPrices.get(sku)?.costPrice || 0) * data.units,
+      profit: data.profit
+    })
+  );
 
   const columns: Column<ProductTableData>[] = [
     { id: 'sku', label: 'SKU', filter: true },
@@ -69,6 +65,8 @@ const ProductList: React.FC<ProductListProps> = ({
       data={productArray}
       defaultSortColumn="sku"
       defaultSortDirection="asc"
+      rowsPerPageOptions={[10, 25, 50]}
+      defaultRowsPerPage={25}
     />
   );
 };
