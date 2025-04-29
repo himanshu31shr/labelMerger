@@ -31,15 +31,28 @@ describe('ProductImportSection', () => {
     expect(mockOnImport).not.toHaveBeenCalled();
   });
 
-  it('calls onImport for valid Excel file', async () => {
+  it('supports both xlsx and xls file extensions', async () => {
     render(<ProductImportSection onImport={mockOnImport} />);
 
-    const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    // Test .xlsx
+    const xlsxFile = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const input = screen.getByLabelText('Upload XLSX File');
+    fireEvent.change(input, { target: { files: [xlsxFile] } });
+    expect(mockOnImport).toHaveBeenCalledWith(xlsxFile);
 
-    fireEvent.change(input, { target: { files: [file] } });
+    // Test .xls
+    const xlsFile = new File([''], 'test.xls', { type: 'application/vnd.ms-excel' });
+    fireEvent.change(input, { target: { files: [xlsFile] } });
+    expect(mockOnImport).toHaveBeenCalledWith(xlsFile);
+  });
 
-    expect(mockOnImport).toHaveBeenCalledWith(file);
+  it('handles empty file selection', async () => {
+    render(<ProductImportSection onImport={mockOnImport} />);
+
+    const input = screen.getByLabelText('Upload XLSX File');
+    fireEvent.change(input, { target: { files: [] } });
+
+    expect(mockOnImport).not.toHaveBeenCalled();
   });
 
   it('shows error message when import fails', async () => {
@@ -56,7 +69,42 @@ describe('ProductImportSection', () => {
     });
   });
 
+  it('clears error message on successful import', async () => {
+    render(<ProductImportSection onImport={mockOnImport} />);
+
+    // First trigger an error
+    const txtFile = new File([''], 'test.txt', { type: 'text/plain' });
+    const input = screen.getByLabelText('Upload XLSX File');
+    fireEvent.change(input, { target: { files: [txtFile] } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Please upload an Excel file/)).toBeInTheDocument();
+    });
+
+    // Then do a successful import
+    const xlsxFile = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    fireEvent.change(input, { target: { files: [xlsxFile] } });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+  });
+
   it('clears file input after successful import', async () => {
+    render(<ProductImportSection onImport={mockOnImport} />);
+
+    const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const input = screen.getByLabelText('Upload XLSX File') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(input.value).toBe('');
+    });
+  });
+
+  it('clears file input after failed import', async () => {
+    mockOnImport.mockRejectedValueOnce(new Error('Import failed'));
     render(<ProductImportSection onImport={mockOnImport} />);
 
     const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

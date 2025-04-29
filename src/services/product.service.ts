@@ -92,7 +92,7 @@ export class ProductService extends FirebaseService {
       DEFAULT_PRODUCT_PRICES.map((price) => [price.sku, price])
     );
 
-    return data.slice(1).map((row) => ({
+    return data.map((row) => ({
       sku: row["Seller SKU Id"],
       name: row["Product Title"],
       description:

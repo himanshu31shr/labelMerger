@@ -1,51 +1,71 @@
 # Label Merger and Analytics Tool
 
 ## Overview
-The Label Merger and Analytics Tool is a web-based application designed to process, merge, and analyze transaction data from two e-commerce platforms: Amazon and Flipkart. The application provides functionality to merge PDF labels and analyze financial data from both platforms.
+The Label Merger and Analytics Tool is a web-based application designed to process, merge, and analyze transaction data from e-commerce platforms (Amazon and Flipkart). The application provides secure authentication, role-based access control, and features for merging PDF labels and analyzing financial data.
 
 ## Features
+- **Authentication**
+  - Secure email/password authentication
+  - Remember Me functionality
+  - Password reset capabilities
+  - Role-based access control
+  - Protected routes
 
-### Label Merging
-- Upload CSV files containing order data for Amazon and Flipkart
-- Generate a merged PDF containing labels for both platforms
-- View summary of merged products
+- **PDF Label Management**
+  - Upload and merge labels from multiple platforms
+  - Automated label processing
+  - Preview and download capabilities
 
-### Transaction Analytics
-- Upload transaction data to analyze financial performance
-- View comprehensive analytics including:
-  - Total sales and expenses
-  - Platform-specific performance metrics
-  - SKU-wise profitability analysis
-- Manage product prices dynamically
-- Support for both Amazon and Flipkart data formats
+- **Transaction Analytics**
+  - Upload and analyze transaction data
+  - Real-time price updates
+  - Financial summary and reporting
+  - Data visualization
 
-### Data Persistence
-- Store transaction data in Firebase Firestore
-- Real-time updates across all connected clients
-- Offline support with automatic sync
-- Dynamic price management with real-time updates
+- **Product Management**
+  - Import products from Excel/CSV
+  - Manage product prices
+  - Track inventory
+  - Real-time updates
 
 ## Tech Stack
-- **Frontend**: React with TypeScript
-- **UI Framework**: Material-UI
+- **Frontend**: React 18 with TypeScript
+- **UI Framework**: Material-UI v5
+- **Build Tool**: Vite
+- **Authentication**: Firebase Auth
 - **Data Storage**: Firebase Firestore
 - **PDF Processing**: pdf-lib
 - **Data Parsing**: papaparse, xlsx
-- **Build Tool**: Vite
+- **Testing**: Jest with React Testing Library
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm (v6 or higher)
-- A Firebase project with Firestore enabled
+- Node.js (v16 or higher)
+- npm (v7 or higher)
+- Git
+- A Firebase project with Authentication and Firestore enabled
 
 ### Installation
-1. Clone the repository
-2. Install dependencies: `npm install`
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd material-ui-vite-ts
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
 3. Configure Firebase:
+   - Create a new Firebase project at https://console.firebase.google.com
+   - Enable Authentication with email/password provider
+   - Enable Firestore database
+   - Create a web app in your Firebase project
    - Copy `.env.example` to `.env.local`
-   - Fill in your Firebase configuration values:
+   - Fill in your Firebase configuration:
      ```
      VITE_FIREBASE_API_KEY=your-api-key
      VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
@@ -54,75 +74,89 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
      VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
      VITE_FIREBASE_APP_ID=your-app-id
      ```
-   - Set up Firestore rules and indexes (see FIREBASE_INTEGRATION.md)
-4. Start development server: `npm run dev`
 
-### Firebase Integration Features
-- Offline data persistence
-- Batch operations support
-- Real-time updates
-- Comprehensive error handling
-- Type-safe operations
-- Automated testing
+4. Set up Firestore:
+   - Update Firestore security rules (copy from firestore.rules)
+   - Create required indexes:
+     - Collection: transactions
+       - Fields: platform (ascending), orderDate (ascending)
+       - Fields: sku (ascending), orderDate (ascending)
+     - Collection: products
+       - Fields: platform (ascending), updatedAt (ascending)
+       - Fields: sku (ascending)
 
-### Theme Customization
-The application uses Material-UI with a custom theme supporting:
-- Light and dark mode
-- Responsive design
-- Consistent component styling
-- Custom color palette
-- Enhanced typography
-- Smooth transitions and animations
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Scripts
-- `npm run dev`: Start the development server
-- `npm run build`: Build the application for production
-- `npm run preview`: Preview the production build
-- `npm run lint`: Run ESLint to check for code quality issues
-- `npm run test`: Run unit tests using Jest
+### Configuration Options
 
-## Folder Structure
-```
-material-ui-vite-ts/
-├── src/
-│   ├── components/        # Reusable UI components
-│   ├── containers/        # Layout containers
-│   ├── pages/            # Application pages
-│   │   ├── home/         # Home page components and services
-│   │   ├── transactionAnalytics/ # Transaction analytics components and services
-│   ├── services/         # Application services
-│   ├── theme.tsx         # Theme configuration
-│   ├── App.tsx          # Main application component
-│   ├── main.tsx         # Application entry point
-├── tests/               # Unit tests
-├── public/             # Static assets
-├── package.json       # Project metadata and dependencies
-├── tsconfig.json     # TypeScript configuration
-└── vite.config.ts    # Vite configuration
-```
+#### Authentication Configuration
+- Customize session persistence in `src/services/auth.service.ts`
+- Modify password requirements in Firebase Console
+- Configure authentication providers in Firebase Console
+
+#### Firebase Configuration
+- Enable offline persistence in `firebase.config.ts`:
+  ```typescript
+  const firebaseConfig = {
+    // ...your config
+    enablePersistence: true,
+    cacheSizeBytes: 10485760 // 10MB cache size
+  };
+  ```
+
+#### Theme Customization
+- Modify `src/theme.tsx` to customize:
+  - Color palette
+  - Typography
+  - Component styles
+  - Dark mode preferences
+
+#### Performance Settings
+- Adjust batch sizes for large operations in `src/services/firebase.service.ts`
+- Configure cache settings in `firebase.config.ts`
+- Modify pagination settings in DataTable components
+
+### Available Scripts
+- `npm run dev`: Start development server
+- `npm run build`: Build for production
+- `npm run preview`: Preview production build
+- `npm run test`: Run unit tests
+- `npm run test:watch`: Run tests in watch mode
+- `npm run test:coverage`: Generate test coverage report
+- `npm run lint`: Run ESLint
+- `npm run lint:fix`: Fix ESLint issues
+- `npm run typecheck`: Check TypeScript types
 
 ## Key Components
 
 ### Pages
+- **Login Page**: User authentication and password reset
 - **Home Page**: Upload CSV files and generate merged PDF labels
 - **Transaction Analytics Page**: Analyze transaction data and view financial analytics
+- **Products Page**: Manage product catalog and prices
 
 ### Components
+- **AuthService**: Handles authentication and user management
+- **ProtectedRoute**: Route protection based on authentication
 - **FileInput**: Reusable file upload component
 - **PriceManagementModal**: Manages product prices with real-time updates
 
 ### Services
+- **auth.service.ts**: Manages authentication and user sessions
+- **firebase.service.ts**: Handles Firebase operations and data persistence
 - **merge.service.ts**: Merges Amazon and Flipkart labels into a single PDF
 - **transactionAnalysis.service.ts**: Processes and analyzes transaction data
-- **firebase.service.ts**: Handles all Firebase operations and data persistence
 
-## Future Enhancements
-- Add support for additional e-commerce platforms
-- Provide export functionality for analytics data
-- Implement user authentication for multi-user support
-- Add data visualization features
-- Enhanced offline capabilities
-- Batch processing for large datasets
+## Security Features
+- Role-based access control (RBAC)
+- Secure authentication with Firebase Auth
+- Protected API endpoints
+- Data validation rules
+- Session management
+- Input sanitization
 
 ## License
 This project is licensed under the MIT License.

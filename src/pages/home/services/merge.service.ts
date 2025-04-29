@@ -1,14 +1,14 @@
-import { PDFDocument } from "pdf-lib";
 import { AmazonPDFTransformer } from "./TrasformAmazonPages";
 import { FlipkartPageTransformer } from "./TrasformFlipkartPages";
 import { ProductSummary } from "./base.transformer";
+import type { PDFDocument } from "pdf-lib";
 
 export class PDFMergerService {
   private outpdf: PDFDocument | undefined;
-
   private summaryText: ProductSummary[] = [];
 
   async initialize(): Promise<PDFDocument> {
+    const { PDFDocument } = await import('pdf-lib');
     return (this.outpdf = await PDFDocument.create());
   }
 

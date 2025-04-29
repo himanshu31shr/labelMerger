@@ -1,4 +1,4 @@
-import { PDFDocument } from "pdf-lib";
+import type { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { BaseTransformer, ProductSummary, TextItem } from "./base.transformer";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -13,6 +13,7 @@ export class FlipkartPageTransformer extends BaseTransformer {
   }
 
   async initialize(): Promise<void> {
+    const { PDFDocument } = await import('pdf-lib');
     this.pdfDoc = await PDFDocument.load(this.filePath);
     this.outputPdf = await PDFDocument.create();
     const loadingTask = pdfjsLib.getDocument({ data: this.filePath });
@@ -20,7 +21,7 @@ export class FlipkartPageTransformer extends BaseTransformer {
   }
 
   async transformPages(): Promise<PDFDocument> {
-    await this.initialize();
+    await this.initialize();``
     if (!this.pdfDoc || !this.outputPdf) {
       throw new Error("PDF document is not loaded. Call initialize() first.");
     }

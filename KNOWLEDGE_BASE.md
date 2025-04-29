@@ -185,35 +185,49 @@ This file serves as a centralized repository for common knowledge, recurring ins
 
 ## 8. Firebase Integration Guidelines
 
-1. **Data Storage**:
-   - Use Firestore for storing transaction data
-   - Implement batch operations for bulk uploads
-   - Follow the defined schema for collections
-   - Use timestamps for tracking data changes
+### 8.1 Authentication Implementation
+1. **User Management**:
+   - Use AuthService for all authentication operations
+   - Implement proper session persistence
+   - Handle auth state changes with cleanup
+   - Validate user roles and permissions
 
-2. **Real-time Updates**:
-   - Implement Firestore listeners for price changes
-   - Handle subscription cleanup properly
-   - Use optimistic updates for better UX
-   - Cache frequently accessed data
+2. **Security Best Practices**:
+   - Never store passwords or sensitive data
+   - Use secure session management
+   - Implement proper token handling
+   - Follow Firebase security guidelines
 
-3. **Performance Guidelines**:
-   - Use pagination for large datasets
-   - Implement compound queries
-   - Enable offline persistence
-   - Cache product prices locally
+3. **Route Protection**:
+   - Use ProtectedRoute component
+   - Handle auth state loading
+   - Implement proper redirects
+   - Preserve return paths
 
-4. **Testing Requirements**:
-   - Mock Firebase in unit tests
-   - Test real-time update functionality
-   - Verify data consistency
-   - Test error scenarios
+4. **Error Handling**:
+   - Provide clear error messages
+   - Handle network issues gracefully
+   - Implement retry mechanisms
+   - Log authentication failures
 
-5. **Security Considerations**:
-   - Follow principle of least privilege
-   - Implement proper authentication
-   - Regular security rules review
-   - Monitor usage patterns
+### 8.2 Role-Based Access Control
+1. **User Roles**:
+   - Admin: Full system access
+   - User: Limited access based on ownership
+   - Define clear role hierarchies
+   - Implement role validation
+
+2. **Permission Management**:
+   - Use Firestore security rules
+   - Validate at service level
+   - Implement UI-level controls
+   - Regular permission audits
+
+3. **Data Access Control**:
+   - Enforce user data isolation
+   - Implement proper queries
+   - Validate ownership
+   - Handle unauthorized access
 
 ---
 
@@ -590,38 +604,94 @@ try {
 
 ## 14. Firebase Service Implementation Guide
 
-### 14.1 Base Firebase Service
-- Extend `FirebaseService` class for specific collection implementations
-- Use type-safe operations with proper generic constraints
-- Implement error handling with context
-
+### 14.1 Authentication Service
 ```typescript
-class YourService extends FirebaseService {
-  // Collection-specific operations
-  async getYourDocuments(): Promise<YourType[]> {
-    return this.getDocuments<YourType>('your-collection');
+// Standard authentication pattern
+class AuthService {
+  // Initialize with proper persistence
+  constructor() {
+    setPersistence(auth, browserLocalPersistence);
+  }
+
+  // Handle auth state changes
+  onAuthStateChanged(callback) {
+    return auth.onAuthStateChanged((user) => {
+      // Clean up subscriptions if needed
+      callback(user);
+    });
+  }
+
+  // Implement proper error handling
+  async handleAuthError(error) {
+    switch (error.code) {
+      case 'auth/wrong-password':
+        throw new Error('Invalid credentials');
+      case 'auth/user-not-found':
+        throw new Error('User not found');
+      default:
+        throw error;
+    }
   }
 }
 ```
 
-### 14.2 Error Handling Pattern
-- Use the `handleError` method for consistent error handling
-- Include operation context in error messages
-- Handle Firebase-specific error codes appropriately
+### 14.2 Security Implementation
+```typescript
+// Security rule patterns
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Validate user role
+    function hasRole(role) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
 
-### 14.3 Batch Operations
-- Use the `batchOperation` method for bulk operations
-- Respect the 500 document limit per batch
-- Implement proper ID generation strategy
-- Handle batch failures gracefully
+    // Validate data format
+    function isValidData(data) {
+      return data.keys().hasAll(['required', 'fields']) &&
+             data.someField is string;
+    }
+  }
+}
+```
 
-### 14.4 Query Operations
-- Use type-safe query constraints
-- Implement proper pagination
-- Use compound queries for complex filters
-- Cache frequently accessed data
+### 14.3 Firestore Service Example
+```typescript
+class TransactionService extends FirebaseService {
+  constructor() {
+    super('transactions');
+  }
 
-### 14.5 Testing Firebase Services
+  async getTransactionsByUser(userId: string) {
+    return this.collection.where('userId', '==', userId).get();
+  }
+}
+```
+
+### 14.4 Batch Operation Example
+```typescript
+async function batchAddTransactions(transactions: TransactionDoc[]) {
+  const batch = db.batch();
+  transactions.forEach(transaction => {
+    const ref = db.collection('transactions').doc(transaction.transactionId);
+    batch.set(ref, transaction);
+  });
+  await batch.commit();
+}
+```
+
+### 14.5 Query Operation Example
+```typescript
+async function getRecentTransactions(limit: number) {
+  return db.collection('transactions')
+    .orderBy('orderDate', 'desc')
+    .limit(limit)
+    .get();
+}
+```
+
+### 14.6 Testing Firebase Services
 - Mock Firebase operations in tests
 - Test error handling scenarios
 - Verify batch operation behavior
@@ -629,4 +699,120 @@ class YourService extends FirebaseService {
 
 ---
 
-This knowledge base will be updated as the project evolves. Always refer to this document before starting any new task or feature implementation.
+## 15. Practical Implementation Examples
+
+### 15.1 Firebase Real-time Updates
+```typescript
+// Example of setting up real-time product price updates
+const setupPriceListener = (onUpdate: (prices: ProductPrice[]) => void) => {
+  const unsubscribe = db.collection('productPrices')
+    .onSnapshot((snapshot) => {
+      const prices = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      onUpdate(prices);
+    }, (error) => {
+      console.error('Price listener error:', error);
+    });
+  
+  return unsubscribe;
+};
+
+// Usage in component
+useEffect(() => {
+  const unsubscribe = setupPriceListener(setPrices);
+  return () => unsubscribe();
+}, []);
+```
+
+### 15.2 Batch Processing Large Datasets
+```typescript
+// Example of processing large XLSX imports
+const processBatchedProducts = async (products: Product[]) => {
+  const batchSize = 500;
+  const batches = [];
+  
+  for (let i = 0; i < products.length; i += batchSize) {
+    const batch = products.slice(i, i + batchSize);
+    batches.push(batch);
+  }
+  
+  for (const batch of batches) {
+    const writeBatch = db.batch();
+    batch.forEach(product => {
+      const ref = db.collection('products').doc(product.sku);
+      writeBatch.set(ref, product, { merge: true });
+    });
+    await writeBatch.commit();
+  }
+};
+```
+
+### 15.3 Offline Support Implementation
+```typescript
+// Example of handling offline/online state
+const setupOfflineHandler = () => {
+  db.enablePersistence()
+    .catch((err) => {
+      if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab
+      } else if (err.code === 'unimplemented') {
+        // Browser doesn't support persistence
+      }
+    });
+
+  // Listen for online/offline changes
+  window.addEventListener('online', () => {
+    // Trigger sync operations
+    syncPendingChanges();
+  });
+};
+
+const syncPendingChanges = async () => {
+  const pendingOps = await getPendingOperations();
+  for (const op of pendingOps) {
+    await processPendingOperation(op);
+  }
+};
+```
+
+## 16. Recent Implementation Updates
+
+### 16.1 Performance Optimizations
+- Implemented virtual scrolling for large datasets
+- Added data caching for frequently accessed products
+- Optimized Firebase queries with compound indexes
+- Improved PDF generation performance with web workers
+
+### 16.2 Error Handling Improvements
+- Added retry mechanism for failed Firebase operations
+- Implemented better error messages for user feedback
+- Added error boundary components for UI recovery
+- Enhanced validation for file uploads
+
+### 16.3 Testing Enhancements
+- Added integration tests for Firebase operations
+- Improved mock implementations for external services
+- Added performance benchmarking tests
+- Enhanced test coverage for critical paths
+
+## 17. Development Guidelines
+
+### 17.1 Code Quality Standards
+- Use TypeScript strict mode
+- Implement proper error boundaries
+- Follow React hooks best practices
+- Use proper type definitions
+
+### 17.2 Performance Guidelines
+- Implement proper React.memo usage
+- Use IndexedDB for large dataset caching
+- Optimize Firebase queries
+- Implement proper cleanup for subscriptions
+
+### 17.3 Testing Requirements
+- Maintain minimum 80% test coverage
+- Include integration tests for critical flows
+- Mock external services properly
+- Test error scenarios thoroughly

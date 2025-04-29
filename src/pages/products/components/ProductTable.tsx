@@ -23,9 +23,10 @@ export const ProductTable: React.FC<Props> = ({
   const handlePlatformChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value as "amazon" | "flipkart" | "";
     setPlatform(value);
+    // Always trigger onChange with empty string values for unset filters
     onFilterChange({
-      platform: value || undefined,
-      search: search || undefined,
+      platform: value,
+      search
     });
   };
 
@@ -33,8 +34,8 @@ export const ProductTable: React.FC<Props> = ({
     const value = event.target.value;
     setSearch(value);
     onFilterChange({
-      platform: platform || undefined,
-      search: value || undefined,
+      platform,
+      search: value
     });
   };
 
@@ -64,6 +65,7 @@ export const ProductTable: React.FC<Props> = ({
             <EditIcon
               sx={{ cursor: "pointer" }}
               onClick={() => row && onEdit(row)}
+              aria-label={`edit-${row?.sku}`}
             />
           </Grid>
           <Grid item xs={6} md={6} lg={6}>

@@ -1,5 +1,6 @@
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import LogoutIcon from "@mui/icons-material/Logout";
 import {
   IconButton,
   AppBar as MuiAppBar,
@@ -7,9 +8,12 @@ import {
   Typography,
   Switch,
   styled,
+  Button,
+  Box,
 } from "@mui/material";
-import React from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { AuthService } from "../services/auth.service";
 
 const DRAWER_WIDTH = 250;
 
@@ -36,6 +40,8 @@ const getRouteTitle = (pathname: string): string => {
       return "PDF Label Merger";
     case "/labelMerger/transactions/":
       return "Transaction Analytics";
+    case "/labelMerger/products/":
+      return "Products";
     default:
       return "Label Merger";
   }
@@ -55,7 +61,27 @@ export const AppBar = ({
   open: boolean;
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const title = getRouteTitle(location.pathname);
+  const [authenticated, setAuthenticated] = useState(false);
+  const authService = new AuthService();
+
+  useEffect(() => {
+    const unsubscribe = authService.onAuthStateChanged((user) => {
+      setAuthenticated(!!user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      navigate('/labelMerger/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <StyledAppBar position="fixed" open={open}>
@@ -71,6 +97,7 @@ export const AppBar = ({
         >
           <MenuIcon />
         </IconButton>
+
         <IconButton
           color="inherit"
           aria-label="close drawer"
@@ -84,11 +111,23 @@ export const AppBar = ({
           {title}
         </Typography>
 
-        <Switch
-          checked={mode === "dark"}
-          onChange={toggleTheme}
-          inputProps={{ "aria-label": "dark mode toggle" }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Switch
+            checked={mode === "dark"}
+            onChange={toggleTheme}
+            inputProps={{ "aria-label": "dark mode toggle" }}
+          />
+
+          {authenticated && (
+            <Button
+              color="inherit"
+              onClick={handleLogout}
+              startIcon={<LogoutIcon />}
+            >
+              Logout
+            </Button>
+          )}
+        </Box>
       </Toolbar>
     </StyledAppBar>
   );

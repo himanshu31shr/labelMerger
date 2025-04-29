@@ -4,6 +4,23 @@ import { ProductTable } from '../../../../src/pages/products/components/ProductT
 import { Product } from '../../../../src/services/product.service';
 import { Timestamp } from 'firebase/firestore';
 
+// Mock Firebase Timestamp
+const mockTimestamp = {
+  seconds: 1234567890,
+  nanoseconds: 0,
+  toDate: () => new Date(1234567890 * 1000),
+  toMillis: () => 1234567890 * 1000,
+  isEqual: (other: typeof mockTimestamp) => 
+    other.seconds === mockTimestamp.seconds && 
+    other.nanoseconds === mockTimestamp.nanoseconds,
+  toJSON: () => ({ seconds: 1234567890, nanoseconds: 0 })
+};
+
+jest.mock('firebase/firestore', () => ({
+  Timestamp: {
+    now: () => mockTimestamp
+  }
+}));
 const mockProducts: Product[] = [
   {
     sku: 'TEST-1',
@@ -14,7 +31,8 @@ const mockProducts: Product[] = [
     metadata: {
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-      lastImportedFrom: 'test'
+      lastImportedFrom: 'test',
+      flipkartSerialNumber: '123'
     }
   },
   {
@@ -26,7 +44,8 @@ const mockProducts: Product[] = [
     metadata: {
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-      lastImportedFrom: 'test'
+      lastImportedFrom: 'test',
+      flipkartSerialNumber: '456'
     }
   }
 ];
@@ -39,7 +58,7 @@ describe('ProductTable', () => {
     jest.clearAllMocks();
   });
 
-  it('renders all products', () => {
+  it('renders all products with correct formatting', () => {
     render(
       <ProductTable
         products={mockProducts}
@@ -48,13 +67,24 @@ describe('ProductTable', () => {
       />
     );
 
+    // Check SKUs
     expect(screen.getByText('TEST-1')).toBeInTheDocument();
-    expect(screen.getByText('Test Product 1')).toBeInTheDocument();
     expect(screen.getByText('TEST-2')).toBeInTheDocument();
-    expect(screen.getByText('Test Product 2')).toBeInTheDocument();
+
+    // Check descriptions
+    expect(screen.getByText('Description 1')).toBeInTheDocument();
+    expect(screen.getByText('Description 2')).toBeInTheDocument();
+
+    // Check platforms
+    expect(screen.getByText('amazon')).toBeInTheDocument();
+    expect(screen.getByText('flipkart')).toBeInTheDocument();
+
+    // Check cost price formatting
+    expect(screen.getByText('₹100.00')).toBeInTheDocument();
+    expect(screen.getByText('₹200.00')).toBeInTheDocument();
   });
 
-  it('filters by platform', () => {
+  it('filters by platform', async () => {
     render(
       <ProductTable
         products={mockProducts}
@@ -63,8 +93,13 @@ describe('ProductTable', () => {
       />
     );
 
+    // Open the select dropdown
     const platformSelect = screen.getByLabelText('Platform');
-    fireEvent.change(platformSelect, { target: { value: 'amazon' } });
+    fireEvent.mouseDown(platformSelect);
+
+    // Click the amazon option
+    const amazonOption = screen.getByRole('option', { name: 'Amazon' });
+    fireEvent.click(amazonOption);
 
     expect(mockOnFilterChange).toHaveBeenCalledWith({
       platform: 'amazon',
@@ -90,7 +125,7 @@ describe('ProductTable', () => {
     });
   });
 
-  it('calls onEdit when row is clicked', () => {
+  it('calls onEdit when edit icon is clicked', () => {
     render(
       <ProductTable
         products={mockProducts}
@@ -99,8 +134,55 @@ describe('ProductTable', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('TEST-1'));
+    const editButton = screen.getByLabelText('edit-TEST-1');
+    fireEvent.click(editButton);
 
     expect(mockOnEdit).toHaveBeenCalledWith(mockProducts[0]);
+  });
+
+  it('renders product links correctly', () => {
+    render(
+      <ProductTable
+        products={mockProducts}
+        onEdit={mockOnEdit}
+        onFilterChange={mockOnFilterChange}
+      />
+    );
+
+    const links = screen.getAllByRole('link');
+    expect(links[0]).toHaveAttribute('href', 'https://www.flipkart.com/product/p/itme?pid=123');
+    expect(links[1]).toHaveAttribute('href', 'https://www.flipkart.com/product/p/itme?pid=456');
+  });
+
+  it('clears filters when All is selected', () => {
+    render(
+      <ProductTable
+        products={mockProducts}
+        onEdit={mockOnEdit}
+        onFilterChange={mockOnFilterChange}
+      />
+    );
+
+    // First set a platform filter
+    const platformSelect = screen.getByLabelText('Platform');
+    fireEvent.mouseDown(platformSelect);
+    const amazonOption = screen.getByRole('option', { name: 'Amazon' });
+    fireEvent.click(amazonOption);
+    expect(mockOnFilterChange).toHaveBeenCalledWith({
+      platform: 'amazon',
+      search: ''
+    });
+
+    // Then clear it by selecting All
+    fireEvent.mouseDown(platformSelect);
+    const allOption = screen.getByRole('option', { name: 'All' });
+    fireEvent.click(allOption);
+
+    // Verify the last call clears the filter
+    const lastCall = mockOnFilterChange.mock.calls[mockOnFilterChange.mock.calls.length - 1][0];
+    expect(lastCall).toEqual({
+      platform: '',
+      search: ''
+    });
   });
 });

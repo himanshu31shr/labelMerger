@@ -1,9 +1,9 @@
-import { PDFDocument, rgb, StandardFonts, PDFPage } from "pdf-lib";
+import type { PDFDocument, PDFPage } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { BaseTransformer, TextItem } from "./base.transformer";
 
 // Initialize PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface Product {
   name: string;
@@ -22,6 +22,7 @@ export class AmazonPDFTransformer extends BaseTransformer {
   }
 
   async initialize(): Promise<void> {
+    const { PDFDocument } = await import('pdf-lib');
     this.pdfDoc = await PDFDocument.load(this.filePath);
     this.outputPdf = await PDFDocument.create();
     const loadingTask = pdfjsLib.getDocument({ data: this.filePath });
@@ -56,6 +57,7 @@ export class AmazonPDFTransformer extends BaseTransformer {
     copiedPage: PDFPage,
     product: Product
   ): Promise<void> {
+    const { rgb, StandardFonts } = await import('pdf-lib');
     const pageWidth = copiedPage.getWidth();
     const fontSize = 10;
     const text = `${product.quantity} X [${product?.name}]`;

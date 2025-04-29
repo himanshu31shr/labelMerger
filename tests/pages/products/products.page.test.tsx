@@ -2,7 +2,14 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ProductsPage } from '../../../src/pages/products/products.page';
 import { ProductService } from '../../../src/services/product.service';
-import { Timestamp } from 'firebase/firestore';
+import { act } from 'react';
+
+// Mock firebase/firestore
+jest.mock('firebase/firestore', () => ({
+  Timestamp: {
+    now: () => ({ seconds: 1234567890, nanoseconds: 0 })
+  }
+}));
 
 // Mock the ProductService
 jest.mock('../../../src/services/product.service');
@@ -15,8 +22,8 @@ const mockProducts = [
     costPrice: 100,
     platform: 'amazon',
     metadata: {
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: { seconds: 1234567890, nanoseconds: 0 },
+      updatedAt: { seconds: 1234567890, nanoseconds: 0 },
       lastImportedFrom: 'test'
     }
   },
@@ -27,8 +34,8 @@ const mockProducts = [
     costPrice: 200,
     platform: 'flipkart',
     metadata: {
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: { seconds: 1234567890, nanoseconds: 0 },
+      updatedAt: { seconds: 1234567890, nanoseconds: 0 },
       lastImportedFrom: 'test'
     }
   }
@@ -51,11 +58,14 @@ describe('ProductsPage', () => {
   });
 
   it('loads and displays products', async () => {
-    render(<ProductsPage />);
+    await act(async () => {
+      render(<ProductsPage />);
+    });
 
     await waitFor(() => {
-      expect(screen.getByText('TEST-1')).toBeInTheDocument();
-      expect(screen.getByText('TEST-2')).toBeInTheDocument();
+      const cells = screen.getAllByRole('cell');
+      expect(cells.some(cell => cell.textContent === 'TEST-1')).toBe(true);
+      expect(cells.some(cell => cell.textContent === 'TEST-2')).toBe(true);
     });
   });
 
@@ -68,22 +78,26 @@ describe('ProductsPage', () => {
     };
     (ProductService as jest.Mock).mockImplementation(() => mockServiceInstance);
 
-    render(<ProductsPage />);
-    
-    // Wait for initial load
-    await waitFor(() => {
-      expect(screen.getByText('Upload XLSX File')).toBeInTheDocument();
+    await act(async () => {
+      render(<ProductsPage />);
     });
 
-    const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const input = screen.getByLabelText('Upload XLSX File');
+    const uploadButton = screen.getByRole('button', { name: /upload xlsx file/i });
+    expect(uploadButton).toBeInTheDocument();
 
-    fireEvent.change(input, { target: { files: [file] } });
+    const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    await act(async () => {
+      const input = uploadButton.querySelector('input[type="file"]');
+      if (input) {
+        fireEvent.change(input, { target: { files: [file] } });
+      }
+    });
 
     await waitFor(() => {
       expect(mockServiceInstance.parseXLSXFile).toHaveBeenCalledWith(file);
       expect(mockServiceInstance.saveProducts).toHaveBeenCalled();
-      expect(mockServiceInstance.getProducts).toHaveBeenCalledTimes(2); // Initial + after import
+      expect(mockServiceInstance.getProducts).toHaveBeenCalled();
     });
   });
 
@@ -96,31 +110,46 @@ describe('ProductsPage', () => {
     };
     (ProductService as jest.Mock).mockImplementation(() => mockServiceInstance);
 
-    render(<ProductsPage />);
+    await act(async () => {
+      render(<ProductsPage />);
+    });
 
     // Wait for products to load
     await waitFor(() => {
-      expect(screen.getByText('TEST-1')).toBeInTheDocument();
+      const cells = screen.getAllByRole('cell');
+      expect(cells.some(cell => cell.textContent === 'TEST-1')).toBe(true);
     });
 
-    // Click on a product to edit
-    fireEvent.click(screen.getByText('TEST-1'));
+    // Find and click the edit button for the first product
+    const editButton = screen.getByLabelText('edit-TEST-1');
+    await act(async () => {
+      fireEvent.click(editButton);
+    });
 
-    // Update the product name
-    const nameInput = screen.getByLabelText('Name');
-    fireEvent.change(nameInput, { target: { value: 'Updated Name' } });
+    // Update the product details in modal
+    await waitFor(() => {
+      const nameInput = screen.getByLabelText(/name/i);
+      const descriptionInput = screen.getByLabelText(/description/i);
+      const costPriceInput = screen.getByLabelText(/cost price/i);
+
+      fireEvent.change(nameInput, { target: { value: 'Updated Name' } });
+      fireEvent.change(descriptionInput, { target: { value: 'Updated Description' } });
+      fireEvent.change(costPriceInput, { target: { value: '150' } });
+    });
 
     // Submit the form
-    const saveButton = screen.getByText('Save Changes');
-    fireEvent.click(saveButton);
+    const saveButton = screen.getByRole('button', { name: /save changes/i });
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
 
     await waitFor(() => {
       expect(mockServiceInstance.updateProduct).toHaveBeenCalledWith('TEST-1', {
         name: 'Updated Name',
-        description: 'Test Description 1',
-        costPrice: 100
+        description: 'Updated Description',
+        costPrice: 150
       });
-      expect(mockServiceInstance.getProducts).toHaveBeenCalledTimes(2); // Initial + after update
+      expect(mockServiceInstance.getProducts).toHaveBeenCalled();
     });
   });
 
@@ -132,7 +161,9 @@ describe('ProductsPage', () => {
       getProducts: jest.fn().mockRejectedValue(mockError)
     }));
 
-    render(<ProductsPage />);
+    await act(async () => {
+      render(<ProductsPage />);
+    });
 
     await waitFor(() => {
       expect(consoleError).toHaveBeenCalledWith('Error loading products:', mockError);

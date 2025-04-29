@@ -1,8 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { Timestamp } from 'firebase/firestore';
 import React from 'react';
 import { TransactionAnalytics } from '../../src/pages/transactionAnalytics/transactionAnalytics.page';
 import { ProductService } from '../../src/services/product.service';
+
+// Create mock timestamp before mocks
+const mockTimestamp = {
+  fromDate: (date: Date) => ({
+    toDate: () => date,
+    seconds: Math.floor(date.getTime() / 1000),
+    nanoseconds: (date.getTime() % 1000) * 1000000
+  })
+};
 
 // Mock ReportExtractionFactory
 jest.mock('../../src/pages/transactionAnalytics/services/ReportExtractionFactory', () => {
@@ -53,13 +61,7 @@ jest.mock('../../src/pages/transactionAnalytics/services/ReportExtractionFactory
 
 // Mock Firebase Timestamp
 jest.mock('firebase/firestore', () => ({
-  Timestamp: {
-    fromDate: (date: Date) => ({
-      toDate: () => date,
-      seconds: Math.floor(date.getTime() / 1000),
-      nanoseconds: (date.getTime() % 1000) * 1000000
-    })
-  }
+  Timestamp: mockTimestamp
 }));
 
 // Mock ProductService
@@ -75,8 +77,8 @@ jest.mock('../../src/services/product.service', () => ({
         basePrice: 200,
         platform: 'amazon',
         metadata: {
-          createdAt: Timestamp.fromDate(new Date()),
-          updatedAt: Timestamp.fromDate(new Date())
+          createdAt: mockTimestamp.fromDate(new Date()),
+          updatedAt: mockTimestamp.fromDate(new Date())
         }
       }
     ])
@@ -85,7 +87,6 @@ jest.mock('../../src/services/product.service', () => ({
 
 describe('Transaction Analytics Integration', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
     render(<TransactionAnalytics />);
   });
@@ -95,22 +96,18 @@ describe('Transaction Analytics Integration', () => {
   });
 
   it('opens price management modal when transactions are loaded', async () => {
-    // First we need transactions to be loaded for the button to be enabled
     const fileInput = screen.getByLabelText('Upload File');
     const file = new File(['test data'], 'test.csv', { type: 'text/csv' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    // Wait for transactions to be processed and button to be enabled
     await waitFor(() => {
       const managePricesButton = screen.getByRole('button', { name: /manage prices/i });
       expect(managePricesButton).not.toBeDisabled();
     });
 
-    // Now we can click the manage prices button
     const managePricesButton = screen.getByRole('button', { name: /manage prices/i });
     fireEvent.click(managePricesButton);
 
-    // Verify modal is open
     await waitFor(() => {
       expect(screen.getByText(/manage product prices/i)).toBeInTheDocument();
     });
@@ -125,15 +122,14 @@ describe('Transaction Analytics Integration', () => {
         description: 'Test Description 1',
         costPrice: 100,
         basePrice: 200,
-        platform: 'amazon' as const,
+        platform: 'amazon',
         metadata: {
-          createdAt: Timestamp.fromDate(new Date()),
-          updatedAt: Timestamp.fromDate(new Date())
+          createdAt: mockTimestamp.fromDate(new Date()),
+          updatedAt: mockTimestamp.fromDate(new Date())
         }
       }
     ];
 
-    // Call saveProducts and verify it was called with correct data
     await productService.saveProducts(mockProducts);
     expect(productService.saveProducts).toHaveBeenCalledWith(mockProducts);
   });

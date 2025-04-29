@@ -18,31 +18,29 @@ export const ProductsPage: React.FC = () => {
   const productService = new ProductService();
 
   useEffect(() => {
-    if (products.length === 0) {
-      loadProducts();
+    loadProducts();
+  }, []); // Run only on mount
+
+  useEffect(() => {
+    if (filters.platform || filters.search) {
+      setFilteredProducts(
+        products.filter(
+          (product) =>
+            (filters.platform ? product.platform === filters.platform : true) &&
+            (filters.search
+              ? product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+                product.sku.toLowerCase().includes(filters.search.toLowerCase())
+              : true)
+        )
+      );
     } else {
-      if (filters.platform || filters.search) {
-        setFilteredProducts(
-          products.filter(
-            (product) =>
-              (filters.platform && product.platform === filters.platform) ||
-              (!!filters.search &&
-                (product.name
-                  .toLowerCase()
-                  .includes(filters.search.toLowerCase()) ||
-                  product.sku
-                    .toLowerCase()
-                    .includes(filters.search.toLowerCase())))
-          )
-        );
-      } else {
-        setFilteredProducts(products);
-      }
+      setFilteredProducts(products);
     }
-  }, [filters]);
+  }, [filters, products]);
 
   const loadProducts = async () => {
     try {
+      setLoading(true);
       const data = await productService.getProducts(filters);
       setProducts(data);
       setFilteredProducts(data);

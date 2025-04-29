@@ -2,6 +2,8 @@ import React, { Suspense } from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { DefaultContainer } from "./containers/default/default.container";
 import { CircularProgress } from "@mui/material";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "./pages/auth/login.page";
 
 const HomePage = React.lazy(() =>
   import("./pages/home/home.page").then((module) => ({
@@ -32,18 +34,28 @@ export default function App({
 }) {
   return (
     <Router>
-      <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
-        <Suspense fallback={<CircularProgress />}>
-          <Routes>
-            <Route path="/labelMerger/" element={<HomePage />} />
-            <Route path="/labelMerger/products/" element={<ProductsPage />} />
-            <Route
-              path="/labelMerger/transactions/"
-              element={<TransactionAnalytics />}
-            />
-          </Routes>
-        </Suspense>
-      </DefaultContainer>
+      <Routes>
+        <Route path="/labelMerger/login" element={<LoginPage />} />
+        <Route
+          path="*"
+          element={
+            <ProtectedRoute>
+              <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
+                <Suspense fallback={<CircularProgress />}>
+                  <Routes>
+                    <Route path="/labelMerger/" element={<HomePage />} />
+                    <Route path="/labelMerger/products/" element={<ProductsPage />} />
+                    <Route
+                      path="/labelMerger/transactions/"
+                      element={<TransactionAnalytics />}
+                    />
+                  </Routes>
+                </Suspense>
+              </DefaultContainer>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </Router>
   );
 }

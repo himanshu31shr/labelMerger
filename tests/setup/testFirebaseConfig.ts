@@ -1,15 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { testEnv } from './testEnv';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: testEnv.VITE_FIREBASE_API_KEY,
-  authDomain: testEnv.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: testEnv.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: testEnv.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: testEnv.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: testEnv.VITE_FIREBASE_APP_ID
+  apiKey: 'test-api-key',
+  authDomain: 'test-auth-domain',
+  projectId: 'test-project-id',
+  storageBucket: 'test-storage-bucket',
+  messagingSenderId: 'test-messaging-sender-id',
+  appId: 'test-app-id',
+  measurementId: 'test-measurement-id'
 };
 
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 export const db = getFirestore(app);

@@ -31,8 +31,11 @@ describe('ProductService', () => {
 
   describe('parseXLSXFile', () => {
     it('should parse Amazon format correctly', async () => {
-      const mockFile = new File([''], 'test.xlsx');
-      const mockWorkbook = {};
+      const mockFile = {
+        name: 'test.xlsx',
+        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8))
+      } as unknown as File;
+      
       const mockData = [{
         sku: 'TEST-SKU',
         description: 'Test Product'
@@ -61,11 +64,19 @@ describe('ProductService', () => {
     });
 
     it('should parse Flipkart format correctly', async () => {
-      const mockFile = new File([''], 'test.xlsx');
+      const mockFile = {
+        name: 'test.xlsx',
+        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8))
+      } as unknown as File;
+
       const mockData = [{
-        'SKU ID': 'TEST-SKU',
+        'Seller SKU Id': 'TEST-SKU',
+        'Product Title': 'Test Product',
         'Product Name': 'Test Product',
-        'Cost Price': '100'
+        'Your Selling Price': '100',
+        'Listing Status': 'Active',
+        'Minimum Order Quantity': '1',
+        'Flipkart Serial Number': 'FSN123'
       }];
 
       (XLSX.read as jest.Mock).mockReturnValue({
@@ -80,18 +91,23 @@ describe('ProductService', () => {
         sku: 'TEST-SKU',
         name: 'Test Product',
         description: 'Test Product',
-        costPrice: 100,
+        sellingPrice: 100,
+        costPrice: 0,
         platform: 'flipkart',
         metadata: {
-          createdAt: expect.any(Object),
-          updatedAt: expect.any(Object),
-          lastImportedFrom: 'flipkart_import'
+          listingStatus: 'Active',
+          moq: '1',
+          flipkartSerialNumber: 'FSN123'
         }
       });
     });
 
     it('should throw error for unsupported format', async () => {
-      const mockFile = new File([''], 'test.xlsx');
+      const mockFile = {
+        name: 'test.xlsx',
+        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8))
+      } as unknown as File;
+      
       const mockData = [{ unsupported: 'format' }];
 
       (XLSX.read as jest.Mock).mockReturnValue({

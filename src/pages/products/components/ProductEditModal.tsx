@@ -60,12 +60,14 @@ export const ProductEditModal: React.FC<Props> = ({ product, onClose, onSave }) 
               value={product.sku}
               disabled
               fullWidth
+              inputProps={{ 'aria-label': 'SKU' }}
             />
             <TextField
               label="Platform"
               value={product.platform}
               disabled
               fullWidth
+              inputProps={{ 'aria-label': 'Platform' }}
             />
             <TextField
               label="Name"
@@ -73,6 +75,7 @@ export const ProductEditModal: React.FC<Props> = ({ product, onClose, onSave }) 
               onChange={handleChange('name')}
               fullWidth
               required
+              inputProps={{ 'aria-label': 'Name' }}
             />
             <TextField
               label="Description"
@@ -82,6 +85,7 @@ export const ProductEditModal: React.FC<Props> = ({ product, onClose, onSave }) 
               multiline
               rows={3}
               required
+              inputProps={{ 'aria-label': 'Description' }}
             />
             <TextField
               label="Cost Price"
@@ -90,7 +94,11 @@ export const ProductEditModal: React.FC<Props> = ({ product, onClose, onSave }) 
               onChange={handleChange('costPrice')}
               fullWidth
               required
-              inputProps={{ min: 0, step: 0.01 }}
+              inputProps={{ 
+                min: 0,
+                step: 0.01,
+                'aria-label': 'Cost Price'
+              }}
             />
             <Box display="flex" gap={2} justifyContent="flex-end">
               <Button onClick={onClose} color="inherit">

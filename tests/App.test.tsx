@@ -1,51 +1,52 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import App from "../src/App";
 
-// No need to wrap in BrowserRouter since App already includes it
+jest.mock("firebase/auth");
+
 const renderApp = () => {
-  window.history.pushState({}, "Test page", "/");
+  window.history.pushState({}, "Test page", "/labelMerger/");
   return render(<App mode="light" toggleTheme={() => {}} />);
 };
 
-test("renders label merger link", () => {
-  const { container } = renderApp();
-  const linkElement = screen.getByText(/label merger/i);
-  expect(linkElement).toBeInTheDocument();
-  expect(container).toMatchSnapshot();
-});
-
-test("renders navigation links", () => {
+test("renders navigation when authenticated", async () => {
   renderApp();
 
-  const menu = screen.getByTestId("menu-button");
-  expect(menu).toBeInTheDocument();
-  fireEvent.click(menu);
-  const mergeLabelsLink = screen.getByText(/merge labels/i);
-  const analyticsLink = screen.getByText(/transaction analytics/i);
-  expect(mergeLabelsLink).toBeInTheDocument();
-  expect(analyticsLink).toBeInTheDocument();
+  await waitFor(() => {
+    const mergeLabelsLink = screen.getByTestId("merge-labels");
+    expect(mergeLabelsLink).toBeInTheDocument();
+  });
 });
 
-test("navigation works correctly", () => {
+test("renders all navigation links", async () => {
   renderApp();
 
-  const menu = screen.getByTestId("menu-button");
-  expect(menu).toBeInTheDocument();
-  fireEvent.click(menu);
-  
-  const mergeLabelsLink = screen.getByText(/merge labels/i);
-  const analyticsLink = screen.getByText(/transaction analytics/i);
-  expect(mergeLabelsLink).toBeInTheDocument();
-  expect(analyticsLink).toBeInTheDocument();
+  await waitFor(() => {
+    const mergeLabelsLink = screen.getByTestId("merge-labels");
+    const productsLink = screen.getByTestId("products");
+    const transactionsLink = screen.getByTestId("transactions");
+    
+    expect(mergeLabelsLink).toBeInTheDocument();
+    expect(productsLink).toBeInTheDocument();
+    expect(transactionsLink).toBeInTheDocument();
+  });
+});
 
-  // Test label merger navigation
-  fireEvent.click(mergeLabelsLink);
-  expect(window.location.pathname).toBe("/labelMerger/");
+test("navigation works correctly", async () => {
+  renderApp();
 
-  // Test analytics page navigation
-  fireEvent.click(menu);
-  fireEvent.click(analyticsLink);
-  expect(window.location.pathname).toBe("/labelMerger/transactions/");
+  await waitFor(async () => {
+    const productsLink = screen.getByTestId("products");
+    fireEvent.click(productsLink);
+    expect(window.location.pathname).toBe("/labelMerger/products/");
+
+    const transactionsLink = screen.getByTestId("transactions");
+    fireEvent.click(transactionsLink);
+    expect(window.location.pathname).toBe("/labelMerger/transactions/");
+
+    const mergeLabelsLink = screen.getByTestId("merge-labels");
+    fireEvent.click(mergeLabelsLink);
+    expect(window.location.pathname).toBe("/labelMerger/");
+  });
 });
