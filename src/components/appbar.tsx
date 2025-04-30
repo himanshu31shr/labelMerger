@@ -116,6 +116,7 @@ export const AppBar = ({
             checked={mode === "dark"}
             onChange={toggleTheme}
             inputProps={{ "aria-label": "dark mode toggle" }}
+            data-testid="theme-toggle"
           />
 
           {authenticated && (

@@ -150,4 +150,8 @@ export class ProductService extends FirebaseService {
     ]);
     return products[0] || null;
   }
+
+  async deleteProduct(sku: string): Promise<void> {
+    return this.deleteDocument(this.COLLECTION_NAME, sku);
+  }
 }

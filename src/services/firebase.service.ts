@@ -1,71 +1,72 @@
+import { FirebaseError } from 'firebase/app';
 import {
-  collection,
-  query,
-  getDocs,
-  QueryConstraint,
-  writeBatch,
-  doc,
-  setDoc,
-  deleteDoc,
-  updateDoc,
   Firestore,
   FirestoreError,
+  QueryConstraint,
+  Timestamp,
+  WithFieldValue,
+  collection,
+  deleteDoc,
+  doc,
+  enableIndexedDbPersistence,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  writeBatch,
   DocumentData,
-  WithFieldValue
+  WriteBatch,
 } from "firebase/firestore";
-import { db as firebaseDb } from "./firebase.config";
+import { db } from "./firebase.config";
+
+interface EnhancedError extends Error {
+  originalError: FirestoreError;
+  shouldRetry: boolean;
+  context: string;
+}
 
 export class FirebaseService {
   protected db: Firestore;
+  private static persistenceEnabled = false;
 
   constructor() {
-    this.db = firebaseDb;
+    this.db = db;
+    this.enableOfflinePersistence();
   }
 
-  protected handleError(error: FirestoreError, context: string): never {
-    console.error(`Firebase error in ${context}:`, error);
-    throw error;
-  }
-
-  protected async batchOperation<T extends DocumentData>(
-    items: T[],
-    collectionName: string,
-    operation: "create" | "update" | "delete",
-    getDocId: (item: T) => string
-  ): Promise<void> {
-    const batch = writeBatch(this.db);
-    const MAX_BATCH_SIZE = 500;
-
-    for (let i = 0; i < items.length; i += MAX_BATCH_SIZE) {
-      const chunk = items.slice(i, i + MAX_BATCH_SIZE);
-
-      for (const item of chunk) {
-        Object.keys(item).forEach((key) => {
-          if (item[key] === undefined) {
-            delete item[key];
-          }
-        });
-        const docRef = doc(this.db, collectionName, getDocId(item));
-
-        switch (operation) {
-          case "create":
-            batch.set(docRef, item as WithFieldValue<T>);
-            break;
-          case "update":
-            batch.update(docRef, item as WithFieldValue<T>);
-            break;
-          case "delete":
-            batch.delete(docRef);
-            break;
+  private async enableOfflinePersistence() {
+    if (!FirebaseService.persistenceEnabled) {
+      try {
+        await enableIndexedDbPersistence(this.db);
+        FirebaseService.persistenceEnabled = true;
+        console.log('Offline persistence enabled');
+      } catch (err) {
+        if ((err as FirestoreError).code === 'failed-precondition') {
+          console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+        } else if ((err as FirestoreError).code === 'unimplemented') {
+          console.warn('The current browser does not support persistence.');
         }
       }
-
-      try {
-        await batch.commit();
-      } catch (error) {
-        this.handleError(error as FirestoreError, `batch ${operation}`);
-      }
     }
+  }
+
+  protected handleError(error: unknown, context: string, shouldRetry = false): never {
+    if (error instanceof FirebaseError) {
+      if (error.code === 'failed-precondition') {
+        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+      } else if (error.code === 'unimplemented') {
+        console.warn('The current browser does not support persistence');
+      } else {
+        console.error(`Firebase error in ${context}:`, {
+          code: error.code,
+          message: error.message,
+          shouldRetry,
+        });
+      }
+    } else if (error instanceof Error) {
+      console.error(`Error in ${context}:`, error.message);
+    }
+    throw error;
   }
 
   protected async getDocuments<T extends DocumentData>(
@@ -73,17 +74,16 @@ export class FirebaseService {
     queryConstraints: QueryConstraint[] = []
   ): Promise<(T & { id: string })[]> {
     try {
-      const q = query(collection(this.db, collectionName), ...queryConstraints);
+      const collectionRef = collection(this.db, collectionName);
+      const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          } as T & { id: string })
-      );
+
+      return querySnapshot.docs.map((doc) => ({
+        ...(doc.data() as T),
+        id: doc.id,
+      }));
     } catch (error) {
-      return this.handleError(error as FirestoreError, "getDocuments");
+      this.handleError(error as FirestoreError, "getDocuments");
     }
   }
 
@@ -93,7 +93,11 @@ export class FirebaseService {
     data: T
   ): Promise<void> {
     try {
-      await setDoc(doc(this.db, collectionName, docId), data);
+      const docRef = doc(this.db, collectionName, docId);
+      await setDoc(docRef, {
+        ...data,
+        updatedAt: Timestamp.now(),
+      });
     } catch (error) {
       this.handleError(error as FirestoreError, "setDocument");
     }
@@ -106,7 +110,10 @@ export class FirebaseService {
   ): Promise<void> {
     try {
       const docRef = doc(this.db, collectionName, docId);
-      await updateDoc(docRef, data as WithFieldValue<DocumentData>);
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: Timestamp.now(),
+      });
     } catch (error) {
       this.handleError(error as FirestoreError, "updateDocument");
     }
@@ -117,13 +124,58 @@ export class FirebaseService {
     docId: string
   ): Promise<void> {
     try {
-      await deleteDoc(doc(this.db, collectionName, docId));
+      const docRef = doc(this.db, collectionName, docId);
+      await deleteDoc(docRef);
     } catch (error) {
       this.handleError(error as FirestoreError, "deleteDocument");
     }
   }
 
-  protected async createIndex() {
-    
+  protected async batchOperation<T>(
+    items: T[],
+    collectionName: string,
+    operation: "create" | "update" | "delete",
+    getDocId: (item: T) => string
+  ): Promise<void> {
+    const batch = writeBatch(this.db);
+    items.forEach((item) => {
+      const docRef = doc(this.db, collectionName, getDocId(item));
+      switch (operation) {
+        case "create":
+          batch.set(docRef, {
+            ...item,
+            updatedAt: Timestamp.now(),
+            createdAt: Timestamp.now(),
+          });
+          break;
+        case "update":
+          batch.update(docRef, {
+            ...item,
+            updatedAt: Timestamp.now(),
+          });
+          break;
+        case "delete":
+          batch.delete(docRef);
+          break;
+      }
+    });
+    return this.processBatchWithRetry(batch);
+  }
+
+  protected async processBatchWithRetry(
+    batch: WriteBatch,
+    maxRetries = 3,
+    attempt = 0
+  ): Promise<void> {
+    try {
+      await batch.commit();
+    } catch (error) {
+      if (error instanceof FirebaseError && error.code === 'unavailable' && attempt < maxRetries) {
+        // Exponential backoff delay
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        return this.processBatchWithRetry(batch, maxRetries, attempt + 1);
+      }
+      throw new Error('Service temporarily unavailable');
+    }
   }
 }

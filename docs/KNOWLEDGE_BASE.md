@@ -476,25 +476,7 @@ interface DataTableProps<T> {
    - Use progressive loading for large datasets
    - Prefetch data based on user behavior
 
-### 10.3 PDF Generation
-1. **Worker Implementation**:
-   ```typescript
-   // Example worker usage
-   const worker = new Worker('/pdf-worker.ts');
-   worker.postMessage({ type: 'generate', data: labels });
-   worker.onmessage = (e) => {
-     if (e.data.type === 'progress') {
-       updateProgress(e.data.progress);
-     } else if (e.data.type === 'complete') {
-       downloadPDF(e.data.pdf);
-     }
-   };
-   ```
-
-2. **Memory Management**:
-   - Release resources after PDF generation
-   - Implement chunked processing for large files
-   - Monitor memory usage during generation
+---
 
 ## 11. Error Handling Standards
 
@@ -816,3 +798,165 @@ const syncPendingChanges = async () => {
 - Include integration tests for critical flows
 - Mock external services properly
 - Test error scenarios thoroughly
+
+## 18. Transaction Analytics Implementation
+
+### 18.1 Component Architecture
+1. **Main Page (`transactionAnalytics.page.tsx`)**:
+   - Manages global state and data fetching
+   - Handles file upload and processing
+   - Coordinates between child components
+   - Implements tab-based navigation
+
+2. **Summary Tiles (`summary-tiles.component.tsx`)**:
+   - Displays key metrics in visual tiles:
+     - Total Sales
+     - Total Expenses
+     - Total Units Sold
+     - Total Cost
+     - Total Profit
+   - Material-UI Paper components with icons
+   - Color-coded for different metrics
+
+3. **Order List (`order-list.component.tsx`)**:
+   - Tabular view of individual transactions
+   - Implements DataTable with filtering and sorting
+   - Columns:
+     - Transaction ID
+     - SKU
+     - Product Name
+     - Platform
+     - Selling Price
+     - Earnings
+     - Product Cost
+     - Type
+
+4. **Product List (`product-list.component.tsx`)**:
+   - Product-wise performance summary
+   - Aggregated metrics by SKU
+   - DataTable implementation with:
+     - SKU
+     - Description
+     - Units
+     - Sales
+     - Cost
+     - Profit
+
+### 18.2 Data Flow
+1. **Initial Load**:
+   ```typescript
+   // Load existing transactions and prices
+   const loadData = async () => {
+     const [transactions, products] = await Promise.all([
+       transactionService.getTransactions(),
+       productService.getProducts()
+     ]);
+     // Process and update state
+   };
+   ```
+
+2. **File Upload Process**:
+   - User selects CSV/XLSX file
+   - Factory pattern processes file based on platform
+   - Data saved to Firebase
+   - UI updates with new data
+   - Analytics recalculated
+
+3. **Price Management**:
+   - Direct navigation to product management
+   - Real-time price updates
+   - Automatic analytics recalculation
+
+### 18.3 State Management
+1. **Component State**:
+   - Transactions array
+   - Product prices map
+   - Summary data
+   - Loading states
+   - Error handling
+   - Tab selection
+   - Date range tracking
+
+2. **Firebase Integration**:
+   - Real-time data persistence
+   - Batch operations for uploads
+   - Optimistic updates
+   - Offline support
+
+### 18.4 Error Handling
+1. **Upload Validation**:
+   - File format checking
+   - Required fields validation
+   - Data format verification
+
+2. **User Feedback**:
+   - Loading indicators
+   - Error alerts
+   - Process status updates
+
+3. **Recovery Actions**:
+   - Offer retry options for failed operations
+   - Implement auto-save for form data
+   - Provide offline capabilities
+
+### 18.5 Factory Pattern Implementation
+1. **Platform Detection**:
+   ```typescript
+   class ReportExtractionFactory {
+     private identify() {
+       if (this.file?.name.endsWith(".xlsx")) {
+         this.reportType = "Flipkart";
+       } else {
+         this.reportType = "Amazon";
+       }
+     }
+   }
+   ```
+
+2. **Processor Selection**:
+   - Automatic format detection based on file extension
+   - Dynamic instantiation of appropriate processor
+   - Error handling for unsupported formats
+   - Memory-efficient processing strategy
+
+3. **Data Standardization**:
+   ```typescript
+   interface AbstractFactory {
+     file: File;
+     process(): Promise<Transaction[]>;
+     transactions: Transaction[];
+     prices: ProductPrice[];
+   }
+   ```
+
+### 18.6 Data Processing
+1. **Amazon CSV Processing**:
+   - Header line skipping (11 lines)
+   - Custom field mapping
+   - Currency format normalization
+   - Dynamic SKU-price mapping
+
+2. **Flipkart XLSX Processing**:
+   - Multi-sheet parsing (Orders P&L, SKU-level P&L)
+   - Required sheet validation
+   - Price extraction from SKU sheet
+   - Order data transformation
+
+3. **Price Integration**:
+   - Real-time price mapping
+   - Cost calculation per transaction
+   - SKU-based relationship tracking
+   - Profit calculation with latest prices
+
+### 18.7 Performance Optimizations
+1. **Memory Management**:
+   - Stream processing for large files
+   - Efficient data structures (Map for price lookup)
+   - Cleanup of temporary data
+   - Resource release after processing
+
+2. **State Updates**:
+   - Batch state updates
+   - Memoized calculations
+   - Efficient re-renders
+   - Loading state management

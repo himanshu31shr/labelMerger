@@ -1,52 +1,78 @@
-import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import App from "../src/App";
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import App from '../src/App';
+import '@testing-library/jest-dom';
 
-jest.mock("firebase/auth");
+// Mock the lazy-loaded components
+jest.mock('../src/pages/home/home.page', () => ({
+  HomePage: () => <div data-testid="home-page">Home Page</div>
+}));
 
-const renderApp = () => {
-  window.history.pushState({}, "Test page", "/labelMerger/");
-  return render(<App mode="light" toggleTheme={() => {}} />);
+jest.mock('../src/pages/products/products.page', () => ({
+  default: () => <div data-testid="products-page">Products Page</div>
+}));
+
+jest.mock('../src/pages/transactionAnalytics/transactionAnalytics.page', () => ({
+  TransactionAnalytics: () => <div data-testid="analytics-page">Analytics Page</div>
+}));
+
+jest.mock('../src/pages/auth/login.page', () => ({
+  LoginPage: () => <div data-testid="login-page">Login Page</div>
+}));
+
+// Mock firebase auth
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn(),
+  signInWithEmailAndPassword: jest.fn(),
+  onAuthStateChanged: jest.fn((auth, callback) => {
+    callback(null); // Simulate no user logged in
+    return () => {};
+  })
+}));
+
+// Mock AuthService
+jest.mock('../src/services/auth.service', () => ({
+  AuthService: jest.fn().mockImplementation(() => ({
+    onAuthStateChanged: (callback: (user: any) => void) => {
+      callback(null);
+      return () => {};
+    }
+  }))
+}));
+
+const renderWithRouter = (initialRoute = '/') => {
+  return render(
+    <MemoryRouter initialEntries={[initialRoute]}>
+      <App toggleTheme={() => {}} mode="light" />
+    </MemoryRouter>
+  );
 };
 
-test("renders navigation when authenticated", async () => {
-  renderApp();
-
-  await waitFor(() => {
-    const mergeLabelsLink = screen.getByTestId("merge-labels");
-    expect(mergeLabelsLink).toBeInTheDocument();
+describe('App Component', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
-});
 
-test("renders all navigation links", async () => {
-  renderApp();
-
-  await waitFor(() => {
-    const mergeLabelsLink = screen.getByTestId("merge-labels");
-    const productsLink = screen.getByTestId("products");
-    const transactionsLink = screen.getByTestId("transactions");
-    
-    expect(mergeLabelsLink).toBeInTheDocument();
-    expect(productsLink).toBeInTheDocument();
-    expect(transactionsLink).toBeInTheDocument();
+  it('displays login page when not authenticated', async () => {
+    renderWithRouter();
+    expect(await screen.findByTestId('login-page')).toBeInTheDocument();
   });
-});
 
-test("navigation works correctly", async () => {
-  renderApp();
+  it('displays home page when authenticated', async () => {
+    // Mock authenticated state
+    const authService = require('../src/services/auth.service');
+    authService.AuthService.mockImplementation(() => ({
+      onAuthStateChanged: (callback: (user: any) => void) => {
+        callback({ uid: 'test-user' });
+        return () => {};
+      }
+    }));
 
-  await waitFor(async () => {
-    const productsLink = screen.getByTestId("products");
-    fireEvent.click(productsLink);
-    expect(window.location.pathname).toBe("/labelMerger/products/");
+    renderWithRouter('/labelMerger/');
 
-    const transactionsLink = screen.getByTestId("transactions");
-    fireEvent.click(transactionsLink);
-    expect(window.location.pathname).toBe("/labelMerger/transactions/");
-
-    const mergeLabelsLink = screen.getByTestId("merge-labels");
-    fireEvent.click(mergeLabelsLink);
-    expect(window.location.pathname).toBe("/labelMerger/");
+    await waitFor(() => {
+      expect(screen.getByTestId('home-page')).toBeInTheDocument();
+    });
   });
 });

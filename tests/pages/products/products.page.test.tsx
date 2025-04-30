@@ -52,9 +52,16 @@ describe('ProductsPage', () => {
     }));
   });
 
-  it('renders loading state initially', () => {
+  it('renders loading state initially', async () => {
     render(<ProductsPage />);
+    
+    // Initial loading state should show CircularProgress
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
   });
 
   it('loads and displays products', async () => {

@@ -1,3 +1,5 @@
+import { Product } from "../services/product.service";
+
 export interface Transaction {
   transactionId: string;
   platform: 'amazon' | 'flipkart';
@@ -21,11 +23,7 @@ export interface Transaction {
     marketplaceFee: number;
     otherFees: number;
   };
-  product: {
-    name: string;
-    costPrice: number;
-    basePrice: number;
-  };
+  product: Product;
   metadata: {
     createdAt: string;
     updatedAt: string;

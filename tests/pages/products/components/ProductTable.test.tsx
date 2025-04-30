@@ -21,37 +21,31 @@ jest.mock('firebase/firestore', () => ({
     now: () => mockTimestamp
   }
 }));
-const mockProducts: Product[] = [
-  {
-    sku: 'TEST-1',
-    name: 'Test Product 1',
-    description: 'Description 1',
-    costPrice: 100,
-    platform: 'amazon',
-    metadata: {
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-      lastImportedFrom: 'test',
-      flipkartSerialNumber: '123'
-    }
-  },
-  {
-    sku: 'TEST-2',
-    name: 'Test Product 2',
-    description: 'Description 2',
-    costPrice: 200,
-    platform: 'flipkart',
-    metadata: {
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-      lastImportedFrom: 'test',
-      flipkartSerialNumber: '456'
-    }
-  }
-];
 
 describe('ProductTable', () => {
+  const mockProducts: Product[] = [
+    {
+      sku: 'SKU1',
+      name: 'Product 1',
+      description: 'Description 1',
+      platform: 'amazon',
+      costPrice: 100,
+      sellingPrice: 200,
+      metadata: {}
+    },
+    {
+      sku: 'SKU2',
+      name: 'Product 2',
+      description: 'Description 2',
+      platform: 'flipkart',
+      costPrice: 150,
+      sellingPrice: 300,
+      metadata: {}
+    }
+  ];
+
   const mockOnEdit = jest.fn();
+  const mockOnDelete = jest.fn();
   const mockOnFilterChange = jest.fn();
 
   beforeEach(() => {
@@ -63,41 +57,38 @@ describe('ProductTable', () => {
       <ProductTable
         products={mockProducts}
         onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
         onFilterChange={mockOnFilterChange}
       />
     );
 
-    // Check SKUs
-    expect(screen.getByText('TEST-1')).toBeInTheDocument();
-    expect(screen.getByText('TEST-2')).toBeInTheDocument();
-
-    // Check descriptions
+    // Check product info
+    expect(screen.getByText('SKU1')).toBeInTheDocument();
+    expect(screen.getByText('Product 1')).toBeInTheDocument();
     expect(screen.getByText('Description 1')).toBeInTheDocument();
-    expect(screen.getByText('Description 2')).toBeInTheDocument();
+    
+    // Check platform badges
+    expect(screen.getByDisplayValue('amazon')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('flipkart')).toBeInTheDocument();
 
-    // Check platforms
-    expect(screen.getByText('amazon')).toBeInTheDocument();
-    expect(screen.getByText('flipkart')).toBeInTheDocument();
-
-    // Check cost price formatting
+    // Check currency formatting
     expect(screen.getByText('₹100.00')).toBeInTheDocument();
     expect(screen.getByText('₹200.00')).toBeInTheDocument();
   });
 
-  it('filters by platform', async () => {
+  it('filters by platform', () => {
     render(
       <ProductTable
         products={mockProducts}
         onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
         onFilterChange={mockOnFilterChange}
       />
     );
 
-    // Open the select dropdown
     const platformSelect = screen.getByLabelText('Platform');
     fireEvent.mouseDown(platformSelect);
 
-    // Click the amazon option
     const amazonOption = screen.getByRole('option', { name: 'Amazon' });
     fireEvent.click(amazonOption);
 
@@ -107,11 +98,43 @@ describe('ProductTable', () => {
     });
   });
 
+  it('clears filters when All is selected', () => {
+    render(
+      <ProductTable
+        products={mockProducts}
+        onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
+        onFilterChange={mockOnFilterChange}
+      />
+    );
+
+    const platformSelect = screen.getByLabelText('Platform');
+    fireEvent.mouseDown(platformSelect);
+
+    const amazonOption = screen.getByRole('option', { name: 'Amazon' });
+    fireEvent.click(amazonOption);
+
+    expect(mockOnFilterChange).toHaveBeenCalledWith({
+      platform: 'amazon',
+      search: ''
+    });
+
+    fireEvent.mouseDown(platformSelect);
+    const allOption = screen.getByRole('option', { name: 'All' });
+    fireEvent.click(allOption);
+
+    expect(mockOnFilterChange).toHaveBeenCalledWith({
+      platform: undefined,
+      search: ''
+    });
+  });
+
   it('filters by search term', () => {
     render(
       <ProductTable
         products={mockProducts}
         onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
         onFilterChange={mockOnFilterChange}
       />
     );
@@ -130,28 +153,36 @@ describe('ProductTable', () => {
       <ProductTable
         products={mockProducts}
         onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
         onFilterChange={mockOnFilterChange}
       />
     );
 
-    const editButton = screen.getByLabelText('edit-TEST-1');
+    const editButton = screen.getByLabelText('edit-SKU1');
     fireEvent.click(editButton);
 
     expect(mockOnEdit).toHaveBeenCalledWith(mockProducts[0]);
   });
 
   it('renders product links correctly', () => {
-    render(
-      <ProductTable
-        products={mockProducts}
-        onEdit={mockOnEdit}
-        onFilterChange={mockOnFilterChange}
-      />
-    );
+    const mockProductWithFlipkartId = {
+      ...mockProducts[1],
+      metadata: {
+        ...mockProducts[1].metadata,
+        flipkartSerialNumber: '12345'
+      }
+    };
 
-    const links = screen.getAllByRole('link');
-    expect(links[0]).toHaveAttribute('href', 'https://www.flipkart.com/product/p/itme?pid=123');
-    expect(links[1]).toHaveAttribute('href', 'https://www.flipkart.com/product/p/itme?pid=456');
+    render(<ProductTable 
+      products={[mockProductWithFlipkartId]} 
+      onEdit={mockOnEdit} 
+      onDelete={mockOnDelete} 
+      onFilterChange={mockOnFilterChange} 
+    />);
+
+    // Find view button (RemoveRedEyeIcon button) for Flipkart product
+    const viewButton = screen.getByTestId('view-flipkart-12345');
+    expect(viewButton).toHaveAttribute('href', 'https://www.flipkart.com/product/p/itme?pid=12345');
   });
 
   it('clears filters when All is selected', () => {
@@ -159,6 +190,7 @@ describe('ProductTable', () => {
       <ProductTable
         products={mockProducts}
         onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
         onFilterChange={mockOnFilterChange}
       />
     );

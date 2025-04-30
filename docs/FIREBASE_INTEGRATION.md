@@ -185,10 +185,10 @@ This document outlines the step-by-step plan for integrating Firebase into the T
    - Role-based access
    - Security rules enforcement
 
-## Phase 4: Transaction Data Structure
+## Phase 4: Transaction Data Structure ✅
 
-### Task 4.1: Database Schema Design
-1. Design Firestore collections:
+### Task 4.1: Database Schema Design (Completed)
+1. Firestore collections implemented:
    - transactions
      - transactionId: string
      - platform: 'amazon' | 'flipkart'
@@ -196,57 +196,143 @@ This document outlines the step-by-step plan for integrating Firebase into the T
      - sku: string
      - quantity: number
      - sellingPrice: number
-     - shippingFee: number
-     - marketplaceFee: number
-     - otherFees: number
+     - expenses: {
+       shippingFee: number
+       marketplaceFee: number
+       otherFees: number
+     }
      - product: {
        name: string
        purchasePrice: number
        currentPrice: number
      }
-     - createdAt: timestamp
-     - updatedAt: timestamp
+     - metadata: {
+       createdAt: timestamp
+       updatedAt: timestamp
+     }
+     - hash: string (unique identifier)
 
-   - productPrices
-     - sku: string
-     - name: string
-     - purchasePrice: number
-     - currentPrice: number
-     - updatedAt: timestamp
+2. Database rules implemented:
+   - Read access: Authenticated users
+   - Write access: Authenticated users with validation
+   - Delete access: Document owner or admin
 
-2. Set up database rules
-3. Create database indexes for efficient queries
-4. Plan data migration strategy for existing data
+3. Database indexes created:
+   - Single field: platform, orderDate, sku, type
+   - Compound: platform + orderDate, sku + orderDate
+
+4. Data migration strategy:
+   - Uses batch operations for bulk imports
+   - Handles concurrent writes with transactions
+   - Maintains data consistency with validation
 
 ## Phase 5: Transaction Analytics Integration
 
 ### Task 5.1: Data Service Implementation
-1. Create TransactionFirebaseService:
-   - saveTransactions(transactions: Transaction[]): Promise<void>
-   - getTransactions(filters: TransactionFilter): Promise<Transaction[]>
-   - updateProductPrices(prices: ProductPrice[]): Promise<void>
-   - getProductPrices(): Promise<ProductPrice[]>
+1. **Implemented Services**:
+   - `transactionService.ts`:
+     ```typescript
+     saveTransactions(transactions: Transaction[]): Promise<void>
+     getTransactions(filters?: TransactionFilter): Promise<Transaction[]>
+     ```
+   - `productService.ts`:
+     ```typescript
+     getProducts(): Promise<Product[]>
+     updateProduct(product: Product): Promise<void>
+     ```
+   - `TransactionAnalysisService`:
+     ```typescript
+     analyze(): TransactionSummary
+     ```
+   - `ReportExtractionFactory`:
+     - Factory pattern for platform-specific data processing
+     - Supports Amazon CSV and Flipkart XLSX formats
 
-2. Update TransactionAnalysisService:
-   - Modify to use Firebase for data persistence
-   - Implement caching for better performance
-   - Add real-time updates for price changes
+2. **Data Flow Implementation**:
+   - Parallel initial data loading with Promise.all
+   - Real-time price synchronization
+   - Optimistic UI updates
+   - Firebase offline persistence
+   - Automatic analytics recalculation on changes
 
-### Task 5.2: Transaction Analytics Page Updates
-1. Modify file upload flow:
-   - Parse CSV data
-   - Save transactions to Firebase
-   - Update UI to show upload progress
+3. **Product Price Integration**:
+   - Dynamic product cost mapping
+   - Real-time profit calculations
+   - SKU-based relationship management
+   - Price history tracking
 
-2. Update visualization components:
-   - Fetch data from Firebase instead of memory
-   - Implement pagination for large datasets
-   - Add real-time updates when data changes
+### Task 5.2: UI Components
+1. **Summary Display**:
+   - Material-UI Paper components
+   - Icon-based metric tiles
+   - Color-coded financial indicators
+   - Responsive layout design
 
-3. Enhance price management:
-   - Store price updates in Firebase
-   - Reflect price changes in real-time across all views
-   - Implement optimistic updates for better UX
+2. **Data Tables**:
+   - Reusable DataTable component
+   - Built-in sorting and filtering
+   - Column customization
+   - Currency formatting
+   - Pagination support
+
+3. **File Upload Flow**:
+   - Platform detection
+   - Format validation
+   - Progress indicators
+   - Error handling
+   - Success feedback
+
+4. **Navigation Integration**:
+   - Direct price management access
+   - Tab-based data views
+   - Date range display
+   - Loading states
+
+### Task 5.3: Error Handling Implementation
+1. **File Processing Errors**:
+   ```typescript
+   try {
+     const newTransactions = await new ReportExtractionFactory(file).extract();
+     await transactionService.saveTransactions(newTransactions);
+   } catch (error) {
+     console.error("Error processing file:", error);
+     setError(error instanceof Error ? error.message : "An error occurred");
+   }
+   ```
+
+2. **Data Loading Errors**:
+   ```typescript
+   const loadData = async () => {
+     try {
+       const [loadedTransactions, products] = await Promise.all([
+         transactionService.getTransactions(),
+         productService.getProducts(),
+       ]);
+       // Process data...
+     } catch (error) {
+       console.error("Error loading data:", error);
+       setError(error instanceof Error ? error.message : "Failed to load data");
+     }
+   };
+   ```
+
+### Task 5.4: Performance Optimizations
+1. **Parallel Data Loading**:
+   - Use Promise.all for concurrent requests
+   - Implement efficient price mapping with Map
+   - Minimize state updates with batch processing
+
+2. **Memory Management**:
+   - Stream processing for file uploads
+   - Efficient data structures
+   - Proper cleanup on unmount
+   - Resource deallocation
+
+3. **State Updates**:
+   - Memoized calculations with useMemo
+   - Efficient re-renders
+   - Smart component updates
+   - Loading state indicators
 
 ## Phase 6: Testing Implementation
 

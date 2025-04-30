@@ -47,9 +47,9 @@ const SummaryTiles: React.FC<SummaryTilesProps> = ({ summary }) => {
   ];
 
   return (
-    <Grid container spacing={4}>
+    <Grid container spacing={2}>
       {tiles.map((tile, index) => (
-        <Grid item sx={{ display: "flex", gap: "16px" }} key={index}>
+        <Grid item key={index}>
           <Paper
             sx={{
               p: 2,

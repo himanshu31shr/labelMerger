@@ -30,14 +30,30 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Product search and filtering
 
 ### 2.3. Transaction Analytics
-- **Input**: Transaction data from uploaded CSV files
-- **Output**: Comprehensive financial analytics
-- **Key Functionalities**:
-  - Process and analyze transaction data from both platforms
-  - Calculate sales, expenses, and profits
-  - Display marketplace-specific analytics
-  - Manage product prices dynamically
-  - Generate SKU-wise performance reports
+- **Input**: 
+  - Transaction data files (.csv for Amazon, .xlsx for Flipkart)
+  - Product catalog with pricing information
+- **Output**: 
+  - Comprehensive financial analytics dashboard
+  - Order-level transaction details
+  - Product-wise performance metrics
+- **Key Features**:
+  - Multi-platform data processing (Amazon and Flipkart)
+  - Real-time data persistence with Firebase
+  - Dynamic price management integration
+  - Financial metrics:
+    - Total sales and expenses
+    - Units sold tracking
+    - Product-wise profitability
+    - Cost analysis
+  - Interactive data views:
+    - Order list with filtering and sorting
+    - Product performance summary
+    - Visual metrics dashboard
+  - Date range tracking for transactions
+  - Error handling and validation
+  - Loading state management
+  - Direct navigation to price management
 
 ## 3. Technical Requirements
 
@@ -276,6 +292,48 @@ service cloud.firestore {
 - Mock `papaparse` for CSV parsing tests
 - Mock `firebase` for Firestore operations tests
 - Mock `xlsx` for Excel file processing tests
+
+### 6.4 Transaction Analytics Testing
+
+#### Factory Pattern Tests
+1. **ReportExtractionFactory**:
+   - Platform detection accuracy
+   - File format validation
+   - Error handling for invalid files
+   - Memory management for large files
+
+2. **Platform-Specific Processors**:
+   - Amazon CSV parsing
+     - Header detection
+     - Line skipping logic
+     - Currency format handling
+     - Field mapping validation
+   - Flipkart XLSX parsing
+     - Sheet structure validation
+     - Multi-sheet processing
+     - Price extraction accuracy
+     - SKU mapping validation
+
+#### Integration Tests
+1. **Data Processing Flow**:
+   - End-to-end file processing
+   - Firebase persistence verification
+   - Price mapping accuracy
+   - Analytics recalculation
+   - Error recovery scenarios
+
+2. **UI Component Tests**:
+   - Summary tile updates
+   - Table sorting and filtering
+   - Date range calculations
+   - Loading state management
+   - Error display handling
+
+3. **Performance Tests**:
+   - Large file processing
+   - Batch operation efficiency
+   - Memory usage monitoring
+   - UI responsiveness checks
 
 ## 8. Future Enhancements
 - Add support for additional e-commerce platforms.

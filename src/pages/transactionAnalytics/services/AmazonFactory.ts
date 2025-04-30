@@ -1,7 +1,7 @@
 import Papa from "papaparse";
-import { ProductPrice, Transaction } from "../../../types/transaction.type";
+import { Transaction } from "../../../types/transaction.type";
 import { AmazonCsvData } from "../../../types/types";
-import { AbstractFactory, ReportData } from "./ReportExtractionFactory";
+import { AbstractFactory } from "./ReportExtractionFactory";
 
 interface AmazonRawData {
   data: AmazonCsvData[];
@@ -11,11 +11,7 @@ interface AmazonRawData {
 
 export class AmazonFactory implements AbstractFactory {
   public file: File;
-
   public transactions: Transaction[] = [];
-
-  public prices: ProductPrice[] = [];
-
   private ordersData: AmazonRawData | undefined;
 
   constructor(file: File) {
@@ -27,100 +23,104 @@ export class AmazonFactory implements AbstractFactory {
     this.process = this.process.bind(this);
   }
 
-  reponseAdapter(): ReportData {
-    return {
-      transactions: this.transactions,
-      prices: this.prices,
-    };
+  private parseCurrencyValue(value: string | null | undefined): number {
+    if (!value) return 0;
+    // Remove currency symbol, commas, and spaces
+    const cleaned = value.replace(/[₹,\s]/g, '').trim();
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
   }
 
-  private async parseCsvData() {
-    this.ordersData = (await new Promise<Papa.ParseResult<unknown>>(
-      (resolve, reject) => {
-        Papa.parse(this.file, {
-          complete: resolve,
-          header: true,
-          skipEmptyLines: true,
-          beforeFirstChunk: function (chunk) {
-            const linesToSkip = 11; // Change this number to skip a different amount of lines
-            let eof = chunk.indexOf("\n");
-            for (let i = 1; i < linesToSkip && eof > 0; ++i) {
-              eof = chunk.indexOf("\n", eof + 1);
-            }
-            return chunk.substring(eof + 1);
-          },
-          error: reject,
-        });
-      }
-    )) as unknown as AmazonRawData;
+  private async parseCsvData(): Promise<void> {
+    this.ordersData = (await new Promise<Papa.ParseResult<unknown>>((resolve, reject) => {
+      Papa.parse(this.file, {
+        complete: resolve,
+        header: true,
+        skipEmptyLines: true,
+        beforeFirstChunk: function(chunk) {
+          const linesToSkip = 11;
+          let eof = chunk.indexOf("\n");
+          for (let i = 1; i < linesToSkip && eof > 0; ++i) {
+            eof = chunk.indexOf("\n", eof + 1);
+          }
+          return chunk.substring(eof + 1);
+        },
+        error: reject,
+      });
+    })) as unknown as AmazonRawData;
   }
 
-  private transformTransactions() {
+  private transformTransactions(): void {
     if (!this.ordersData) {
       throw new Error("No data to transform");
     }
 
     this.transactions = this.ordersData.data
-      .filter((row) => row && typeof row === "object")
-      .map(this.rowToTransaction);
+      .filter((row) => row && typeof row === "object" && row.type)
+      .map(this.rowToTransaction)
+      .filter((transaction): transaction is Transaction => !!transaction && !!transaction.type && !!transaction.sku);
   }
 
-  private rowToTransaction(row: AmazonCsvData): Transaction {
+  private rowToTransaction(row: AmazonCsvData): Transaction | null {
     const sku = row["Sku"] || row["sku"] || "";
-    const existingPrice = this.prices.find((price) => price.sku === sku);
-    if (!existingPrice && sku) {
-      this.prices.push({
-        sku: sku,
-        basePrice: 0,
-        costPrice: 0,
-        description: row["description"],
-        name: row["description"],
-      });
+    const type = row["type"]?.toLowerCase();
+
+    // Skip non-order transactions
+    if (!type || !["order", "shipped", "refund"].includes(type)) {
+      return null;
     }
+
+    // Parse all currency values
+    const sellingPrice = this.parseCurrencyValue(row["product sales"]);
+    const sellingFees = this.parseCurrencyValue(row["selling fees"]);
+    const fbaFees = this.parseCurrencyValue(row["fba fees"]);
+    const otherFees = this.parseCurrencyValue(row["other transaction fees"]);
+    const total = this.parseCurrencyValue(row["total"]);
 
     return {
       transactionId: row["order id"],
       platform: "amazon",
       orderDate: row["date/time"],
       sku: sku,
-      quantity: Number(row["quantity"]),
-      sellingPrice: Number(row["product sales"].replace(/[₹,]/g, "")),
-      description: row["description"],
-      type: row["type"],
+      quantity: Number(row["quantity"]) || 0,
+      sellingPrice,
+      description: row["description"] || "",
+      type: type,
       marketplace: "Amazon",
-      total: Number(row["total"].replace(/[₹,]/g, "")),
-      productSales: row["product sales"],
-      sellingFees: row["selling fees"],
-      fbaFees: row["fba fees"],
-      otherTransactionFees: row["other transaction fees"],
-      other: row["other"],
+      total,
+      productSales: row["product sales"] || "0",
+      sellingFees: Math.abs(sellingFees).toString(),
+      fbaFees: Math.abs(fbaFees).toString(),
+      otherTransactionFees: Math.abs(otherFees).toString(),
+      other: row["other"] || "0",
       expenses: {
         shippingFee: 0,
-        marketplaceFee: Number(row["selling fees"].replace(/[₹,]/g, "") || 0),
-        otherFees: Number(
-          row["other transaction fees"].replace(/[₹,]/g, "") || 0
-        ),
+        marketplaceFee: Math.abs(sellingFees),
+        otherFees: Math.abs(fbaFees) + Math.abs(otherFees)
       },
       product: {
-        name: row["description"],
+        name: row["description"] || "",
         costPrice: 0,
-        basePrice: 0,
+        sku: sku,
+        description: row["description"] || "",
+        platform: "amazon",
+        metadata: {}
       },
       metadata: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
-      hash:
-        Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15),
+      hash: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
     };
   }
 
-  async process(): Promise<ReportData> {
+  reponseAdapter(): Transaction[] {
+    return this.transactions;
+  }
+
+  async process(): Promise<Transaction[]> {
     await this.parseCsvData();
-
     this.transformTransactions();
-
     return this.reponseAdapter();
   }
 }

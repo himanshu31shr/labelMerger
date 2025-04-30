@@ -9,6 +9,7 @@ interface OrderListProps {
 interface OrderTableData {
   transactionId: string;
   sku: string;
+  productName: string;
   platform: string;
   sellingPrice: number;
   total: number;
@@ -20,23 +21,26 @@ const OrderList: React.FC<OrderListProps> = ({ transactions }) => {
   const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
 
   const tableData: OrderTableData[] = transactions.map(transaction => ({
-    transactionId: transaction.transactionId,
-    sku: transaction.sku,
-    platform: transaction.platform,
-    sellingPrice: transaction.sellingPrice,
+    transactionId: transaction.transactionId || '',
+    sku: transaction.sku || '',
+    productName: transaction.description || transaction.sku || 'Unknown Product',
+    platform: transaction.platform || '',
+    sellingPrice: transaction.sellingPrice || 0,
     total: transaction.total || 0,
-    productCost: transaction.product.costPrice,
+    productCost: transaction.product?.costPrice || 0,
     type: transaction.type || ''
   }));
 
   const columns: Column<OrderTableData>[] = [
     { id: 'transactionId', label: '#', filter: true },
     { id: 'sku', label: 'SKU', filter: true },
+    { id: 'productName', label: 'Product Name', filter: true },
     { id: 'platform', label: 'Platform', filter: true },
     { 
       id: 'sellingPrice', 
       label: 'Selling Price', 
       align: 'right',
+      filter: true,
       format: (value) => formatCurrency(value as number)
     },
     { 
