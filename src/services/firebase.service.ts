@@ -4,7 +4,6 @@ import {
   FirestoreError,
   QueryConstraint,
   Timestamp,
-  WithFieldValue,
   collection,
   deleteDoc,
   doc,
@@ -18,12 +17,6 @@ import {
   WriteBatch,
 } from "firebase/firestore";
 import { db } from "./firebase.config";
-
-interface EnhancedError extends Error {
-  originalError: FirestoreError;
-  shouldRetry: boolean;
-  context: string;
-}
 
 export class FirebaseService {
   protected db: Firestore;

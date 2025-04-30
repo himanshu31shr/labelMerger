@@ -91,7 +91,7 @@ describe('FlipkartFactory', () => {
       transactionId: 'OD123',
       platform: 'flipkart',
       orderDate: '2023-01-01',
-      sku: 'TEST-SKU-1',
+      sku: 'Test Product',
       quantity: 1,
       sellingPrice: 1234.56,
       description: 'Test Product',
@@ -109,7 +109,7 @@ describe('FlipkartFactory', () => {
       product: {
         name: 'Test Product',
         costPrice: 0,
-        sku: 'TEST-SKU-1',
+        sku: 'Test Product',
         description: 'Test Product',
         platform: 'flipkart',
         metadata: {}

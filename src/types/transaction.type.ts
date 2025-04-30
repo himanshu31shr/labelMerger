@@ -58,6 +58,7 @@ export interface TransactionSummary {
   totalProfit: number;
   totalUnits: number;
   totalCost: number;
+  profitBeforeCost: number;
 }
 
 export interface PriceMapping {

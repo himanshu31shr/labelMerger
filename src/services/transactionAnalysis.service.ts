@@ -1,14 +1,17 @@
 import {
+  ProductPrice,
   Transaction,
-  TransactionSummary
+  TransactionSummary,
 } from "../types/transaction.type";
-import { Product } from "./product.service";
 
 export class TransactionAnalysisService {
   private transactions: Transaction[];
-  private productPrices?: Map<string, Product>;
+  private productPrices?: Map<string, ProductPrice>;
 
-  constructor(transactions: Transaction[], productPrices: Map<string, Product>) {
+  constructor(
+    transactions: Transaction[],
+    productPrices: Map<string, ProductPrice>
+  ) {
     // Only include transactions that have a valid type
     this.transactions = transactions.filter(
       (transaction) => !!transaction && !!transaction.type
@@ -37,43 +40,74 @@ export class TransactionAnalysisService {
       "delivered",
       "in_transit",
       "return_cancelled",
-      "return_requested",
     ].includes(type.toLowerCase());
   }
 
-  analyze(transactions: Transaction[]): TransactionAnalysis {
-    const totalTransactions = transactions.length;
-    let totalRevenue = 0;
-    let totalCost = 0;
-    let totalProfit = 0;
-
-    transactions.forEach((transaction) => {
-      totalRevenue += transaction.total || 0;
-      if (transaction.product) {
-        totalCost += (transaction.product.costPrice || 0) * (transaction.quantity || 1);
-      }
-    });
-
-    totalProfit = totalRevenue - totalCost;
-
-    return {
-      totalTransactions,
-      totalRevenue,
-      totalCost,
-      totalProfit,
-      averageOrderValue: totalTransactions ? totalRevenue / totalTransactions : 0,
-      profitMargin: totalRevenue ? (totalProfit / totalRevenue) * 100 : 0,
+  analyze(): TransactionSummary {
+    const summary: TransactionSummary = {
+      totalSales: 0,
+      totalExpenses: 0,
+      expensesByCategory: {},
+      salesByProduct: {},
+      totalProfit: 0,
+      totalUnits: 0,
+      totalCost: 0,
+      profitBeforeCost: 0,
     };
-  }
 
-  updateProductPrices(prices: Product[]): void {
-    this.productPrices = new Map(prices.map((p) => [p.sku, p]));
-  }
+    for (const transaction of this.transactions) {
+      // Type safety is guaranteed by the filter in constructor
+      const transactionType = transaction.type || "";
+      const sku = transaction.sku;
+      const quantity = transaction.quantity;
+      const amount = transaction.sellingPrice;
+      const earnings = transaction.total || 0;
 
-  getProductPrices(): Product[] {
-    if (!this.productPrices) {
-      return [];
+      if (this.isExpense(transactionType)) {
+        const category = transactionType?.toLowerCase();
+        const totalExpenses =
+          transaction.expenses.shippingFee +
+          transaction.expenses.marketplaceFee +
+          transaction.expenses.otherFees;
+        summary.expensesByCategory[category] =
+          (summary.expensesByCategory[category] || 0) + totalExpenses;
+        summary.totalExpenses += totalExpenses;
+      }
+
+      if (this.isSale(transactionType)) {
+        summary.totalSales += amount;
+
+        // Add expenses for this sale
+        const totalExpenses =
+          transaction.expenses.shippingFee +
+          transaction.expenses.marketplaceFee +
+          transaction.expenses.otherFees;
+        summary.totalExpenses += totalExpenses;
+
+        if (!summary.salesByProduct[sku]) {
+          const productPrice = this.productPrices?.get(sku);
+          summary.salesByProduct[sku] = {
+            units: 0,
+            amount: 0,
+            profit: 0,
+            profitPerUnit: 0,
+            name: productPrice?.name || sku,
+          };
+        }
+
+        const productSummary = summary.salesByProduct[sku];
+        productSummary.units += quantity;
+        productSummary.amount += earnings;
+        summary.totalUnits += quantity;
+
+
+        const totalCost = transaction.product.costPrice;
+        summary.totalCost += totalCost;
+        summary.profitBeforeCost += amount + totalExpenses;
+        summary.totalProfit += (amount + totalExpenses - totalCost);
+      }
     }
-    return Array.from(this.productPrices.values());
+
+    return summary;
   }
 }

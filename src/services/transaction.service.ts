@@ -10,31 +10,26 @@ export class TransactionService extends FirebaseService {
       return;
     }
 
-    try {
-      // Remove duplicates within the new transactions based on hash
-      const uniqueTransactions = this.removeDuplicatesFromArray(transactions);
-      
-      // Check for existing transactions with the same hashes
-      const existingHashes = await this.getExistingHashes(uniqueTransactions.map(t => t.hash));
-      
-      // Filter out transactions that already exist
-      const newTransactions = uniqueTransactions.filter(t => !existingHashes.includes(t.hash));
+    // Remove duplicates within the new transactions based on hash
+    const uniqueTransactions = this.removeDuplicatesFromArray(transactions);
+    
+    // Check for existing transactions with the same hashes
+    const existingHashes = await this.getExistingHashes(uniqueTransactions.map(t => t.hash));
+    
+    // Filter out transactions that already exist
+    const newTransactions = uniqueTransactions.filter(t => !existingHashes.includes(t.hash));
 
-      if (newTransactions.length === 0) {
-        return;
-      }
-
-      // Save new transactions in batches
-      await this.batchOperation(
-        newTransactions,
-        this.COLLECTION_NAME,
-        "create",
-        (transaction) => transaction.hash
-      );
-    } catch (error) {
-      // Re-throw the enhanced error from FirebaseService
-      throw error;
+    if (newTransactions.length === 0) {
+      return;
     }
+
+    // Save new transactions in batches
+    await this.batchOperation(
+      newTransactions,
+      this.COLLECTION_NAME,
+      "create",
+      (transaction) => transaction.hash
+    );
   }
 
   async getTransactions(): Promise<Transaction[]> {

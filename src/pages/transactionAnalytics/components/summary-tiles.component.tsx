@@ -33,10 +33,16 @@ const SummaryTiles: React.FC<SummaryTilesProps> = ({ summary }) => {
       icon: <ShoppingCartIcon color="secondary" fontSize="large" />,
     },
     {
-      label: "Total Cost",
-      value: <FormattedCurrency value={summary.totalCost} />,
+      label: "Profit Before Cost",
+      value: <FormattedCurrency value={summary.profitBeforeCost} />,
       color: "info",
       icon: <InventoryIcon color="info" fontSize="large" />,
+    },
+    {
+      label: "Total Cost",
+      value: <FormattedCurrency value={summary.totalCost} />,
+      color: "success",
+      icon: <TrendingUpIcon color="success" fontSize="large" />,
     },
     {
       label: "Total Profit",

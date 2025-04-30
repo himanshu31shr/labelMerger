@@ -1,6 +1,6 @@
 import React from "react";
+import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { Transaction } from "../../../types/transaction.type";
-import { DataTable, Column } from "../../../components/DataTable/DataTable";
 
 interface OrderListProps {
   transactions: Transaction[];
@@ -23,7 +23,7 @@ const OrderList: React.FC<OrderListProps> = ({ transactions }) => {
   const tableData: OrderTableData[] = transactions.map(transaction => ({
     transactionId: transaction.transactionId || '',
     sku: transaction.sku || '',
-    productName: transaction.description || transaction.sku || 'Unknown Product',
+    productName: transaction.product.name || transaction.description || 'Unknown Product',
     platform: transaction.platform || '',
     sellingPrice: transaction.sellingPrice || 0,
     total: transaction.total || 0,

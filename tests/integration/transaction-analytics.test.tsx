@@ -28,6 +28,20 @@ jest.mock('../../src/services/product.service', () => ({
   }))
 }));
 
+// Mock TransactionAnalysisService
+jest.mock('../../src/services/transactionAnalysis.service', () => ({
+  TransactionAnalysisService: jest.fn().mockImplementation(() => ({
+    analyze: jest.fn().mockReturnValue({
+      totalTransactions: 1,
+      totalRevenue: 100,
+      totalCost: 80,
+      totalProfit: 20,
+      averageOrderValue: 100,
+      profitMargin: 20
+    })
+  }))
+}));
+
 // Then import React and testing utilities
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
