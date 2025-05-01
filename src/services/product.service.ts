@@ -1,7 +1,7 @@
 import { Timestamp, orderBy, where } from "firebase/firestore";
+import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { DEFAULT_PRODUCT_PRICES } from "../constants/defaultPrices";
-import { AmazonCsvData } from "../types/types";
 import { FirebaseService } from "./firebase.service";
 
 export interface Product {
@@ -17,16 +17,13 @@ export interface Product {
     listingStatus?: string;
     moq?: string;
     flipkartSerialNumber?: string;
+    amazonSerialNumber?: string;
   };
 }
 
 export interface ProductFilter {
   platform?: "amazon" | "flipkart";
   search?: string;
-}
-
-interface ParsedData {
-  [key: string]: unknown;
 }
 
 interface RawFlipkartData {
@@ -39,55 +36,128 @@ interface RawFlipkartData {
   "Flipkart Serial Number": string;
 }
 
+interface RawAmazonData {
+  "item-name": string;
+  "item-description": string;
+  "listing-id": string;
+  "seller-sku": string;
+  price: string;
+  quantity: string;
+  "open-date": string;
+  "image-url": string;
+  "item-is-marketplace": string;
+  "product-id-type": string;
+  "zshop-shipping-fee": string;
+  "item-note": string;
+  "item-condition": string;
+  "zshop-category1": string;
+  "zshop-browse-path": string;
+  "zshop-storefront-feature": string;
+  asin1: string;
+  asin2: string;
+  asin3: string;
+  "will-ship-internationally": string;
+  "expedited-shipping": string;
+  "zshop-boldface": string;
+  "product-id": string;
+  "bid-for-featured-placement": string;
+  "add-delete": string;
+  "pending-quantity": string;
+  "fulfillment-channel": string;
+  "Business Price": string;
+  "Quantity Price Type": string;
+  "maximum-retail-price": string;
+}
+
 export class ProductService extends FirebaseService {
   private readonly COLLECTION_NAME = "products";
 
-  async parseXLSXFile(file: File): Promise<Product[]> {
+  async parseProducts(file: File): Promise<Product[]> {
+    if (this.isAmazonFormat(file)) {
+      return this.parseAmazonProducts(file);
+    }
+
+    if (this.isFlipkartFormat(file)) {
+      return this.processFlipkartProducts(file);
+    }
+
+    throw new Error("Unsupported file format");
+  }
+
+  private async parseAmazonProducts(file: File): Promise<Product[]> {
+    const amazonProducts = await new Promise<RawAmazonData[]>(
+      (resolve, reject) => {
+        if (!file) {
+          reject(new Error("File is not set"));
+        }
+
+        Papa.parse(file, {
+          header: true,
+          complete: async (results) => {
+            const data = results.data as RawAmazonData[];
+            if (!Array.isArray(data) || data.length === 0) {
+              throw new Error("File is empty");
+            }
+            return resolve(data.filter((row) => row["seller-sku"]));
+          },
+          error: (error) => {
+            reject(error);
+          },
+        });
+      }
+    );
+
+    return this.amazonAdapter(amazonProducts);
+  }
+
+  private async processFlipkartProducts(file: File): Promise<Product[]> {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const rawData = XLSX.utils.sheet_to_json(worksheet);
+    rawData.shift()
 
     if (!Array.isArray(rawData) || rawData.length === 0) {
       throw new Error("File is empty");
     }
 
-    const firstRow = rawData[0] as ParsedData;
-
-    if (this.isAmazonFormat(firstRow)) {
-      return this.parseAmazonProducts(rawData as unknown as AmazonCsvData[]);
-    } else if (this.isFlipkartFormat(firstRow)) {
-      return this.parseFlipkartProducts(
-        rawData as unknown as RawFlipkartData[]
-      );
-    }
-    throw new Error("Unsupported file format");
+    return this.flipkartAdapter((rawData as unknown as RawFlipkartData[]));
   }
 
-  private isAmazonFormat(data: ParsedData): boolean {
-    return "sku" in data || "Sku" in data;
+  private isAmazonFormat(file: File): boolean {
+    return file.type === "text/plain";
   }
 
-  private isFlipkartFormat(data: ParsedData): boolean {
-    return "Seller SKU Id" in data;
+  private isFlipkartFormat(file: File): boolean {
+    return (
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel"
+    );
   }
 
-  private parseAmazonProducts(data: AmazonCsvData[]): Product[] {
+  private amazonAdapter(data: RawAmazonData[]): Product[] {
+    const prices = new Map(
+      DEFAULT_PRODUCT_PRICES.map((price) => [price.sku, price])
+    );
+
     return data.map((row) => ({
-      sku: (row.Sku || row.sku) as string,
-      name: row.description,
-      description: row.description,
-      costPrice: 0, // To be updated by user
+      sku: row["seller-sku"],
+      name: row["item-name"],
+      description:
+        prices.get(row["seller-sku"])?.description ?? row["item-description"],
+      costPrice: prices.get(row["seller-sku"])?.costPrice ?? 0, // To be updated by user
       platform: "amazon" as const,
+      sellingPrice: Number(row["price"]) || 0,
       metadata: {
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        lastImportedFrom: "amazon_import",
+        listingStatus: "active",
+        moq: "1",
+        amazonSerialNumber: row["asin1"],
       },
     }));
   }
 
-  private parseFlipkartProducts(data: Array<RawFlipkartData>): Product[] {
+  private flipkartAdapter(data: Array<RawFlipkartData>): Product[] {
     const prices = new Map(
       DEFAULT_PRODUCT_PRICES.map((price) => [price.sku, price])
     );
@@ -96,7 +166,7 @@ export class ProductService extends FirebaseService {
       sku: row["Seller SKU Id"],
       name: row["Product Title"],
       description:
-        prices.get(row["Seller SKU Id"])?.description ?? row["Product Name"],
+        prices.get(row["Seller SKU Id"])?.description ?? row["Product Name"] ?? '',
       sellingPrice: Number(row["Your Selling Price"]) || 0,
       costPrice: prices.get(row["Seller SKU Id"])?.costPrice ?? 0,
       platform: "flipkart" as const,

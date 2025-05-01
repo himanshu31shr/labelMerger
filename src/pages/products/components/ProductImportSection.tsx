@@ -13,7 +13,7 @@ export const ProductImportSection: React.FC<Props> = ({ onImport }) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.txt')) {
       setError('Please upload an Excel file (.xlsx or .xls)');
       return;
     }
@@ -21,7 +21,7 @@ export const ProductImportSection: React.FC<Props> = ({ onImport }) => {
     try {
       setError(null);
       await onImport(file);
-    } catch (_err) {
+    } catch {
       setError('Failed to import products. Please check the file format.');
     }
 
@@ -44,12 +44,12 @@ export const ProductImportSection: React.FC<Props> = ({ onImport }) => {
           <input
             type="file"
             hidden
-            accept=".xlsx,.xls"
+            accept=".xlsx,.xls,.txt"
             onChange={handleFileChange}
           />
         </Button>
         <Typography variant="body2" color="text.secondary">
-          Supported formats: Amazon and Flipkart product exports (.xlsx, .xls)
+          Supported formats: Amazon and Flipkart product exports (.xlsx, .xls, .txt)
         </Typography>
       </Box>
       {error && (

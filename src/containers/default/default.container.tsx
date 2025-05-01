@@ -114,7 +114,7 @@ export const DefaultContainer = ({
   );
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", width: "100%" }}>
       <AppBar
         toggleDrawer={toggleDrawer}
         toggleTheme={toggleTheme}

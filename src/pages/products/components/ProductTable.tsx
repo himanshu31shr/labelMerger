@@ -1,27 +1,26 @@
-import { Badge, Box, Grid, MenuItem, TextField, IconButton, Select, FormControl } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEyeOutlined";
+import { Box, Chip, IconButton, MenuItem, TextField } from "@mui/material";
+import Link from "@mui/material/Link";
 import React, { useState } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product, ProductFilter } from "../../../services/product.service";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEyeOutlined";
-import Link from "@mui/material/Link";
 
 interface Props {
   products: Product[];
   onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
   onFilterChange: (filter: ProductFilter) => void;
 }
 
 export const ProductTable: React.FC<Props> = ({
   products,
   onEdit,
-  onDelete,
   onFilterChange,
 }) => {
-  const [platform, setPlatform] = useState<"amazon" | "flipkart" | undefined>(undefined);
+  const [platform, setPlatform] = useState<"amazon" | "flipkart" | undefined>(
+    undefined
+  );
   const [search, setSearch] = useState("");
 
   const handlePlatformChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,23 +51,10 @@ export const ProductTable: React.FC<Props> = ({
       format: (value: unknown) => {
         const platform = value as string;
         return (
-          <FormControl fullWidth size="small">
-            <Select
-              value={platform}
-              onChange={(e) =>
-                onFilterChange({
-                  platform: e.target.value as "amazon" | "flipkart" | undefined,
-                })
-              }
-              displayEmpty
-            >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="amazon">Amazon</MenuItem>
-              <MenuItem value="flipkart">Flipkart</MenuItem>
-            </Select>
-          </FormControl>
+          <Chip label={platform.toUpperCase()} color={value === 'amazon' ? 'default' : 'primary'} />
         );
       },
+      filter: true,
     },
     {
       id: "costPrice",
@@ -111,14 +97,19 @@ export const ProductTable: React.FC<Props> = ({
           </IconButton>
         </Link>
       )}
-      <IconButton
-        size="small"
-        color="error"
-        data-testid={`delete-product-${product.sku}`}
-        onClick={() => onDelete(product)}
-      >
-        <DeleteIcon />
-      </IconButton>
+
+      {product.metadata?.amazonSerialNumber && (
+        <Link
+          href={`https://www.amazon.in/sacred/dp/${product.metadata.amazonSerialNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid={`view-flipkart-${product.metadata.amazonSerialNumber}`}
+        >
+          <IconButton size="small">
+            <RemoveRedEyeIcon />
+          </IconButton>
+        </Link>
+      )}
     </>
   );
 
@@ -151,7 +142,7 @@ export const ProductTable: React.FC<Props> = ({
         defaultSortColumn="sku"
         defaultSortDirection="asc"
         rowsPerPageOptions={[10, 25, 50]}
-        defaultRowsPerPage={25}
+        defaultRowsPerPage={10}
       />
     </Box>
   );
