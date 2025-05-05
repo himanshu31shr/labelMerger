@@ -22,11 +22,24 @@ export class AmazonPDFTransformer extends BaseTransformer {
   }
 
   async initialize(): Promise<void> {
-    const { PDFDocument } = await import('pdf-lib');
+    const { PDFDocument } = await import("pdf-lib");
     this.pdfDoc = await PDFDocument.load(this.filePath);
     this.outputPdf = await PDFDocument.create();
     const loadingTask = pdfjsLib.getDocument({ data: this.filePath });
     this.pdf = await loadingTask.promise;
+  }
+
+  recurseQuantity(segments: string[], startIdx = -1): number {
+    const defaultIndex = -1;
+    for (let i = startIdx > -1 ? startIdx : 0; i < segments.length; i++) {
+      const segment = segments[i];
+      if (segment.includes("₹")) {
+        return this.recurseQuantity(segments, i + 1);
+      } else if (startIdx > -1 && !segment.includes("₹")) {
+        return i;
+      }
+    }
+    return defaultIndex;
   }
 
   private extractProductInfo(lines: string[]): Product {
@@ -42,9 +55,9 @@ export class AmazonPDFTransformer extends BaseTransformer {
       .split(" ")
       .filter((str) => !!str && /[()]/.test(str) === false);
 
-    const idx = rest.findIndex((str) => str.includes("₹"));
+    const idx = this.recurseQuantity(rest);
     if (idx > -1) {
-      quantity = rest[idx + 1] || "1";
+      quantity = rest[idx] || "1";
     }
 
     return {
@@ -57,7 +70,7 @@ export class AmazonPDFTransformer extends BaseTransformer {
     copiedPage: PDFPage,
     product: Product
   ): Promise<void> {
-    const { rgb, StandardFonts } = await import('pdf-lib');
+    const { rgb, StandardFonts } = await import("pdf-lib");
     const pageWidth = copiedPage.getWidth();
     const fontSize = 10;
     const text = `${product.quantity} X [${product?.name}]`;
@@ -67,13 +80,16 @@ export class AmazonPDFTransformer extends BaseTransformer {
       quantity: parseInt(product.quantity),
       type: "amazon",
     });
+    console.log("🚀 ~ AmazonPDFTransformer ~ product:", product);
 
+    // Using standard Helvetica font which supports basic ASCII characters
+    const font = await this.outputPdf.embedFont(StandardFonts.Helvetica);
     copiedPage.drawText(text, {
       y: copiedPage.getHeight() - 20,
       x: 10,
       size: fontSize,
       color: rgb(0, 0, 0),
-      font: await this.outputPdf.embedFont(StandardFonts.Helvetica),
+      font,
       maxWidth: pageWidth,
     });
   }
