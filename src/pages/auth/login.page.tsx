@@ -51,6 +51,7 @@ export const LoginPage: React.FC = () => {
       sx={{
         height: '100vh',
         display: 'flex',
+        width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: (theme) => theme.palette.background.default
