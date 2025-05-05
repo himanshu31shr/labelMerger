@@ -33,12 +33,19 @@ export default function App({
   mode: "light" | "dark";
 }) {
   return (
-    <Box sx={{ display: "flex" }}>
-      <Suspense fallback={
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <CircularProgress data-testid="loading-progress" />
-        </Box>
-      }>
+    <Box
+      sx={{
+        display: "flex",
+        width: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Suspense
+        fallback={
+          <CircularProgress data-testid="loading-progress" color="success" />
+        }
+      >
         <Routes>
           <Route path="/labelMerger/login" element={<LoginPage />} />
           <Route
@@ -48,8 +55,14 @@ export default function App({
                 <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
                   <Routes>
                     <Route path="/labelMerger/" element={<HomePage />} />
-                    <Route path="/labelMerger/products/" element={<ProductsPage />} />
-                    <Route path="/labelMerger/transactions/" element={<TransactionAnalytics />} />
+                    <Route
+                      path="/labelMerger/products/"
+                      element={<ProductsPage />}
+                    />
+                    <Route
+                      path="/labelMerger/transactions/"
+                      element={<TransactionAnalytics />}
+                    />
                   </Routes>
                 </DefaultContainer>
               </ProtectedRoute>
