@@ -32,7 +32,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Product search and filtering
   - Offline support with synchronization
 
-### 2.3. Transaction Analytics 🔄
+### 2.3. Transaction Analytics ✅
 - **Input**: 
   - Transaction data files (.csv for Amazon, .xlsx for Flipkart)
   - Product catalog with pricing information

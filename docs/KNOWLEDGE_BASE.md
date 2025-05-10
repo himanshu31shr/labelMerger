@@ -9,24 +9,29 @@ This file serves as a centralized repository for common knowledge, recurring ins
 1. **Follow TDD (Test-Driven Development):**
    - Every new feature or change must include corresponding unit tests.
    - Ensure all tests pass before considering the task complete.
+   - Maintain test coverage above 90% for critical components.
 
 2. **Update Documentation:**
    - Update the `PRD.md` file to reflect any new features, changes, or enhancements.
    - Update the `README.md` file to include usage instructions, implementation details, and testing information for new features.
+   - Keep the Knowledge Base up to date with new patterns and practices.
 
 3. **Code Quality:**
    - Follow standard coding practices and ensure code readability.
    - Use meaningful variable and function names.
    - Avoid code duplication and ensure modularity.
+   - Follow TypeScript best practices and maintain strict type checking.
 
 4. **Testing Standards:**
    - Use Jest and `@testing-library/react` for unit and integration tests.
    - Mock external dependencies (e.g., `pdf-lib`, `papaparse`) as needed.
    - Ensure 100% test coverage for critical components and services.
+   - Write tests for both success and error scenarios.
 
 5. **Version Control:**
    - Commit changes with clear and descriptive messages.
    - Use feature branches for new features and merge them into the main branch after review.
+   - Follow conventional commits format.
 
 ---
 
@@ -36,23 +41,28 @@ This file serves as a centralized repository for common knowledge, recurring ins
    - Use functional components with hooks (e.g., `useState`, `useEffect`).
    - Ensure components are reusable and modular.
    - Use Material-UI for consistent styling and theming.
+   - Implement proper cleanup in useEffect hooks.
 
 2. **State Management:**
    - Use React's `useState` and `useContext` for local and shared state
    - Use Firebase Firestore for persistent storage
    - Implement proper cleanup for Firebase listeners
+   - Plan for Redux integration in future updates
 
 3. **Theming:**
    - Use Material-UI's `ThemeProvider` and `createTheme` for theming.
    - Ensure support for both light and dark modes.
+   - Maintain consistent color palette and typography.
 
 4. **File Structure:**
    - Organize files by feature (e.g., `pages`, `components`, `services`).
    - Use descriptive file and folder names.
+   - Keep related files together in feature folders.
 
 5. **Error Handling:**
    - Handle errors gracefully and provide meaningful feedback to users.
    - Log errors for debugging purposes.
+   - Implement proper error boundaries.
 
 ---
 
@@ -251,74 +261,50 @@ interface QueryOptions {
   limit?: number;
   orderBy?: string;
   orderDirection?: 'asc' | 'desc';
-  where?: [string, FirebaseFirestore.WhereFilterOp, any][];
+  where?: Array<{
+    field: string;
+    operator: string;
+    value: any;
+  }>;
 }
 ```
 
----
+## 7. Performance Optimization Guidelines
 
-## 7. Component Integration
+### 7.1. React Performance
+- Use React.memo for expensive components
+- Implement proper dependency arrays in useEffect
+- Use useCallback for event handlers
+- Implement virtualization for long lists
 
-### 7.1. Protected Routes
-```typescript
-const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) return <LoadingSpinner />;
-  if (!user) return <Navigate to="/login" />;
-  
-  return <>{children}</>;
-};
-```
-
-### 7.2. Real-time Updates
-```typescript
-const ProductList = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  
-  useEffect(() => {
-    const unsubscribe = setupProductListener(setProducts);
-    return () => unsubscribe();
-  }, []);
-  
-  return (/* render products */);
-};
-```
-
----
-
-## 8. Performance Guidelines
-
-### 8.1. Query Optimization
-- Use compound queries for complex filters
-- Implement cursor-based pagination
-- Create necessary indexes
-- Monitor query performance
-
-### 8.2. Batch Processing
+### 7.2. Firebase Performance
+- Use proper indexing for queries
+- Implement pagination for large datasets
 - Use batch operations for bulk updates
-- Implement chunking for large datasets
-- Monitor batch operation size
-- Handle partial failures
-
-### 8.3. Caching Strategy
 - Cache frequently accessed data
-- Implement LRU cache for large datasets
-- Clear cache periodically
-- Handle cache invalidation
 
----
+### 7.3. Bundle Optimization
+- Implement code splitting
+- Use dynamic imports for large components
+- Optimize third-party dependencies
+- Monitor bundle size regularly
 
-## 9. Deployment Checklist
+## 8. Security Best Practices
 
-### 9.1. Pre-deployment
-- Verify security rules
-- Test offline functionality
-- Check error handling
-- Validate data models
+### 8.1. Authentication
+- Implement proper session management
+- Use secure password policies
+- Implement rate limiting
+- Handle token refresh properly
 
-### 9.2. Post-deployment
-- Monitor performance metrics
-- Track error rates
-- Verify data consistency
-- Check cache effectiveness
+### 8.2. Data Security
+- Validate all user inputs
+- Implement proper access control
+- Use secure data transmission
+- Implement proper error handling
+
+### 8.3. Firebase Security
+- Use proper security rules
+- Implement role-based access
+- Validate data structure
+- Handle offline security
