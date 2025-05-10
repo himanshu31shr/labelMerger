@@ -1,14 +1,9 @@
 import type { PDFDocument, PDFPage } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import { BaseTransformer, TextItem } from "./base.transformer";
+import { BaseTransformer, ProductSummary, TextItem } from "./base.transformer";
 
 // Initialize PDF.js worker
-// pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-interface Product {
-  name: string;
-  quantity: string;
-}
+// pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;ß
 
 export class AmazonPDFTransformer extends BaseTransformer {
   protected filePath: Uint8Array;
@@ -42,14 +37,36 @@ export class AmazonPDFTransformer extends BaseTransformer {
     return defaultIndex;
   }
 
-  private extractProductInfo(lines: string[]): Product {
+  private extractProductInfo(lines: string[]): ProductSummary {
     const index = lines.findIndex((line) => line.startsWith("1 "));
     if (index === -1) {
-      return { name: "", quantity: "" };
+      return {
+        name: "",
+        quantity: "",
+        type: "amazon",
+      };
     }
 
     const productDetails = lines.slice(index, index + 4).join(" ");
-    const [name, info] = productDetails.split("|");
+    let [name, info] = productDetails.split("|");
+    if (name.indexOf("₹") !== -1) {
+      name = name.substring(0, name.indexOf("₹") - 1);
+    }
+
+    let sku;
+    if (/[A-Za-z0-9]{2}-[A-Za-z0-9]{4}-[A-Z|a-z|0-9]{4}/gi.test(productDetails)) {
+      const reg = new RegExp(
+        /[A-Za-z0-9]{2}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}/,
+        "ig"
+      );
+      sku = productDetails.match(reg)?.[0];
+    }
+
+    if (/SS[a-z0-9]{2}.*/gi.test(productDetails)) {
+      const reg = new RegExp(/SS[a-zA-Z]{2,4}[0-9]{6,7}/, "ig");
+      sku = productDetails.match(reg)?.[0];
+    }
+
     let quantity = "1";
     const rest = info
       .split(" ")
@@ -63,12 +80,14 @@ export class AmazonPDFTransformer extends BaseTransformer {
     return {
       name: name.replace(/1 /, "").trim(),
       quantity,
+      SKU: sku || "",
+      type: "amazon",
     };
   }
 
   private async addFooterText(
     copiedPage: PDFPage,
-    product: Product
+    product: ProductSummary
   ): Promise<void> {
     const { rgb, StandardFonts } = await import("pdf-lib");
     const pageWidth = copiedPage.getWidth();
@@ -77,10 +96,10 @@ export class AmazonPDFTransformer extends BaseTransformer {
 
     this.summaryText.push({
       name: product.name,
-      quantity: parseInt(product.quantity),
+      quantity: product.quantity,
       type: "amazon",
+      SKU: product.SKU,
     });
-    console.log("🚀 ~ AmazonPDFTransformer ~ product:", product);
 
     // Using standard Helvetica font which supports basic ASCII characters
     const font = await this.outputPdf.embedFont(StandardFonts.Helvetica);

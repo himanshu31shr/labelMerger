@@ -6,6 +6,10 @@ import React, { useState } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product, ProductFilter } from "../../../services/product.service";
+import {
+  ViewAmazonListingButton,
+  ViewFlipkartListingButton,
+} from "../../../shared/ActionButtons";
 
 interface Props {
   products: Product[];
@@ -51,7 +55,10 @@ export const ProductTable: React.FC<Props> = ({
       format: (value: unknown) => {
         const platform = value as string;
         return (
-          <Chip label={platform.toUpperCase()} color={value === 'amazon' ? 'default' : 'primary'} />
+          <Chip
+            label={platform.toUpperCase()}
+            color={value === "amazon" ? "default" : "primary"}
+          />
         );
       },
       filter: true,
@@ -86,29 +93,15 @@ export const ProductTable: React.FC<Props> = ({
         <EditIcon />
       </IconButton>
       {product.metadata?.flipkartSerialNumber && (
-        <Link
-          href={`https://www.flipkart.com/product/p/itme?pid=${product.metadata.flipkartSerialNumber}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-testid={`view-flipkart-${product.metadata.flipkartSerialNumber}`}
-        >
-          <IconButton size="small">
-            <RemoveRedEyeIcon />
-          </IconButton>
-        </Link>
+        <ViewFlipkartListingButton
+          flipkartSerialNumber={product.metadata.flipkartSerialNumber}
+        />
       )}
 
       {product.metadata?.amazonSerialNumber && (
-        <Link
-          href={`https://www.amazon.in/sacred/dp/${product.metadata.amazonSerialNumber}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-testid={`view-flipkart-${product.metadata.amazonSerialNumber}`}
-        >
-          <IconButton size="small">
-            <RemoveRedEyeIcon />
-          </IconButton>
-        </Link>
+        <ViewAmazonListingButton
+          amazonSerialNumber={product.metadata.amazonSerialNumber}
+        />
       )}
     </>
   );

@@ -1,3 +1,4 @@
+import { TodaysOrder } from "../../../services/todaysOrder.service";
 import { AmazonPDFTransformer } from "./TrasformAmazonPages";
 import { FlipkartPageTransformer } from "./TrasformFlipkartPages";
 import { ProductSummary } from "./base.transformer";
@@ -8,7 +9,7 @@ export class PDFMergerService {
   private summaryText: ProductSummary[] = [];
 
   async initialize(): Promise<PDFDocument> {
-    const { PDFDocument } = await import('pdf-lib');
+    const { PDFDocument } = await import("pdf-lib");
     return (this.outpdf = await PDFDocument.create());
   }
 
@@ -28,6 +29,12 @@ export class PDFMergerService {
     await this.amazon(amzon);
     await this.flipkart(flp);
 
+    await new TodaysOrder().updateTodaysOrder({
+      orders: this.summaryText,
+      date: new Date().toDateString(),
+      id: 'active-orders',
+    });
+
     return this.outpdf;
   }
 
@@ -41,7 +48,7 @@ export class PDFMergerService {
       const [page] = await this.outpdf.copyPages(pages, [i]);
       this.outpdf.addPage(page);
     }
-    this.summaryText.push(...amz.summary)
+    this.summaryText.push(...amz.summary);
   }
 
   private async flipkart(flp: Uint8Array | null) {
@@ -54,7 +61,7 @@ export class PDFMergerService {
       const [page] = await this.outpdf.copyPages(pages, [i]);
       this.outpdf.addPage(page);
     }
-    this.summaryText.push(...flipkartService.summary)
+    this.summaryText.push(...flipkartService.summary);
   }
 
   get summary(): ProductSummary[] {

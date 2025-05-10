@@ -25,6 +25,12 @@ const ProductsPage = React.lazy(() =>
   }))
 );
 
+const ActiveOrders = React.lazy(() =>
+  import("./pages/todaysOrders/todaysOrder.page").then((module) => ({
+    default: module.TodaysOrderPage,
+  }))
+);
+
 export default function App({
   toggleTheme,
   mode,
@@ -62,6 +68,10 @@ export default function App({
                     <Route
                       path="/labelMerger/transactions/"
                       element={<TransactionAnalytics />}
+                    />
+                    <Route
+                      path="/labelMerger/activeOrders/"
+                      element={<ActiveOrders />}
                     />
                   </Routes>
                 </DefaultContainer>

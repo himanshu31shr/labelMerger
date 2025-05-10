@@ -52,7 +52,7 @@ export const exportTableToPDF = (elementId: string) => {
   
   worker
     .set({
-      margin: 0,
+      margin: 0.2,
       filename: "summary-table.pdf",
       image: { type: "png", quality: 0.98 },
       html2canvas: { scale: 1 },

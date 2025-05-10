@@ -83,6 +83,21 @@ export const DefaultContainer = ({
 
         <Link
           component={RouterLink}
+          to={"/labelMerger/activeOrders/"}
+          data-testid="merge-labels"
+        >
+          <ListItem key={"Active Orders"} disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                <InboxIcon />
+              </ListItemIcon>
+              <ListItemText primary={"Active Orders"} />
+            </ListItemButton>
+          </ListItem>
+        </Link>
+
+        <Link
+          component={RouterLink}
           to={"/labelMerger/products/"}
           data-testid="products"
         >

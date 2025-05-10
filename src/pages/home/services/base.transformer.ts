@@ -1,4 +1,5 @@
 import { PDFDocument } from "pdf-lib";
+import { Product } from "../../../services/product.service";
 
 export interface TextItem {
   str: string;
@@ -7,10 +8,11 @@ export interface TextItem {
 
 export interface ProductSummary {
   name: string;
-  quantity: number;
+  quantity: string;
   SKU?: string;
   orderId?: string;
   type: 'amazon' | 'flipkart';
+  product?: Product;
 }
 
 export class BaseTransformer {
