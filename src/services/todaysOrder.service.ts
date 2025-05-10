@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { ProductSummary } from "../pages/home/services/base.transformer";
 import { FirebaseService } from "./firebase.service";
 import { Product, ProductService } from "./product.service";
@@ -19,14 +20,14 @@ export class TodaysOrder extends FirebaseService {
     this.products = await new ProductService().getProducts({});
   }
 
-  async getTodaysOrders(): Promise<ActiveOrderSchema[]> {
+  async getTodaysOrders(): Promise<ActiveOrderSchema | undefined> {
     await this.mapProductsToActiveOrder();
-    const activeOrder = await this.getDocuments<ActiveOrderSchema>(
+    const activeOrder = await this.getDocument<ActiveOrderSchema>(
       this.COLLECTION_NAME,
-      []
+      format(new Date(), "yyyy-MM-dd")
     );
-    if (activeOrder && activeOrder.length > 0) {
-      activeOrder.at(0)?.orders.map((order) => {
+    if (activeOrder) {
+      activeOrder.orders.map((order) => {
         const product = this.products.find((p) => p.sku === order.SKU);
         if (product) {
           order.product = product;
@@ -40,8 +41,7 @@ export class TodaysOrder extends FirebaseService {
   async updateTodaysOrder(
     order: ActiveOrderSchema
   ): Promise<ActiveOrderSchema | undefined> {
-    const existingOrders = await this.getTodaysOrders();
-    const existingOrder = existingOrders.find((o) => o.date === order.date);
+    const existingOrder = await this.getTodaysOrders();
     if (existingOrder) {
       this.updateDocument<ActiveOrderSchema>(
         this.COLLECTION_NAME,
@@ -59,6 +59,6 @@ export class TodaysOrder extends FirebaseService {
         (item) => item.id
       );
     }
-    return (await this.getTodaysOrders())?.at(0);
+    return (await this.getTodaysOrders());
   }
 }

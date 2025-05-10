@@ -3,6 +3,7 @@ import { AmazonPDFTransformer } from "./TrasformAmazonPages";
 import { FlipkartPageTransformer } from "./TrasformFlipkartPages";
 import { ProductSummary } from "./base.transformer";
 import type { PDFDocument } from "pdf-lib";
+import { format } from "date-fns";
 
 export class PDFMergerService {
   private outpdf: PDFDocument | undefined;
@@ -31,8 +32,8 @@ export class PDFMergerService {
 
     await new TodaysOrder().updateTodaysOrder({
       orders: this.summaryText,
-      date: new Date().toDateString(),
-      id: 'active-orders',
+      date: format(new Date(), "yyyy-MM-dd"),
+      id: format(new Date(), "yyyy-MM-dd"),
     });
 
     return this.outpdf;

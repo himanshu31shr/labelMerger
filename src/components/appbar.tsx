@@ -37,9 +37,11 @@ const StyledAppBar = styled(MuiAppBar, {
 const getRouteTitle = (pathname: string): string => {
   switch (pathname) {
     case "/labelMerger/":
-      return "PDF Label Merger";
+      return "Dashboard";
     case "/labelMerger/transactions/":
       return "Transaction Analytics";
+    case "/labelMerger/activeOrders/":
+      return "Active Orders";    
     case "/labelMerger/products/":
       return "Products";
     default:

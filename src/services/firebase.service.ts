@@ -15,6 +15,7 @@ import {
   writeBatch,
   DocumentData,
   WriteBatch,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "./firebase.config";
 
@@ -77,6 +78,23 @@ export class FirebaseService {
       }));
     } catch (error) {
       this.handleError(error as FirestoreError, "getDocuments");
+    }
+  }
+
+  protected async getDocument<T extends DocumentData>(
+    collectionName: string,
+    docId: string
+  ): Promise<T | undefined> {
+    try {
+      const docRef = doc(this.db, collectionName, docId);
+      const docSnapshot = await getDoc(docRef);
+
+      if (docSnapshot.exists()) {
+        return docSnapshot.data() as T;
+      }
+      return undefined;
+    } catch (error) {
+      this.handleError(error as FirestoreError, "getDocument");
     }
   }
 
