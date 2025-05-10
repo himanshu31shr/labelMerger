@@ -10,6 +10,8 @@ export interface Product {
   description: string;
   costPrice: number;
   platform: "amazon" | "flipkart";
+  visibility: "visible" | "hidden";
+  sellingPrice: number;
   metadata: {
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
@@ -19,11 +21,18 @@ export interface Product {
     flipkartSerialNumber?: string;
     amazonSerialNumber?: string;
   };
+  competetionAnalysis?: {
+    competitorName: string;
+    competitorPrice: string;
+    ourPrice: number;
+    visibility: string;
+  }
 }
 
 export interface ProductFilter {
   platform?: "amazon" | "flipkart";
   search?: string;
+  visibility?: "visible" | "hidden";
 }
 
 interface RawFlipkartData {
@@ -131,7 +140,7 @@ export class ProductService extends FirebaseService {
   private isFlipkartFormat(file: File): boolean {
     return (
       file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       file.type === "application/vnd.ms-excel"
     );
   }
@@ -154,6 +163,7 @@ export class ProductService extends FirebaseService {
         moq: "1",
         amazonSerialNumber: row["asin1"],
       },
+      visibility: "visible",
     }));
   }
 
@@ -175,6 +185,7 @@ export class ProductService extends FirebaseService {
         moq: row["Minimum Order Quantity"] || "1",
         flipkartSerialNumber: row["Flipkart Serial Number"],
       },
+      visibility: "visible",
     }));
   }
 
@@ -207,6 +218,10 @@ export class ProductService extends FirebaseService {
     if (filters?.search) {
       constraints.push(where("name", ">=", filters.search));
       constraints.push(where("name", "<=", filters.search + "\uf8ff"));
+    }
+
+    if(filters?.visibility) {
+      constraints.push(where("visibility", "==", filters.visibility));
     }
 
     constraints.push(orderBy("sku", "desc"));

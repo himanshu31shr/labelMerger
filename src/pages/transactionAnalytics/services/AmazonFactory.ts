@@ -104,7 +104,9 @@ export class AmazonFactory implements AbstractFactory {
         sku: sku,
         description: row["description"] || "",
         platform: "amazon",
-        metadata: {}
+        metadata: {},
+        visibility: "visible",
+        sellingPrice: sellingPrice,
       },
       metadata: {
         createdAt: new Date().toISOString(),

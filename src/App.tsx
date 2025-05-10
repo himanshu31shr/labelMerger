@@ -5,6 +5,12 @@ import { CircularProgress, Box } from "@mui/material";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LoginPage } from "./pages/auth/login.page";
 
+const DashboardPage = React.lazy(() =>
+  import("./pages/dashboard/dashboard.page").then((module) => ({
+    default: module.DashboardPage,
+  }))
+);
+
 const HomePage = React.lazy(() =>
   import("./pages/home/home.page").then((module) => ({
     default: module.HomePage,
@@ -60,7 +66,8 @@ export default function App({
               <ProtectedRoute>
                 <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
                   <Routes>
-                    <Route path="/labelMerger/" element={<HomePage />} />
+                    <Route path="/labelMerger/" element={<DashboardPage />} />
+                    <Route path="/labelMerger/home/" element={<HomePage />} />
                     <Route
                       path="/labelMerger/products/"
                       element={<ProductsPage />}

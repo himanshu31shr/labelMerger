@@ -56,7 +56,7 @@ export class FlipkartPageTransformer extends BaseTransformer {
       let j = 1;
       const currentSUmmary: ProductSummary = {
         name: "",
-        quantity: 0,
+        quantity: "0",
         type: "flipkart",
       };
 

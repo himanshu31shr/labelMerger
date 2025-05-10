@@ -103,6 +103,8 @@ export default class FlipkartFactory implements AbstractFactory {
         platform: "flipkart",
         costPrice: 0,
         metadata: {},
+        visibility: "visible",
+        sellingPrice: 0,
       },
       metadata: {
         createdAt: new Date().toISOString(),
