@@ -45,7 +45,6 @@ if (process.env.NODE_ENV === 'test') {
     }))
   } as unknown as Firestore;
 } else {
-  console.log(firebaseConfig)
   // Real Firebase initialization for non-test environments
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
