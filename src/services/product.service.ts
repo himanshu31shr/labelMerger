@@ -239,4 +239,14 @@ export class ProductService extends FirebaseService {
   async deleteProduct(sku: string): Promise<void> {
     return this.deleteDocument(this.COLLECTION_NAME, sku);
   }
+
+  async getProductDetails(sku: string): Promise<Product> {
+    const product = await this.getDocument<Product>(this.COLLECTION_NAME, sku);
+    
+    if (!product) {
+      throw new Error(`Product with SKU ${sku} not found`);
+    }
+    
+    return product as Product;
+  }
 }
