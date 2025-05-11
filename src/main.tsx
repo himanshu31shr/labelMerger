@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Paper } from '@mui/material';
 import { BrowserRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import getDesignTokens from './theme';
 import App from './App';
 
@@ -19,14 +21,16 @@ const AppWrapper = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Paper sx={{ minHeight: '100vh' }}>
-        <BrowserRouter>
-          <App toggleTheme={toggleTheme} mode={mode} />
-        </BrowserRouter>
-      </Paper>
-    </ThemeProvider>
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Paper sx={{ minHeight: '100vh' }}>
+          <BrowserRouter>
+            <App toggleTheme={toggleTheme} mode={mode} />
+          </BrowserRouter>
+        </Paper>
+      </ThemeProvider>
+    </Provider>
   );
 };
 

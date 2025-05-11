@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Box,
     Grid,
@@ -6,6 +6,7 @@ import {
     Typography,
     Card,
     CardContent,
+    CircularProgress,
 } from '@mui/material';
 import {
     BarChart,
@@ -19,7 +20,11 @@ import {
     LineChart,
     Line,
 } from 'recharts';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchProducts } from '../../store/slices/productsSlice';
+import { fetchOrders } from '../../store/slices/ordersSlice';
 import { HiddenProducts } from './components/hiddenProducts';
+import { ProductSummary } from '../../pages/home/services/base.transformer';
 
 // Mock data for demonstration
 const salesData = [
@@ -42,6 +47,32 @@ const orderData = [
 ];
 
 export const DashboardPage = () => {
+    const dispatch = useAppDispatch();
+    const { items: products, loading: productsLoading } = useAppSelector(state => state.products);
+    const { items: orders, loading: ordersLoading } = useAppSelector(state => state.orders);
+
+    useEffect(() => {
+        dispatch(fetchProducts({}));
+        dispatch(fetchOrders());
+    }, [dispatch]);
+
+    const totalOrders = orders.length;
+    const activeOrders = orders.filter(order => order.product?.visibility === 'visible').length;
+    const totalProducts = products.length;
+    const revenue = orders.reduce((sum, order: ProductSummary) => {
+        const price = order.product?.sellingPrice || 0;
+        const quantity = parseInt(order.quantity) || 0;
+        return sum + (price * quantity);
+    }, 0);
+
+    if (productsLoading || ordersLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{ flexGrow: 1, p: 3 }}>
             <Typography variant="h4" gutterBottom>
@@ -56,7 +87,7 @@ export const DashboardPage = () => {
                             <Typography color="textSecondary" gutterBottom>
                                 Total Orders
                             </Typography>
-                            <Typography variant="h5">1,234</Typography>
+                            <Typography variant="h5">{totalOrders}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -66,7 +97,7 @@ export const DashboardPage = () => {
                             <Typography color="textSecondary" gutterBottom>
                                 Active Orders
                             </Typography>
-                            <Typography variant="h5">56</Typography>
+                            <Typography variant="h5">{activeOrders}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -76,7 +107,7 @@ export const DashboardPage = () => {
                             <Typography color="textSecondary" gutterBottom>
                                 Total Products
                             </Typography>
-                            <Typography variant="h5">789</Typography>
+                            <Typography variant="h5">{totalProducts}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -86,7 +117,7 @@ export const DashboardPage = () => {
                             <Typography color="textSecondary" gutterBottom>
                                 Revenue
                             </Typography>
-                            <Typography variant="h5">$45,678</Typography>
+                            <Typography variant="h5">₹{revenue.toLocaleString()}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -135,6 +166,6 @@ export const DashboardPage = () => {
                     <HiddenProducts />
                 </Grid>
             </Grid>
-        </Box >
+        </Box>
     );
 }; 

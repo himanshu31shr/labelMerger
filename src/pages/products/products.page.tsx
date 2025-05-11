@@ -1,86 +1,40 @@
 import { Box, CircularProgress } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import {
-  Product,
-  ProductFilter,
-  ProductService,
-} from "../../services/product.service";
+import React, { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { fetchProducts, importProducts, updateProduct, setFilters } from "../../store/slices/productsSlice";
+import { Product } from "../../services/product.service";
 import { ProductEditModal } from "./components/ProductEditModal";
 import { ProductImportSection } from "./components/ProductImportSection";
 import { ProductTable } from "./components/ProductTable";
 
-const processFilters = (products: Product[], filters: ProductFilter) => {
-  return products.filter(
-    (product) =>
-      (filters.platform ? product.platform === filters.platform : true) &&
-      (filters.search
-        ? product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-          product.sku.toLowerCase().includes(filters.search.toLowerCase())
-        : true)
-  );
-};
-
 export const ProductsPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [filters, setFilters] = useState<ProductFilter>({});
-  const productService = new ProductService();
+  const dispatch = useAppDispatch();
+  const { items: products, filteredItems: filteredProducts, loading } = useAppSelector(state => state.products);
+  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
-
-  useEffect(() => {
-    if (filters.platform || filters.search) {
-      const filtered = processFilters(products, filters);
-      if (filtered.length === 0) {
-        loadProducts();
-      }
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts(products);
-    }
-  }, [filters, products]);
-
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const data = await productService.getProducts(filters);
-      setProducts(data);
-      setFilteredProducts(data);
-    } catch (error) {
-      console.error("Error loading products:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchProducts({}));
+  }, [dispatch]);
 
   const handleProductImport = async (file: File) => {
     try {
-      setLoading(true);
-      const importedProducts = await productService.parseProducts(file);
-      await productService.saveProducts(importedProducts);
-      await loadProducts();
+      await dispatch(importProducts(file)).unwrap();
     } catch (error) {
       console.error("Error importing products:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleProductUpdate = async (sku: string, data: Partial<Product>) => {
     try {
-      setLoading(true);
-      await productService.updateProduct(sku, data);
-      await loadProducts();
+      await dispatch(updateProduct({ sku, data })).unwrap();
       setEditingProduct(null);
     } catch (error) {
       console.error("Error updating product:", error);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const handleFilterChange = (filters: { platform?: string; search?: string }) => {
+    dispatch(setFilters(filters));
   };
 
   return (
@@ -95,7 +49,7 @@ export const ProductsPage: React.FC = () => {
         <ProductTable
           products={filteredProducts}
           onEdit={setEditingProduct}
-          onFilterChange={setFilters}
+          onFilterChange={handleFilterChange}
         />
       )}
 

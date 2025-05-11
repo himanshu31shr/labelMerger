@@ -1,51 +1,38 @@
 import { MergeOutlined } from "@mui/icons-material";
 import { Box, Button, CircularProgress } from "@mui/material";
 import { useState } from "react";
-import { FirebaseService } from "../../services/firebase.service";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { mergePDFs, setAmazonFile, setFlipkartFile, clearFiles } from "../../store/slices/pdfMergerSlice";
 import { AccordionSection } from "./components/AccordionSection";
 import { DownloadButtons } from "./components/DownloadButtons";
 import { FileUploadSection } from "./components/FileUploadSection";
 import { PDFViewer } from "./components/PDFViewer";
 import { SummaryTable } from "./components/SummaryTable";
-import { ProductSummary } from "./services/base.transformer";
-import { PDFMergerService } from "./services/merge.service";
-import { exportTableToPDF, readFileFromInput } from "./utils";
+import { exportTableToPDF } from "./utils";
 import React from "react";
 
 export const HomePage: React.FC = () => {
-  const [amazon, setAmazon] = useState<File>();
-  const [flipkart, setFlipkart] = useState<File>();
-  const [finalPdf, setFinal] = useState<string>();
-  const [summary, setSummary] = useState<ProductSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
+  const { amazonFile, flipkartFile, finalPdf, summary, loading } = useAppSelector(state => state.pdfMerger);
   const [activeSection, setActiveSection] = useState<string>("");
-  new FirebaseService();
 
   const handleSubmit = async () => {
-    if (!amazon && !flipkart) return;
-    setIsLoading(true);
+    if (!amazonFile && !flipkartFile) return;
+    
     try {
-      const mergePdfs = new PDFMergerService();
-      const pdf = await mergePdfs.mergePdfs({
-        amzon: await readFileFromInput(amazon),
-        flp: await readFileFromInput(flipkart),
-      });
-      setSummary(mergePdfs.summary);
-
-      if (!pdf) return;
-
-      const outputPdfBytes = await pdf.save();
-      const blob = new Blob([outputPdfBytes], { type: "application/pdf" });
-      const pdfUrl = URL.createObjectURL(blob);
-      setFinal(pdfUrl);
-      setAmazon(undefined);
-      setFlipkart(undefined);
+      const result = await dispatch(mergePDFs({ amazonFile, flipkartFile })).unwrap();
       setActiveSection("pdfViewer");
     } catch (error) {
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
+  };
+
+  const handleAmazonFileChange = (file: File | undefined) => {
+    dispatch(setAmazonFile(file || null));
+  };
+
+  const handleFlipkartFileChange = (file: File | undefined) => {
+    dispatch(setFlipkartFile(file || null));
   };
 
   const handleExportTableToPDF = () => exportTableToPDF("summary-table");
@@ -53,10 +40,10 @@ export const HomePage: React.FC = () => {
   return (
     <Box>
       <FileUploadSection
-        amazonFile={amazon}
-        flipkartFile={flipkart}
-        onAmazonChange={setAmazon}
-        onFlipkartChange={setFlipkart}
+        amazonFile={amazonFile || undefined}
+        flipkartFile={flipkartFile || undefined}
+        onAmazonChange={handleAmazonFileChange}
+        onFlipkartChange={handleFlipkartFileChange}
       />
 
       <Box sx={{ my: 4, display: "flex", justifyContent: "center" }}>
@@ -65,21 +52,21 @@ export const HomePage: React.FC = () => {
           size="large"
           onClick={handleSubmit}
           startIcon={
-            isLoading ? (
+            loading ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
               <MergeOutlined />
             )
           }
-          disabled={(!amazon && !flipkart) || isLoading}
+          disabled={(!amazonFile && !flipkartFile) || loading}
         >
-          {isLoading ? "Processing..." : "Merge & Generate PDF"}
+          {loading ? "Processing..." : "Merge & Generate PDF"}
         </Button>
       </Box>
 
       {(finalPdf || summary.length > 0) && (
         <DownloadButtons
-          pdfUrl={finalPdf}
+          pdfUrl={finalPdf || undefined}
           onExportSummary={handleExportTableToPDF}
           hasSummary={summary.length > 0}
         />

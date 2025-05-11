@@ -10,10 +10,12 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
-import { Product, ProductService } from "../../services/product.service";
-import { TransactionService } from "../../services/transaction.service";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { fetchTransactions, saveTransactions } from "../../store/slices/transactionsSlice";
+import { fetchProducts } from "../../store/slices/productsSlice";
+import { Transaction } from "../../types/transaction.type";
 import { TransactionAnalysisService } from "../../services/transactionAnalysis.service";
-import { Transaction, TransactionSummary } from "../../types/transaction.type";
+import { TransactionSummary } from "../../types/transaction.type";
 import OrderList from "./components/order-list.component";
 import ProductList from "./components/product-list.component";
 import SummaryTiles from "./components/summary-tiles.component";
@@ -36,13 +38,10 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export const TransactionAnalytics: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [productPrices, setProductPrices] = useState<Map<string, Product>>(
-    new Map()
-  );
+  const dispatch = useAppDispatch();
+  const { items: transactions, loading, error } = useAppSelector(state => state.transactions);
+  const { items: products } = useAppSelector(state => state.products);
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [dateRange, setDateRange] = useState<{
     minDate: Date | null;
@@ -53,68 +52,55 @@ export const TransactionAnalytics: React.FC = () => {
   });
   const navigate = useNavigate();
 
-  const transactionService = useMemo(() => new TransactionService(), []);
-  const productService = useMemo(() => new ProductService(), []);
-
   useEffect(() => {
     // Load existing transactions and product prices on mount
     const loadData = async () => {
-      setLoading(true);
       try {
-        const [loadedTransactions, products] = await Promise.all([
-          transactionService.getTransactions(),
-          productService.getProducts(),
+        await Promise.all([
+          dispatch(fetchTransactions()),
+          dispatch(fetchProducts({}))
         ]);
-
-        // Convert products to ProductPrice format and store in Map
-        const priceMap = new Map<string, Product>();
-
-        products.forEach((product) => {
-          priceMap.set(product.sku.toLowerCase(), product);
-        });
-
-        const transactionsWithPrices = loadedTransactions.map(
-          (transaction) => ({
-            ...transaction,
-            product: {
-              ...transaction.product,
-              ...priceMap.get(transaction.sku.toLowerCase()),
-            },
-          })
-        );
-
-        const dates = transactionsWithPrices.map(
-          (transaction) => new Date(transaction.orderDate)
-        );
-
-        setDateRange({
-          minDate: new Date(Math.min(...dates.map((date) => date.getTime()))),
-          maxDate: new Date(Math.max(...dates.map((date) => date.getTime()))),
-        });
-
-        setTransactions(transactionsWithPrices);
-
-        setProductPrices(priceMap);
-
-        if (loadedTransactions.length > 0) {
-          const service = new TransactionAnalysisService(
-            transactionsWithPrices,
-            priceMap
-          );
-          setSummary(service.analyze());
-        }
       } catch (error) {
         console.error("Error loading data:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to load data"
-        );
-      } finally {
-        setLoading(false);
       }
     };
 
     loadData();
-  }, [transactionService, productService]);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (transactions.length > 0 && products.length > 0) {
+      // Convert products to ProductPrice format and store in Map
+      const priceMap = new Map(
+        products.map(product => [product.sku.toLowerCase(), product])
+      );
+
+      const transactionsWithPrices = transactions.map(
+        (transaction) => ({
+          ...transaction,
+          product: {
+            ...transaction.product,
+            ...priceMap.get(transaction.sku.toLowerCase()),
+          },
+        })
+      );
+
+      const dates = transactionsWithPrices.map(
+        (transaction) => new Date(transaction.orderDate)
+      );
+
+      setDateRange({
+        minDate: new Date(Math.min(...dates.map((date) => date.getTime()))),
+        maxDate: new Date(Math.max(...dates.map((date) => date.getTime()))),
+      });
+
+      const service = new TransactionAnalysisService(
+        transactionsWithPrices,
+        priceMap
+      );
+      setSummary(service.analyze());
+    }
+  }, [transactions, products]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -142,36 +128,17 @@ export const TransactionAnalytics: React.FC = () => {
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setLoading(true);
-    setError(null);
-
     try {
       const file = event.target.files?.[0];
       if (!file) throw new Error("No file selected");
 
       const newTransactions = await new ReportExtractionFactory(file).extract();
-
-      // Save new transactions to Firebase
-      await transactionService.saveTransactions(newTransactions);
-
-      // Get all transactions including the newly saved ones
-      const allTransactions = await transactionService.getTransactions();
-      setTransactions(allTransactions);
-
-      const service = new TransactionAnalysisService(
-        allTransactions,
-        productPrices
-      );
-
-      setSummary(service.analyze());
+      await dispatch(saveTransactions(newTransactions)).unwrap();
 
       // Reset file input
       event.target.value = "";
     } catch (error) {
       console.error("Error processing file:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -248,7 +215,7 @@ export const TransactionAnalytics: React.FC = () => {
               </TabPanel>
 
               <TabPanel value={tabValue} index={1} key="product-list">
-                <ProductList summary={summary} productPrices={productPrices} />
+                <ProductList transactions={transactions} />
               </TabPanel>
             </Grid>
           </Grid>

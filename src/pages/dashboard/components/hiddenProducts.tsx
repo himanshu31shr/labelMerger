@@ -1,9 +1,10 @@
 import { ArrowUpwardOutlined } from "@mui/icons-material";
-import { Box, Chip } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { Box, Chip, CircularProgress } from "@mui/material";
+import React from "react";
+import { useAppSelector } from "../../../store/hooks";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
-import { Product, ProductService } from "../../../services/product.service";
+import { Product } from "../../../services/product.service";
 import {
   ShowProductEditPageButton,
   ViewAmazonListingButton,
@@ -11,37 +12,22 @@ import {
 } from "../../../shared/ActionButtons";
 
 export const HiddenProducts: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const productService = new ProductService();
+  const { items: products, loading } = useAppSelector(state => state.products);
 
-  const loadProducts = async () => {
-    try {
-      const data = await productService.getProducts();
-      setProducts(
-        data
-          .filter(
-            (product) =>
-              product?.competetionAnalysis &&
-              Number(product?.competetionAnalysis?.competitorPrice) > 0
-          )
-          .filter(
-            (product) =>
-              product?.competetionAnalysis &&
-              !!product?.competetionAnalysis?.competitorPrice &&
-              product.sellingPrice -
-              Number(product?.competetionAnalysis?.competitorPrice) >
-              0
-          )
-      );
-    } catch (error) {
-      console.error("Error loading products:", error);
-    } finally {
-    }
-  };
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  const hiddenProducts = products
+    .filter(
+      (product: Product) =>
+        product?.competetionAnalysis &&
+        Number(product?.competetionAnalysis?.competitorPrice) > 0
+    )
+    .filter(
+      (product: Product) =>
+        product?.competetionAnalysis &&
+        !!product?.competetionAnalysis?.competitorPrice &&
+        product.sellingPrice -
+        Number(product?.competetionAnalysis?.competitorPrice) >
+        0
+    );
 
   const columns: Column<Product>[] = [
     { id: "sku", label: "SKU", filter: true },
@@ -125,11 +111,19 @@ export const HiddenProducts: React.FC = () => {
     </>
   );
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: "100%" }}>
       <DataTable
         columns={columns}
-        data={products}
+        data={hiddenProducts}
         defaultSortColumn="sku"
         defaultSortDirection="asc"
         rowsPerPageOptions={[10, 25, 50]}

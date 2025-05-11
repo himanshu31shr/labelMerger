@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { DataTable, Column } from "../../../components/DataTable/DataTable";
-import { ProductPrice, TransactionSummary } from "../../../types/transaction.type";
+import { Transaction } from "../../../types/transaction.type";
 
 interface ProductTableData {
   sku: string;
@@ -12,23 +12,44 @@ interface ProductTableData {
 }
 
 interface Props {
-  summary: TransactionSummary;
-  productPrices: Map<string, ProductPrice>;
+  transactions: Transaction[];
 }
 
-const ProductList: React.FC<Props> = ({ summary, productPrices }) => {
+const ProductList: React.FC<Props> = ({ transactions }) => {
   const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
 
-  const productArray: ProductTableData[] = Object.entries(summary.salesByProduct).map(
-    ([sku, data]) => ({
-      sku,
-      description: data.name,
-      units: data.units,
-      sales: data.amount,
-      cost: (productPrices.get(sku)?.costPrice || 0) * data.units,
-      profit: data.profit
-    })
-  );
+  const productArray = useMemo(() => {
+    const productMap = new Map<string, ProductTableData>();
+
+    transactions.forEach(transaction => {
+      const sku = transaction.sku;
+      const existing = productMap.get(sku) || {
+        sku,
+        description: transaction.description || sku,
+        units: 0,
+        sales: 0,
+        cost: 0,
+        profit: 0
+      };
+
+      existing.units += transaction.quantity;
+      existing.sales += transaction.sellingPrice * transaction.quantity;
+      existing.cost += (transaction.product?.costPrice || 0) * transaction.quantity;
+      
+      // Calculate profit: sales - cost - expenses
+      const expenses = transaction.expenses.shippingFee + 
+                      transaction.expenses.marketplaceFee + 
+                      transaction.expenses.otherFees;
+      const transactionProfit = (transaction.sellingPrice * transaction.quantity) - 
+                              ((transaction.product?.costPrice || 0) * transaction.quantity) - 
+                              expenses;
+      existing.profit += transactionProfit;
+
+      productMap.set(sku, existing);
+    });
+
+    return Array.from(productMap.values());
+  }, [transactions]);
 
   const columns: Column<ProductTableData>[] = [
     { id: 'sku', label: 'SKU', filter: true },

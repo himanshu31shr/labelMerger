@@ -12,37 +12,33 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { AuthService } from '../../services/auth.service';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { login, resetPassword } from '../../store/slices/authSlice';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   
   const navigate = useNavigate();
-  const authService = new AuthService();
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector(state => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
 
     try {
       if (isResetMode) {
-        await authService.resetPassword(email);
-        setError('Password reset email sent. Check your inbox.');
+        await dispatch(resetPassword(email)).unwrap();
         setIsResetMode(false);
       } else {
-        await authService.signIn(email, password, rememberMe);
+        await dispatch(login({ email, password, rememberMe })).unwrap();
         navigate('/labelMerger/');
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
-    } finally {
-      setLoading(false);
+      // Error is handled by the auth slice
+      console.error('Authentication error:', err);
     }
   };
 

@@ -6,31 +6,33 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect } from "react";
-import { ActiveOrder, TodaysOrder } from "../../services/todaysOrder.service";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { fetchOrders } from "../../store/slices/ordersSlice";
 import { SummaryTable } from "../home/components/SummaryTable";
 
 export const TodaysOrderPage: React.FC = () => {
-  const [orders, setOrders] = React.useState<ActiveOrder[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const orderService = new TodaysOrder();
-
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await orderService.getTodaysOrders();
-      if (data) {
-        setOrders(data.orders);
-      }
-    } catch (error) {
-      console.error("Error loading products:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dispatch = useAppDispatch();
+  const { items: orders, loading } = useAppSelector(state => state.orders);
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    dispatch(fetchOrders());
+  }, [dispatch]);
+
+  const totalRevenue = orders.reduce((sum, order) => {
+    const price = order.product?.sellingPrice || 0;
+    const quantity = parseInt(order.quantity) || 0;
+    return sum + (price * quantity);
+  }, 0);
+
+  const totalCost = orders.reduce((sum, order) => {
+    const cost = order.product?.costPrice || 0;
+    const quantity = parseInt(order.quantity) || 0;
+    return sum + (cost * quantity);
+  }, 0);
+
+  const profitMargin = totalRevenue > 0 
+    ? Math.round(((totalRevenue - totalCost) / totalRevenue) * 100)
+    : 0;
 
   return (
     <Container maxWidth={false} sx={{ mb: 4, maxWidth: "100%" }}>
@@ -51,7 +53,7 @@ export const TodaysOrderPage: React.FC = () => {
               Total Revenue
             </Typography>
             <Typography variant="h4">
-              ₹{orders.reduce((sum, order) => sum + (order.product?.sellingPrice || 0), 0).toLocaleString()}
+              ₹{totalRevenue.toLocaleString()}
             </Typography>
           </Box>
         </Grid>
@@ -61,7 +63,7 @@ export const TodaysOrderPage: React.FC = () => {
               Total Cost
             </Typography>
             <Typography variant="h4">
-              ₹{orders.reduce((sum, order) => sum + (order.product?.costPrice || 0), 0).toLocaleString()}
+              ₹{totalCost.toLocaleString()}
             </Typography>
           </Box>
         </Grid>
@@ -71,11 +73,7 @@ export const TodaysOrderPage: React.FC = () => {
               Profit Margin
             </Typography>
             <Typography variant="h4">
-              {Math.round(
-                ((orders.reduce((sum, order) => sum + (order.product?.sellingPrice || 0), 0) -
-                  orders.reduce((sum, order) => sum + (order.product?.costPrice || 0), 0)) /
-                  orders.reduce((sum, order) => sum + (order.product?.sellingPrice || 0), 0) * 100)
-              ) || 0}%
+              {profitMargin}%
             </Typography>
           </Box>
         </Grid>
