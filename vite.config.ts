@@ -20,7 +20,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: "/flipkart-amazon-tools//",
+  base: "/flipkart-amazon-tools/",
   worker: {
     format: "es",
     plugins: () => [],
