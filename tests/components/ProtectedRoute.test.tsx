@@ -28,13 +28,13 @@ describe('ProtectedRoute', () => {
     return <div data-testid="location-state">{location.state?.from?.pathname}</div>;
   };
 
-  const renderProtectedRoute = (initialPath = '/labelMerger/') => {
+  const renderProtectedRoute = (initialPath = '/flipkart-amazon-tools/') => {
     return render(
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
-          <Route path="/labelMerger/login" element={<><div>Login Page</div><LocationStateCapture /></>} />
+          <Route path="/flipkart-amazon-tools/login" element={<><div>Login Page</div><LocationStateCapture /></>} />
           <Route
-            path="/labelMerger/*"
+            path="/flipkart-amazon-tools/*"
             element={
               <ProtectedRoute>
                 <TestComponent />
@@ -78,7 +78,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('preserves the redirect path when redirecting to login', async () => {
-    renderProtectedRoute('/labelMerger/protected-path');
+    renderProtectedRoute('/flipkart-amazon-tools/protected-path');
     
     // Simulate unauthenticated state
     await act(async () => {
@@ -87,7 +87,7 @@ describe('ProtectedRoute', () => {
 
     await waitFor(() => {
       const locationState = screen.getByTestId('location-state');
-      expect(locationState).toHaveTextContent('/labelMerger/protected-path');
+      expect(locationState).toHaveTextContent('/flipkart-amazon-tools/protected-path');
     });
   });
 

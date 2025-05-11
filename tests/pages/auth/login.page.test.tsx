@@ -80,7 +80,7 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password123', true);
-      expect(mockNavigate).toHaveBeenCalledWith('/labelMerger/');
+      expect(mockNavigate).toHaveBeenCalledWith('/flipkart-amazon-tools/');
     });
   });
 

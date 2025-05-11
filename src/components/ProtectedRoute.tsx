@@ -25,7 +25,7 @@ export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ childr
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/labelMerger/login" state={{ from: location }} replace />;
+    return <Navigate to="/flipkart-amazon-tools/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

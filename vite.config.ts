@@ -20,7 +20,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: "/labelMerger/",
+  base: "/flipkart-amazon-tools//",
   worker: {
     format: "es",
     plugins: () => [],

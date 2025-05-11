@@ -69,7 +69,7 @@ describe('App Component', () => {
       }
     }));
 
-    renderWithRouter('/labelMerger/');
+    renderWithRouter('/flipkart-amazon-tools/');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-page')).toBeInTheDocument();

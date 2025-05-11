@@ -178,7 +178,7 @@ export const TransactionAnalytics: React.FC = () => {
             </Button>
             <Button
               variant="contained"
-              onClick={() => navigate("/labelMerger/products")}
+              onClick={() => navigate("/flipkart-amazon-tools/products")}
               disabled={!availableProducts.length}
             >
               Manage Prices

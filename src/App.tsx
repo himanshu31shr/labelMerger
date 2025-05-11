@@ -59,25 +59,25 @@ export default function App({
         }
       >
         <Routes>
-          <Route path="/labelMerger/login" element={<LoginPage />} />
+          <Route path="/flipkart-amazon-tools/login" element={<LoginPage />} />
           <Route
             path="*"
             element={
               <ProtectedRoute>
                 <DefaultContainer toggleTheme={toggleTheme} mode={mode}>
                   <Routes>
-                    <Route path="/labelMerger/" element={<DashboardPage />} />
-                    <Route path="/labelMerger/home/" element={<HomePage />} />
+                    <Route path="/flipkart-amazon-tools/" element={<DashboardPage />} />
+                    <Route path="/flipkart-amazon-tools/home/" element={<HomePage />} />
                     <Route
-                      path="/labelMerger/products/"
+                      path="/flipkart-amazon-tools/products/"
                       element={<ProductsPage />}
                     />
                     <Route
-                      path="/labelMerger/transactions/"
+                      path="/flipkart-amazon-tools/transactions/"
                       element={<TransactionAnalytics />}
                     />
                     <Route
-                      path="/labelMerger/activeOrders/"
+                      path="/flipkart-amazon-tools/activeOrders/"
                       element={<ActiveOrders />}
                     />
                   </Routes>

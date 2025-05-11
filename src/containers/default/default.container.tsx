@@ -108,7 +108,7 @@ export const DefaultContainer = ({
       <List sx={{ px: 1, py: 2 }}>
         <Link
           component={RouterLink}
-          to={"/labelMerger/"}
+          to={"/flipkart-amazon-tools/"}
           data-testid="dashboard"
           style={{ textDecoration: 'none', color: 'inherit' }}
         >
@@ -124,7 +124,7 @@ export const DefaultContainer = ({
 
         <Link
           component={RouterLink}
-          to={"/labelMerger/home/"}
+          to={"/flipkart-amazon-tools/home/"}
           data-testid="merge-labels"
           style={{ textDecoration: 'none', color: 'inherit' }}
         >
@@ -140,7 +140,7 @@ export const DefaultContainer = ({
 
         <Link
           component={RouterLink}
-          to={"/labelMerger/activeOrders/"}
+          to={"/flipkart-amazon-tools/activeOrders/"}
           data-testid="merge-labels"
           style={{ textDecoration: 'none', color: 'inherit' }}
         >
@@ -156,7 +156,7 @@ export const DefaultContainer = ({
 
         <Link
           component={RouterLink}
-          to={"/labelMerger/products/"}
+          to={"/flipkart-amazon-tools/products/"}
           data-testid="products"
           style={{ textDecoration: 'none', color: 'inherit' }}
         >
@@ -171,7 +171,7 @@ export const DefaultContainer = ({
         </Link>
         <Link
           component={RouterLink}
-          to={"/labelMerger/transactions/"}
+          to={"/flipkart-amazon-tools/transactions/"}
           data-testid="transactions"
           style={{ textDecoration: 'none', color: 'inherit' }}
         >

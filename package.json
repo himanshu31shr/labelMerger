@@ -3,7 +3,7 @@
   "private": true,
   "version": "5.0.0",
   "type": "module",
-  "homepage": "https://himanshu31shr.github.io/labelMerger/",
+  "homepage": "https://himanshu31shr.github.io/flipkart-amazon-tools/",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

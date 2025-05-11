@@ -34,7 +34,7 @@ export const LoginPage: React.FC = () => {
         setIsResetMode(false);
       } else {
         await dispatch(login({ email, password, rememberMe })).unwrap();
-        navigate('/labelMerger/');
+        navigate('/flipkart-amazon-tools/');
       }
     } catch (err: any) {
       // Error is handled by the auth slice
