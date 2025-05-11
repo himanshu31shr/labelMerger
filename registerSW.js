@@ -1,1 +1,1 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/flipkart-amazon-tools//sw.js', { scope: '/flipkart-amazon-tools//' })})}
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/flipkart-amazon-tools/sw.js', { scope: '/flipkart-amazon-tools/' })})}
