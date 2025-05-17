@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Paper } from '@mui/material';
 import { BrowserRouter } from 'react-router-dom';
@@ -9,11 +9,30 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store';
 import getDesignTokens from './theme';
 import App from './App';
+import { registerServiceWorker } from './services/notification.service';
 
 const AppWrapper = () => {
   const [mode, setMode] = useState<'light' | 'dark'>(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
 
   const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
+  // Register service worker automatically when the app loads
+  useEffect(() => {
+    const registerSW = async () => {
+      try {
+        // Register the service worker
+        const registration = await registerServiceWorker();
+        if (registration) {
+          // Service worker registered successfully
+        }
+      } catch (error) {
+        // Error registering service worker
+      }
+    };
+    
+    // Call the registration function
+    registerSW();
+  }, []);
 
   const toggleTheme = () => {
     const newMode = mode === 'light' ? 'dark' : 'light';

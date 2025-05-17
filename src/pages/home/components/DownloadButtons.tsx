@@ -11,21 +11,21 @@ interface DownloadButtonsProps {
 
 export const DownloadButtons = ({ pdfUrl, onExportSummary, hasSummary }: DownloadButtonsProps) => {
   return (
-    <Paper 
-      sx={{ 
-        p: 3,
-        mb: 4,
+    <Paper
+      sx={{
+        p: { xs: 2, sm: 3 },
+        mb: { xs: 3, sm: 4 },
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 3
+        gap: { xs: 2, sm: 3 }
       }}
     >
       {pdfUrl && (
         <>
-          <Box sx={{ textAlign: 'center' }}>
-            <PictureAsPdf sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
+          <Box sx={{ textAlign: 'center', width: '100%' }}>
+            <PictureAsPdf sx={{ fontSize: { xs: 28, sm: 32 }, color: 'primary.main', mb: 1 }} />
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Download Merged Labels
             </Typography>
@@ -35,20 +35,26 @@ export const DownloadButtons = ({ pdfUrl, onExportSummary, hasSummary }: Downloa
               href={pdfUrl}
               startIcon={<Download />}
               onClick={(e: MouseEvent<HTMLAnchorElement>) => downloadFile(e, pdfUrl)}
-              sx={{ minWidth: 200 }}
+              sx={{
+                minWidth: { xs: '100%', sm: 200 },
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               Download PDF
             </Button>
           </Box>
           {hasSummary && (
-            <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
+            <>
+              <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
+              <Divider orientation="horizontal" sx={{ display: { xs: 'block', sm: 'none' }, width: '100%', my: 1 }} />
+            </>
           )}
         </>
       )}
-      
+
       {hasSummary && (
-        <Box sx={{ textAlign: 'center' }}>
-          <TableChart sx={{ fontSize: 32, color: 'secondary.main', mb: 1 }} />
+        <Box sx={{ textAlign: 'center', width: '100%' }}>
+          <TableChart sx={{ fontSize: { xs: 28, sm: 32 }, color: 'secondary.main', mb: 1 }} />
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             Export Product Summary
           </Typography>
@@ -57,7 +63,10 @@ export const DownloadButtons = ({ pdfUrl, onExportSummary, hasSummary }: Downloa
             color="secondary"
             onClick={onExportSummary}
             startIcon={<Download />}
-            sx={{ minWidth: 200 }}
+            sx={{
+              minWidth: { xs: '100%', sm: 200 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
           >
             Export Summary
           </Button>

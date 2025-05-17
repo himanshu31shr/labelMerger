@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { format } from 'date-fns';
 import {
     Box,
     Grid,
@@ -7,7 +8,11 @@ import {
     Card,
     CardContent,
     CircularProgress,
+    Button,
+    Divider,
 } from '@mui/material';
+import WarningIcon from '@mui/icons-material/Warning';
+import { HiddenProductsWidget, HighPricedProductsWidget } from './components/ProductAlertWidgets';
 import {
     BarChart,
     Bar,
@@ -23,37 +28,25 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchProducts } from '../../store/slices/productsSlice';
 import { fetchOrders } from '../../store/slices/ordersSlice';
-import { HiddenProducts } from './components/hiddenProducts';
+import { fetchOrderHistory } from '../../store/slices/orderHistorySlice';
+import { fetchLowStockItems } from '../../store/slices/inventorySlice';
 import { ProductSummary } from '../../pages/home/services/base.transformer';
-
-// Mock data for demonstration
-const salesData = [
-    { name: 'Jan', sales: 4000 },
-    { name: 'Feb', sales: 3000 },
-    { name: 'Mar', sales: 2000 },
-    { name: 'Apr', sales: 2780 },
-    { name: 'May', sales: 1890 },
-    { name: 'Jun', sales: 2390 },
-];
-
-const orderData = [
-    { name: 'Mon', orders: 24 },
-    { name: 'Tue', orders: 13 },
-    { name: 'Wed', orders: 98 },
-    { name: 'Thu', orders: 39 },
-    { name: 'Fri', orders: 48 },
-    { name: 'Sat', orders: 38 },
-    { name: 'Sun', orders: 43 },
-];
+import { ActiveOrderSchema } from '../../services/todaysOrder.service';
+import LowInventoryWidget from './components/LowInventoryWidget';
+import NotificationTester from '../../components/NotificationTester';
 
 export const DashboardPage = () => {
     const dispatch = useAppDispatch();
     const { items: products, loading: productsLoading } = useAppSelector(state => state.products);
     const { items: orders, loading: ordersLoading } = useAppSelector(state => state.orders);
+    const { dailyOrders, loading: historyLoading } = useAppSelector(state => state.orderHistory);
+    const { lowStockItems, loading: inventoryLoading } = useAppSelector(state => state.inventory);
 
     useEffect(() => {
         dispatch(fetchProducts({}));
         dispatch(fetchOrders());
+        dispatch(fetchOrderHistory());
+        dispatch(fetchLowStockItems());
     }, [dispatch]);
 
     const totalOrders = orders.length;
@@ -65,7 +58,7 @@ export const DashboardPage = () => {
         return sum + (price * quantity);
     }, 0);
 
-    if (productsLoading || ordersLoading) {
+    if (productsLoading || ordersLoading || historyLoading || inventoryLoading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <CircularProgress />
@@ -73,99 +66,161 @@ export const DashboardPage = () => {
         );
     }
 
+    // Transform daily orders for the chart
+    const chartData = dailyOrders.map((day: ActiveOrderSchema) => ({
+        date: day.date,
+        orders: day.orders.length
+    }));
+
     return (
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-            <Typography variant="h4" gutterBottom>
-                Dashboard
-            </Typography>
+        <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+                    Dashboard
+                </Typography>
+                <Box sx={{ flexGrow: 1 }} />
+                <Typography variant="subtitle1" color="text.secondary">
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </Typography>
+            </Box>
 
             {/* Summary Cards */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
+                    <Paper sx={{ p: 2, borderRadius: 2, borderLeft: '4px solid', borderColor: 'primary.main', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
                                 Total Orders
                             </Typography>
-                            <Typography variant="h5">{totalOrders}</Typography>
-                        </CardContent>
-                    </Card>
+                        </Box>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+                            {totalOrders}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Across all platforms
+                        </Typography>
+                    </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Active Orders
+                    <Paper sx={{ p: 2, borderRadius: 2, borderLeft: '4px solid', borderColor: 'success.main', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                                Total Revenue
                             </Typography>
-                            <Typography variant="h5">{activeOrders}</Typography>
-                        </CardContent>
-                    </Card>
+                        </Box>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.dark' }}>
+                            ₹{revenue.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Gross revenue from all sales
+                        </Typography>
+                    </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Total Products
+                    <Paper sx={{ p: 2, borderRadius: 2, borderLeft: '4px solid', borderColor: 'info.main', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                                Recent Orders
                             </Typography>
-                            <Typography variant="h5">{totalProducts}</Typography>
-                        </CardContent>
-                    </Card>
+                        </Box>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.dark' }}>
+                            {activeOrders}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Currently active orders
+                        </Typography>
+                    </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                        <CardContent>
-                            <Typography color="textSecondary" gutterBottom>
-                                Revenue
+                    <Paper sx={{ p: 2, borderRadius: 2, borderLeft: '4px solid', borderColor: 'secondary.main', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                                Average Order Value
                             </Typography>
-                            <Typography variant="h5">₹{revenue.toLocaleString()}</Typography>
-                        </CardContent>
-                    </Card>
+                        </Box>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.dark' }}>
+                            {totalProducts}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Total products in catalog
+                        </Typography>
+                    </Paper>
                 </Grid>
             </Grid>
 
-            {/* Charts */}
+            {/* Charts and Widgets */}
             <Grid container spacing={3}>
-                {/* <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={8}>
                     <Paper sx={{ p: 2 }}>
                         <Typography variant="h6" gutterBottom>
-                            Sales Overview
+                            Orders Overview
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={salesData}>
+                            <LineChart 
+                                data={chartData}
+                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                            >
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
+                                <XAxis 
+                                    dataKey="date" 
+                                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    interval={2}
+                                />
                                 <YAxis />
-                                <Tooltip />
+                                <Tooltip 
+                                    labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                                    formatter={(value) => [`${value} orders`, 'Orders']}
+                                />
                                 <Legend />
-                                <Bar dataKey="sales" fill="#8884d8" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Daily Orders
-                        </Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={orderData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line type="monotone" dataKey="orders" stroke="#82ca9d" />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="orders" 
+                                    name="Orders"
+                                    stroke="#8884d8" 
+                                    activeDot={{ r: 8 }} 
+                                />
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
-                </Grid> */}
-                <Grid item xs={12} md={12} lg={12}>
-                    <Typography variant="h6" gutterBottom>
-                        Hidden Products
-                    </Typography>
-                    <HiddenProducts />
+                </Grid>
+                
+                {/* Low Inventory Widget */}
+                <Grid item xs={12} md={4}>
+                    <LowInventoryWidget 
+                        items={lowStockItems} 
+                        loading={inventoryLoading} 
+                    />
                 </Grid>
             </Grid>
+
+            {/* Additional Alert Widgets */}
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+                {/* Hidden Products Widget */}
+                <Grid item xs={12} md={6}>
+                    <HiddenProductsWidget 
+                        products={products} 
+                        loading={productsLoading} 
+                    />
+                </Grid>
+                
+                {/* High-Priced Products Widget */}
+                <Grid item xs={12} md={6}>
+                    <HighPricedProductsWidget 
+                        products={products} 
+                        loading={productsLoading} 
+                    />
+                </Grid>
+            </Grid>
+            
+            {/* Notification Testing Section */}
+            <Box sx={{ mt: 4 }}>
+                <Divider sx={{ mb: 3 }}>
+                    <Typography variant="h6" color="text.secondary">
+                        Notification Testing
+                    </Typography>
+                </Divider>
+                <NotificationTester />
+            </Box>
         </Box>
     );
 }; 

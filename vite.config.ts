@@ -8,8 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       manifest: {
+        name: "Material UI Vite TS",
+        short_name: "MUI App",
         theme_color: "#2196f3", // Material UI primary blue color
         background_color: "#ffffff",
+        display: "standalone",
+        scope: "/",
+        start_url: "/",
         icons: [
           {
             src: "favicon.ico",
@@ -18,9 +23,38 @@ export default defineConfig({
           },
         ],
       },
+      workbox: {
+        // Don't register the service worker for firebase-messaging-sw.js
+        // as we'll handle it manually
+        navigateFallbackDenylist: [/^\/firebase-messaging-sw\.js$/],
+        // Skip waiting on install and activate immediately
+        skipWaiting: true,
+        // Take control of clients immediately
+        clientsClaim: true,
+        // Disable service worker registration in development
+        disableDevLogs: true,
+      },
+      // Include firebase-messaging-sw.js in the build
+      includeAssets: ["favicon.ico", "firebase-messaging-sw.js"],
+      // Use manual registration for better control
+      injectRegister: null,
+      // Use minimal strategy for development
+      strategies: "generateSW",
+      devOptions: {
+        // Disable service worker in development to avoid conflicts
+        enabled: false,
+        type: "module",
+      },
     }),
   ],
-  base: "/flipkart-amazon-tools/",
+  base: "/",
+  server: {
+    port: 5173, // Use Vite's default port
+    strictPort: false, // Allow fallback to another port if needed
+    allowedHosts: [
+      '8690-2405-201-3034-5047-acbc-3d30-cd62-9d80.ngrok-free.app'
+    ]
+  },
   worker: {
     format: "es",
     plugins: () => [],

@@ -8,8 +8,17 @@ import {
   Tab,
   Tabs,
   Typography,
+  Paper,
+  Divider,
+  Chip,
+  Card,
+  CardContent,
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import PriceChangeIcon from "@mui/icons-material/PriceChange";
+import DateRangeIcon from "@mui/icons-material/DateRange";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchTransactions, saveTransactions } from "../../store/slices/transactionsSlice";
 import { fetchProducts } from "../../store/slices/productsSlice";
@@ -143,32 +152,68 @@ export const TransactionAnalytics: React.FC = () => {
   };
 
   return (
-    <Container maxWidth={false} sx={{ mb: 4, maxWidth: "100%" }}>
-      <Grid container spacing={3}>
-        <Grid item xs={12} lg={6} md={6}>
-          <Typography variant="h5" gutterBottom>
-            Transactions between {dateRange.minDate?.toDateString()} to{" "}
-            {dateRange.maxDate?.toDateString()}
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <AnalyticsIcon sx={{ fontSize: 32, mr: 2, color: 'primary.main' }} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+            Transaction Analytics
           </Typography>
-        </Grid>
-        <Grid
-          item
-          xs={12}
-          lg={6}
-          md={6}
-          alignItems={"flex-end"}
-          justifyContent={"flex-end"}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              alignItems: "end",
-              justifyContent: "end",
-            }}
-          >
-            <Button variant="contained" component="label" disabled={loading}>
-              Upload File
+          {transactions.length > 0 && (
+            <Chip 
+              label={`${transactions.length} Transactions`} 
+              color="primary" 
+              size="medium" 
+              sx={{ ml: 2 }}
+            />
+          )}
+          <Box sx={{ flexGrow: 1 }} />
+          {loading && (
+            <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+              <CircularProgress size={24} sx={{ mr: 1 }} color="primary" />
+              <Typography color="primary.main">Processing...</Typography>
+            </Box>
+          )}
+        </Box>
+
+        <Divider sx={{ mb: 3 }} />
+        
+        <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid', borderColor: dateRange.minDate ? 'info.light' : 'divider' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <DateRangeIcon sx={{ color: 'info.main', mr: 1 }} />
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'info.dark' }}>
+                {dateRange.minDate ? (
+                  <>Transaction Period</>
+                ) : (
+                  <>No Transactions Available</>
+                )}
+              </Typography>
+            </Box>
+            
+            {dateRange.minDate ? (
+              <Typography variant="body1">
+                Analyzing transactions from <strong>{dateRange.minDate?.toDateString()}</strong> to <strong>{dateRange.maxDate?.toDateString()}</strong>
+              </Typography>
+            ) : (
+              <Typography variant="body1" color="text.secondary">
+                Upload a transaction file to begin analysis
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6}>
+            <Button 
+              variant="contained" 
+              component="label" 
+              disabled={loading}
+              startIcon={<UploadFileIcon />}
+              fullWidth
+              sx={{ py: 1.5, fontWeight: 'medium' }}
+            >
+              Upload Transaction File
               <input
                 type="file"
                 hidden
@@ -176,51 +221,68 @@ export const TransactionAnalytics: React.FC = () => {
                 onChange={handleFileUpload}
               />
             </Button>
+          </Grid>
+          <Grid item xs={12} sm={6}>
             <Button
               variant="contained"
+              color="secondary"
               onClick={() => navigate("/flipkart-amazon-tools/products")}
               disabled={!availableProducts.length}
+              startIcon={<PriceChangeIcon />}
+              fullWidth
+              sx={{ py: 1.5, fontWeight: 'medium' }}
             >
-              Manage Prices
+              Manage Product Prices
             </Button>
-            {loading && (
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <CircularProgress size={24} sx={{ mr: 1 }} />
-                <Typography>Processing...</Typography>
-              </Box>
-            )}
-          </Box>
+          </Grid>
         </Grid>
 
         {error && (
-          <Grid item xs={12} md={12} lg={12}>
-            <Box>
-              <Alert severity="error">{error}</Alert>
-            </Box>
-          </Grid>
+          <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
         )}
+        
         {summary && (
-          <Grid item xs={12} md={12} lg={12}>
+          <>
             <SummaryTiles summary={summary} />
-            <Grid item xs={12} marginTop={4}>
+            
+            <Box sx={{ mt: 4, mb: 2 }}>
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tabs 
+                  value={tabValue} 
+                  onChange={handleTabChange}
+                  sx={{
+                    '& .MuiTab-root': { fontWeight: 'bold' },
+                    '& .Mui-selected': { color: 'primary.main' },
+                    '& .MuiTabs-indicator': { backgroundColor: 'primary.main' },
+                  }}
+                >
                   <Tab label="Orders" />
                   <Tab label="Product Details" />
                 </Tabs>
               </Box>
+            </Box>
 
-              <TabPanel value={tabValue} index={0} key="transactions">
-                <OrderList transactions={transactions} />
-              </TabPanel>
+            <TabPanel value={tabValue} index={0} key="transactions">
+              <OrderList transactions={transactions} />
+            </TabPanel>
 
-              <TabPanel value={tabValue} index={1} key="product-list">
-                <ProductList transactions={transactions} />
-              </TabPanel>
-            </Grid>
-          </Grid>
+            <TabPanel value={tabValue} index={1} key="product-list">
+              <ProductList transactions={transactions} />
+            </TabPanel>
+          </>
         )}
-      </Grid>
+        
+        {!summary && !loading && (
+          <Box sx={{ textAlign: 'center', py: 5 }}>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              No transaction data available
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Upload a transaction file to view analytics
+            </Typography>
+          </Box>
+        )}
+      </Paper>
     </Container>
   );
 };

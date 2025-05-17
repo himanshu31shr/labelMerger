@@ -6,12 +6,14 @@ import { ordersReducer } from './slices/ordersSlice';
 import { transactionsReducer } from './slices/transactionsSlice';
 import { authReducer } from './slices/authSlice';
 import { pdfMergerReducer } from './slices/pdfMergerSlice';
+import orderHistoryReducer from './slices/orderHistorySlice';
+import inventoryReducer from './slices/inventorySlice';
 
 const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['products', 'orders', 'transactions'], // Only persist these reducers
+  whitelist: ['products', 'orders', 'transactions', 'orderHistory', 'inventory'], // Only persist these reducers
   blacklist: ['auth', 'pdfMerger'], // Don't persist these reducers
 };
 
@@ -21,6 +23,8 @@ const rootReducer = combineReducers({
   transactions: transactionsReducer,
   auth: authReducer,
   pdfMerger: pdfMergerReducer,
+  orderHistory: orderHistoryReducer,
+  inventory: inventoryReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

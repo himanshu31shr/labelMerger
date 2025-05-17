@@ -1,5 +1,17 @@
-import { MergeOutlined } from "@mui/icons-material";
-import { Box, Button, CircularProgress } from "@mui/material";
+import { MergeOutlined, UploadFile, TableChart, PictureAsPdf, HomeOutlined } from "@mui/icons-material";
+import { 
+  Box, 
+  Button, 
+  CircularProgress, 
+  Container, 
+  Paper, 
+  Typography, 
+  Divider,
+  Grid,
+  Card,
+  CardContent,
+  Chip
+} from "@mui/material";
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { mergePDFs, setAmazonFile, setFlipkartFile, clearFiles } from "../../store/slices/pdfMergerSlice";
@@ -38,67 +50,133 @@ export const HomePage: React.FC = () => {
   const handleExportTableToPDF = () => exportTableToPDF("summary-table");
 
   return (
-    <Box>
-      <FileUploadSection
-        amazonFile={amazonFile || undefined}
-        flipkartFile={flipkartFile || undefined}
-        onAmazonChange={handleAmazonFileChange}
-        onFlipkartChange={handleFlipkartFileChange}
-      />
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <HomeOutlined sx={{ fontSize: 32, mr: 2, color: 'primary.main' }} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+            PDF Merger Dashboard
+          </Typography>
+        </Box>
+        
+        <Divider sx={{ mb: 3 }} />
+        
+        <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid', borderColor: 'primary.light' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <UploadFile sx={{ color: 'primary.main', mr: 1 }} />
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+                Upload Files
+              </Typography>
+            </Box>
+            
+            <FileUploadSection
+              amazonFile={amazonFile || undefined}
+              flipkartFile={flipkartFile || undefined}
+              onAmazonChange={handleAmazonFileChange}
+              onFlipkartChange={handleFlipkartFileChange}
+            />
+          </CardContent>
+        </Card>
 
-      <Box sx={{ my: 4, display: "flex", justifyContent: "center" }}>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleSubmit}
-          startIcon={
-            loading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <MergeOutlined />
-            )
-          }
-          disabled={(!amazonFile && !flipkartFile) || loading}
-        >
-          {loading ? "Processing..." : "Merge & Generate PDF"}
-        </Button>
-      </Box>
+        <Box sx={{ my: 4, display: "flex", justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleSubmit}
+            startIcon={
+              loading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <MergeOutlined />
+              )
+            }
+            disabled={(!amazonFile && !flipkartFile) || loading}
+            sx={{ 
+              py: 1.5, 
+              px: 4, 
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              boxShadow: (theme) => theme.palette.mode === 'dark' 
+                ? '0 4px 12px rgba(0,0,0,0.2)' 
+                : '0 4px 12px rgba(21,101,192,0.2)'
+            }}
+          >
+            {loading ? "Processing..." : "Merge & Generate PDF"}
+          </Button>
+        </Box>
 
       {(finalPdf || summary.length > 0) && (
-        <DownloadButtons
-          pdfUrl={finalPdf || undefined}
-          onExportSummary={handleExportTableToPDF}
-          hasSummary={summary.length > 0}
-        />
-      )}
-
-      {finalPdf && (
-        <Box sx={{ my: 4 }}>
-          <AccordionSection
-            title="Merged PDF Preview"
-            isExpanded={activeSection === "pdfViewer"}
-            onChange={(isExpanded) =>
-              setActiveSection(isExpanded ? "pdfViewer" : "")
-            }
-          >
-            <PDFViewer pdfUrl={finalPdf} />
-          </AccordionSection>
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+          <DownloadButtons
+            pdfUrl={finalPdf || undefined}
+            onExportSummary={handleExportTableToPDF}
+            hasSummary={summary.length > 0}
+          />
         </Box>
       )}
 
-      {summary.length > 0 && (
-        <Box sx={{ my: 4 }}>
-          <AccordionSection
-            title="Product Summary"
-            isExpanded={activeSection === "summary"}
-            onChange={(isExpanded) =>
-              setActiveSection(isExpanded ? "summary" : "")
-            }
-          >
-            <SummaryTable summary={summary} />
-          </AccordionSection>
+      <Grid container spacing={3}>
+        {finalPdf && (
+          <Grid item xs={12} md={summary.length > 0 ? 6 : 12}>
+            <Card sx={{ borderRadius: 2, height: '100%', border: '1px solid', borderColor: 'primary.light' }}>
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <PictureAsPdf sx={{ color: 'primary.main', mr: 1 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+                    Merged PDF Preview
+                  </Typography>
+                  <Chip 
+                    label="PDF Generated" 
+                    color="success" 
+                    size="small" 
+                    sx={{ ml: 2 }}
+                  />
+                </Box>
+                <Box sx={{ height: '600px', overflow: 'auto' }}>
+                  <PDFViewer pdfUrl={finalPdf} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {summary.length > 0 && (
+          <Grid item xs={12} md={finalPdf ? 6 : 12}>
+            <Card sx={{ borderRadius: 2, height: '100%', border: '1px solid', borderColor: 'primary.light' }}>
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ p: 2, display: 'flex', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <TableChart sx={{ color: 'primary.main', mr: 1 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+                    Product Summary
+                  </Typography>
+                  <Chip 
+                    label={`${summary.length} Products`} 
+                    color="primary" 
+                    size="small" 
+                    sx={{ ml: 2 }}
+                  />
+                </Box>
+                <Box sx={{ height: '600px', overflow: 'auto' }}>
+                  <SummaryTable summary={summary} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+      
+      {!finalPdf && !summary.length && !loading && (
+        <Box sx={{ textAlign: 'center', py: 5 }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No data available
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Upload files and merge them to view results
+          </Typography>
         </Box>
       )}
-    </Box>
+      </Paper>
+    </Container>
   );
 };

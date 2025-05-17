@@ -37,6 +37,18 @@ const ActiveOrders = React.lazy(() =>
   }))
 );
 
+const HiddenProductsPage = React.lazy(() =>
+  import("./pages/hidden-products/hidden-products.page").then((module) => ({
+    default: module.HiddenProductsPage,
+  }))
+);
+
+const InventoryPage = React.lazy(() =>
+  import("./pages/inventory/inventory.page").then((module) => ({
+    default: module.InventoryPage,
+  }))
+);
+
 export default function App({
   toggleTheme,
   mode,
@@ -79,6 +91,14 @@ export default function App({
                     <Route
                       path="/flipkart-amazon-tools/activeOrders/"
                       element={<ActiveOrders />}
+                    />
+                    <Route
+                      path="/flipkart-amazon-tools/hidden-products/"
+                      element={<HiddenProductsPage />}
+                    />
+                    <Route
+                      path="/flipkart-amazon-tools/inventory/"
+                      element={<InventoryPage />}
                     />
                   </Routes>
                 </DefaultContainer>

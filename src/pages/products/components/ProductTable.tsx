@@ -108,13 +108,21 @@ export const ProductTable: React.FC<Props> = ({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
+      <Box sx={{
+        mb: 2,
+        display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
+        gap: 2
+      }}>
         <TextField
           select
           label="Platform"
           value={platform ?? ""}
           onChange={handlePlatformChange}
-          sx={{ minWidth: 200 }}
+          sx={{
+            minWidth: { xs: "100%", sm: 200 },
+            flexGrow: { xs: 1, sm: 0 }
+          }}
         >
           <MenuItem value="">All</MenuItem>
           <MenuItem value="amazon">Amazon</MenuItem>
@@ -125,7 +133,10 @@ export const ProductTable: React.FC<Props> = ({
           label="Search"
           value={search}
           onChange={handleSearchChange}
-          sx={{ minWidth: 200 }}
+          sx={{
+            minWidth: { xs: "100%", sm: 200 },
+            flexGrow: 1
+          }}
         />
       </Box>
 

@@ -9,9 +9,18 @@ import {
   Checkbox,
   Link,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Card,
+  CardContent,
+  Divider,
+  InputAdornment,
+  IconButton
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { login, resetPassword } from '../../store/slices/authSlice';
 
@@ -20,6 +29,7 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -45,28 +55,57 @@ export const LoginPage: React.FC = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
+        minHeight: { xs: 'calc(100vh - 60px)', sm: '100vh' }, // Account for mobile browser chrome
         display: 'flex',
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: (theme) => theme.palette.background.default
+        py: { xs: 4, sm: 0 }, // Add padding on small screens
+        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.paper' : 'primary.light',
+        backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))'
       }}
     >
-      <Paper
-        elevation={3}
+      <Card
+        elevation={5}
         sx={{
-          p: 4,
+          p: { xs: 3, sm: 4 },
           width: '100%',
-          maxWidth: 400,
+          maxWidth: { xs: 350, sm: 450 },
+          mx: { xs: 2, sm: 0 }, // Add horizontal margin on small screens
           display: 'flex',
           flexDirection: 'column',
-          gap: 2
+          gap: 2,
+          borderRadius: 2,
+          boxShadow: (theme) => theme.palette.mode === 'dark' 
+            ? '0 8px 24px rgba(0,0,0,0.4)' 
+            : '0 8px 24px rgba(21,101,192,0.2)'
         }}
       >
-        <Typography variant="h5" component="h1" align="center" gutterBottom>
-          {isResetMode ? 'Reset Password' : 'Sign In'}
-        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ 
+            bgcolor: 'primary.main', 
+            color: 'white', 
+            width: 56, 
+            height: 56, 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            mb: 2
+          }}>
+            <LockOutlinedIcon fontSize="large" />
+          </Box>
+          <Typography variant="h4" component="h1" align="center" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+            {isResetMode ? 'Reset Password' : 'Sign In'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
+            {isResetMode 
+              ? 'Enter your email to receive a password reset link' 
+              : 'Sign in to access your account'}
+          </Typography>
+        </Box>
+        
+        <Divider sx={{ mb: 2 }} />
 
         <form onSubmit={handleSubmit}>
           <TextField
@@ -78,17 +117,44 @@ export const LoginPage: React.FC = () => {
             margin="normal"
             required
             autoFocus
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailOutlinedIcon color="primary" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 2 }}
           />
 
           {!isResetMode && (
             <TextField
               fullWidth
               label="Password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               margin="normal"
               required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockOutlinedIcon color="primary" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 1 }}
             />
           )}
 
@@ -115,7 +181,16 @@ export const LoginPage: React.FC = () => {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ 
+              mt: 3, 
+              mb: 2, 
+              py: 1.5, 
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              boxShadow: (theme) => theme.palette.mode === 'dark' 
+                ? '0 4px 12px rgba(0,0,0,0.2)' 
+                : '0 4px 12px rgba(21,101,192,0.2)'
+            }}
             disabled={loading}
           >
             {loading ? (
@@ -128,16 +203,23 @@ export const LoginPage: React.FC = () => {
           </Button>
         </form>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-          <Link
-            component="button"
-            variant="body2"
+        <Divider sx={{ my: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {isResetMode ? 'Remember your password?' : 'Having trouble?'}
+          </Typography>
+        </Divider>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant="text"
+            color="primary"
             onClick={() => setIsResetMode(!isResetMode)}
+            sx={{ fontWeight: 'medium' }}
           >
             {isResetMode ? 'Back to Sign In' : 'Forgot Password?'}
-          </Link>
+          </Button>
         </Box>
-      </Paper>
+      </Card>
     </Box>
   );
 };

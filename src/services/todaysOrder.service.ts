@@ -13,11 +13,16 @@ export interface ActiveOrderSchema {
 
 export class TodaysOrder extends FirebaseService {
   private readonly COLLECTION_NAME = "active-orders";
-
+  private productService: ProductService;
   private products: Product[] = [];
 
+  constructor() {
+    super();
+    this.productService = new ProductService();
+  }
+
   async mapProductsToActiveOrder() {
-    this.products = await new ProductService().getProducts({});
+    this.products = await this.productService.getProducts({});
   }
 
   async getTodaysOrders(): Promise<ActiveOrderSchema | undefined> {
@@ -28,7 +33,7 @@ export class TodaysOrder extends FirebaseService {
     );
     if (activeOrder) {
       activeOrder.orders.map((order) => {
-        const product = this.products.find((p) => p.sku === order.SKU);
+        const product = this.products.find((p) => p.sku === order.SKU && p.platform === order.type);
         if (product) {
           order.product = product;
         }
@@ -38,12 +43,104 @@ export class TodaysOrder extends FirebaseService {
     return activeOrder;
   }
 
+  async getLastThirtyDaysOrders(): Promise<ActiveOrderSchema[]> {
+    await this.mapProductsToActiveOrder();
+    const orders: ActiveOrderSchema[] = [];
+
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = format(date, "yyyy-MM-dd");
+
+      try {
+        const dayOrder = await this.getDocument<ActiveOrderSchema>(
+          this.COLLECTION_NAME,
+          dateStr
+        );
+
+        if (dayOrder) {
+          dayOrder.orders.forEach((order) => {
+            const product = this.products.find((p) => p.sku === order.SKU);
+            if (product) {
+              order.product = product;
+            }
+          });
+          orders.push(dayOrder);
+        } else {
+          orders.push({
+            id: dateStr,
+            orders: [],
+            date: dateStr
+          });
+        }
+      } catch (error) {
+        orders.push({
+          id: dateStr,
+          orders: [],
+          date: dateStr
+        });
+      }
+    }
+
+    return orders;
+  }
+
+  /**
+   * Check if there's sufficient inventory for all products in the order
+   * @param orders List of orders to check
+   * @returns Boolean indicating if all products have sufficient inventory
+   */
+  async checkInventoryForOrders(orders: ActiveOrder[]): Promise<boolean> {
+    for (const order of orders) {
+      try {
+        // Skip orders without a valid SKU
+        if (!order.SKU) {
+          console.warn('Order missing SKU, skipping inventory check');
+          continue;
+        }
+        
+        const hasSufficient = await this.productService.hasSufficientInventory(order.SKU, Number(order.quantity) || 1);
+        if (!hasSufficient) {
+          return false;
+        }
+      } catch (error) {
+        console.error(`Error checking inventory for SKU ${order.SKU || 'unknown'}:`, error);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Reduce inventory for all products in the order
+   * @param orders List of orders to process
+   */
+  async reduceInventoryForOrders(orders: ActiveOrder[]): Promise<void> {
+    for (const order of orders) {
+      try {
+        // Skip orders without a valid SKU
+        if (!order.SKU) {
+          console.warn('Order missing SKU, skipping inventory reduction');
+          continue;
+        }
+        
+        await this.productService.reduceInventoryForOrder(order.SKU, Number(order.quantity) || 1);
+      } catch (error) {
+        console.error(`Error reducing inventory for SKU ${order.SKU || 'unknown'}:`, error);
+        // Continue with other orders even if one fails
+      }
+    }
+  }
+
   async updateTodaysOrder(
     order: ActiveOrderSchema
   ): Promise<ActiveOrderSchema | undefined> {
+
     const existingOrder = await this.getTodaysOrders();
+    
+    // Process the order
     if (existingOrder) {
-      this.updateDocument<ActiveOrderSchema>(
+      await this.updateDocument<ActiveOrderSchema>(
         this.COLLECTION_NAME,
         existingOrder.id,
         {
@@ -52,13 +149,17 @@ export class TodaysOrder extends FirebaseService {
         }
       );
     } else {
-      this.batchOperation<ActiveOrderSchema>(
+      await this.batchOperation<ActiveOrderSchema>(
         [order],
         this.COLLECTION_NAME,
         "create",
         (item) => item.id
       );
     }
+    
+    // Reduce inventory after the order is successfully processed
+    await this.reduceInventoryForOrders(order.orders);
+    
     return (await this.getTodaysOrders());
   }
 }

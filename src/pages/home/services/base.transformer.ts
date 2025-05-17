@@ -13,6 +13,7 @@ export interface ProductSummary {
   orderId?: string;
   type: 'amazon' | 'flipkart';
   product?: Product;
+  createdAt?: string;
 }
 
 export class BaseTransformer {

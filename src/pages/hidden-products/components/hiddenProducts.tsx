@@ -1,7 +1,6 @@
 import { ArrowUpwardOutlined } from "@mui/icons-material";
-import { Box, Chip, CircularProgress } from "@mui/material";
+import { Box, Chip, CircularProgress, colors } from "@mui/material";
 import React from "react";
-import { useAppSelector } from "../../../store/hooks";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product } from "../../../services/product.service";
@@ -10,24 +9,43 @@ import {
   ViewAmazonListingButton,
   ViewFlipkartListingButton,
 } from "../../../shared/ActionButtons";
+import { useAppSelector } from "../../../store/hooks";
 
-export const HiddenProducts: React.FC = () => {
+interface HiddenProductsProps {
+  mode?: 'hidden' | 'price'
+}
+export const HiddenProducts: React.FC<HiddenProductsProps> = ({
+  mode = 'price'
+}) => {
   const { items: products, loading } = useAppSelector(state => state.products);
 
-  const hiddenProducts = products
-    .filter(
-      (product: Product) =>
-        product?.competetionAnalysis &&
-        Number(product?.competetionAnalysis?.competitorPrice) > 0
-    )
-    .filter(
-      (product: Product) =>
-        product?.competetionAnalysis &&
-        !!product?.competetionAnalysis?.competitorPrice &&
-        product.sellingPrice -
-        Number(product?.competetionAnalysis?.competitorPrice) >
-        0
-    );
+  let hiddenProducts = [];
+
+  if (mode === 'price') {
+    hiddenProducts = products
+      .filter(
+        (product: Product) =>
+          product?.competetionAnalysis &&
+          Number(product?.competetionAnalysis?.competitorPrice) > 0
+      )
+      .filter(
+        (product: Product) =>
+          product?.competetionAnalysis &&
+          !!product?.competetionAnalysis?.competitorPrice &&
+          product.sellingPrice -
+          Number(product?.competetionAnalysis?.competitorPrice) >
+          0
+      );
+  } else {
+    hiddenProducts = products
+      .filter(
+        (product: Product) =>
+          product?.visibility &&
+          product?.visibility === 'hidden'
+      )
+
+  }
+
 
   const columns: Column<Product>[] = [
     { id: "sku", label: "SKU", filter: true },
@@ -46,33 +64,27 @@ export const HiddenProducts: React.FC = () => {
       },
     },
     {
-      id: "visibility",
-      label: "Visibility",
-      format: (value: unknown, row: Product | undefined) => {
-        const visibility = value as string;
-
-        if (visibility === "visible") {
-          return <Chip label={visibility?.toUpperCase()} color="success" />;
-        }
-
-        if (row?.platform === "amazon") {
-          return <Chip label="VISIBLE" color="success" />;
-        }
-
-        return <Chip label={visibility?.toUpperCase()} color="error" />;
-      },
+      id: 'costPrice',
+      label: 'Cost Price',
+      align: 'center',
+      format: (value, row?: Product) => <>
+        <FormattedCurrency color={colors.green[500]} value={(row?.costPrice ?? 0) * (Number(row?.metadata?.moq ?? '0'))} />
+        <Box fontSize={12}>
+          <FormattedCurrency value={row?.costPrice ?? 0} /> x {row?.metadata?.moq}
+        </Box>
+      </>,
     },
     {
       id: "sellingPrice",
       label: "Selling Price",
       align: "center",
-      format: (value, row?: Product) => <Box display={"flex"} flexDirection={"column"} alignItems={"center"} gap={1}>
+      format: (value, row?: Product) => <>
         <FormattedCurrency value={value as number} />
-        <div style={{ display: "flex", alignItems: "center", gap: 4, color: "red", 'fontSize': 12 }}>
+        <Box gap={1} color="red" fontSize={12} display={'flex'} alignContent={'center'} justifyContent={'center'}>
           <FormattedCurrency value={((row?.sellingPrice ?? 0) - Number(row?.competetionAnalysis?.competitorPrice))} />
           <ArrowUpwardOutlined style={{ fontSize: 12 }} />
-        </div>
-      </Box>,
+        </Box>
+      </>,
     },
     {
       id: "competitorPrice",

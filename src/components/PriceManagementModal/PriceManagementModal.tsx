@@ -15,13 +15,14 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: "90%",
-  maxWidth: 1200,
+  width: { xs: "95%", sm: "90%" },
+  maxWidth: { xs: "100%", sm: 900, md: 1200 },
   bgcolor: "background.paper",
   boxShadow: 24,
-  p: 4,
-  maxHeight: "90vh",
+  p: { xs: 2, sm: 3, md: 4 },
+  maxHeight: { xs: "95vh", sm: "90vh" },
   overflow: "auto",
+  borderRadius: 1,
 };
 
 interface Props {
@@ -100,11 +101,21 @@ export const PriceManagementModal: React.FC<Props> = ({
   , [prices]);
 
   const columns: Column<PriceTableData>[] = [
-    { id: 'sku', label: 'SKU', filter: true },
-    { id: 'description', label: 'Description', filter: true },
-    { 
-      id: 'basePrice', 
-      label: 'Base Price', 
+    {
+      id: 'sku',
+      label: 'SKU',
+      filter: true,
+      priorityOnMobile: true // Show in collapsed mobile view
+    },
+    {
+      id: 'description',
+      label: 'Description',
+      filter: true,
+      priorityOnMobile: true // Show in collapsed mobile view
+    },
+    {
+      id: 'basePrice',
+      label: 'Base Price',
       align: 'right',
       format: (value,): React.ReactNode => {
         const row = tableData.find(r => r.basePrice === value);
@@ -115,6 +126,10 @@ export const PriceManagementModal: React.FC<Props> = ({
             value={value}
             onChange={(e) => handlePriceChange(row.sku, "basePrice", e.target.value)}
             size="small"
+            fullWidth
+            sx={{
+              maxWidth: { xs: 100, sm: 120 }
+            }}
             inputProps={{
               style: { textAlign: "right" },
               min: 0,
@@ -123,9 +138,9 @@ export const PriceManagementModal: React.FC<Props> = ({
         );
       }
     },
-    { 
-      id: 'costPrice', 
-      label: 'Cost Price', 
+    {
+      id: 'costPrice',
+      label: 'Cost Price',
       align: 'right',
       format: (value): React.ReactNode => {
         const row = tableData.find(r => r.costPrice === value);
@@ -136,6 +151,10 @@ export const PriceManagementModal: React.FC<Props> = ({
             value={value}
             onChange={(e) => handlePriceChange(row.sku, "costPrice", e.target.value)}
             size="small"
+            fullWidth
+            sx={{
+              maxWidth: { xs: 100, sm: 120 }
+            }}
             inputProps={{
               style: { textAlign: "right" },
               min: 0,

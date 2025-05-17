@@ -1,5 +1,6 @@
-import { Box, CircularProgress } from "@mui/material";
+import { Box, CircularProgress, Typography, Container, Paper, Divider, Chip, Card, CardContent } from "@mui/material";
 import React, { useEffect } from "react";
+import InventoryIcon from "@mui/icons-material/Inventory";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchProducts, importProducts, updateProduct, setFilters } from "../../store/slices/productsSlice";
 import { Product } from "../../services/product.service";
@@ -38,29 +39,58 @@ export const ProductsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <ProductImportSection onImport={handleProductImport} />
-
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems={"center"} m={4}>
-          <CircularProgress />
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <InventoryIcon sx={{ fontSize: 32, mr: 2, color: 'primary.main' }} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
+            Product Management
+          </Typography>
+          <Chip 
+            label={`${products.length} Products`} 
+            color="primary" 
+            size="medium" 
+            sx={{ ml: 2 }}
+          />
         </Box>
-      ) : (
-        <ProductTable
-          products={filteredProducts}
-          onEdit={setEditingProduct}
-          onFilterChange={handleFilterChange}
-        />
-      )}
 
-      {editingProduct && (
-        <ProductEditModal
-          product={editingProduct}
-          onClose={() => setEditingProduct(null)}
-          onSave={handleProductUpdate}
-        />
-      )}
-    </Box>
+        <Divider sx={{ mb: 3 }} />
+        
+        <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid', borderColor: 'primary.light' }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
+              Import Products
+            </Typography>
+            <ProductImportSection onImport={handleProductImport} />
+          </CardContent>
+        </Card>
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems={"center"} m={4}>
+            <CircularProgress color="primary" size={40} thickness={4} />
+          </Box>
+        ) : (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
+              Product Catalog
+            </Typography>
+            <ProductTable
+              products={filteredProducts}
+              onEdit={setEditingProduct}
+              onFilterChange={handleFilterChange}
+            />
+          </Box>
+        )}
+
+        {editingProduct && (
+          <ProductEditModal
+            product={editingProduct}
+            onClose={() => setEditingProduct(null)}
+            onSave={handleProductUpdate}
+          />
+        )}
+      </Paper>
+    </Container>
   );
 };
 

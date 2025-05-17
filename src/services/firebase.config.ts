@@ -1,6 +1,7 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getMessaging, Messaging, getToken, onMessage, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'test-api-key',
@@ -15,6 +16,7 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
+let messaging: Messaging | null = null;
 
 // Check if we're in a test environment
 if (process.env.NODE_ENV === 'test') {
@@ -49,6 +51,19 @@ if (process.env.NODE_ENV === 'test') {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
+  
+  // Initialize messaging if supported by the browser
+  const initMessaging = async () => {
+    try {
+      if (await isSupported()) {
+        messaging = getMessaging(app);
+      }
+    } catch (error) {
+      console.error('Firebase messaging not supported:', error);
+    }
+  };
+  
+  initMessaging();
 }
 
-export { app, auth, db };
+export { app, auth, db, messaging };

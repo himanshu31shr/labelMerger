@@ -1,4 +1,4 @@
-import { Timestamp, orderBy, where } from "firebase/firestore";
+import { Timestamp, orderBy, where, increment } from "firebase/firestore";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { DEFAULT_PRODUCT_PRICES } from "../constants/defaultPrices";
@@ -12,6 +12,11 @@ export interface Product {
   platform: "amazon" | "flipkart";
   visibility: "visible" | "hidden";
   sellingPrice: number;
+  inventory: {
+    quantity: number;
+    lowStockThreshold: number;
+    lastUpdated?: Timestamp;
+  };
   metadata: {
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
@@ -158,6 +163,11 @@ export class ProductService extends FirebaseService {
       costPrice: prices.get(row["seller-sku"])?.costPrice ?? 0, // To be updated by user
       platform: "amazon" as const,
       sellingPrice: Number(row["price"]) || 0,
+      inventory: {
+        quantity: Number(row["quantity"]) || 0,
+        lowStockThreshold: 5,
+        lastUpdated: Timestamp.now()
+      },
       metadata: {
         listingStatus: "active",
         moq: "1",
@@ -180,6 +190,11 @@ export class ProductService extends FirebaseService {
       sellingPrice: Number(row["Your Selling Price"]) || 0,
       costPrice: prices.get(row["Seller SKU Id"])?.costPrice ?? 0,
       platform: "flipkart" as const,
+      inventory: {
+        quantity: 0, // Default to 0 as Flipkart data may not have quantity
+        lowStockThreshold: 5,
+        lastUpdated: Timestamp.now()
+      },
       metadata: {
         listingStatus: row["Listing Status"],
         moq: row["Minimum Order Quantity"] || "1",
@@ -190,8 +205,11 @@ export class ProductService extends FirebaseService {
   }
 
   async saveProducts(products: Product[]): Promise<void> {
+    const allSkus = (await this.getDocuments<Product>(this.COLLECTION_NAME))
+    const newProducts = products.filter(product => allSkus.filter(sku => sku.sku === product.sku && sku.platform === product.platform).length === 0)
+
     return this.batchOperation(
-      products,
+      newProducts,
       this.COLLECTION_NAME,
       "create",
       (product) => product.sku
@@ -220,7 +238,7 @@ export class ProductService extends FirebaseService {
       constraints.push(where("name", "<=", filters.search + "\uf8ff"));
     }
 
-    if(filters?.visibility) {
+    if (filters?.visibility) {
       constraints.push(where("visibility", "==", filters.visibility));
     }
 
@@ -242,11 +260,100 @@ export class ProductService extends FirebaseService {
 
   async getProductDetails(sku: string): Promise<Product> {
     const product = await this.getDocument<Product>(this.COLLECTION_NAME, sku);
-    
+
     if (!product) {
       throw new Error(`Product with SKU ${sku} not found`);
     }
-    
+
     return product as Product;
+  }
+
+  /**
+   * Update inventory quantity for a product
+   * @param sku Product SKU
+   * @param quantityChange Amount to change (positive to add, negative to subtract)
+   * @returns Updated product
+   */
+  async updateInventory(sku: string, quantityChange: number): Promise<Product> {
+    try {
+      // First get the current product to ensure it exists
+      const product = await this.getProductDetails(sku);
+      
+      // Initialize inventory if it doesn't exist
+      if (!product.inventory) {
+        // Create a new inventory object for products that don't have one
+        await this.updateDocument(this.COLLECTION_NAME, sku, {
+          inventory: {
+            quantity: quantityChange, // Allow any value including negative
+            lowStockThreshold: 5,
+            lastUpdated: Timestamp.now()
+          }
+        });
+      } else {
+        // Calculate the new quantity for existing inventory - allow negative values
+        const newQuantity = product.inventory.quantity + quantityChange;
+        
+        // Update the product with the new inventory quantity
+        await this.updateDocument(this.COLLECTION_NAME, sku, {
+          inventory: {
+            ...product.inventory,
+            quantity: newQuantity,
+            lastUpdated: Timestamp.now()
+          }
+        });
+      }
+      
+      // Return the updated product
+      return this.getProductDetails(sku);
+    } catch (error: any) {
+      console.error(`Error updating inventory for SKU ${sku}:`, error);
+      throw new Error(`Failed to update inventory: ${error.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Reduce inventory when an order is placed
+   * @param sku Product SKU
+   * @param quantity Quantity ordered
+   * @returns Updated product
+   */
+  async reduceInventoryForOrder(sku: string, quantity: number): Promise<Product> {
+    return this.updateInventory(sku, -Math.abs(quantity));
+  }
+
+  /**
+   * Check if a product has sufficient inventory for an order
+   * @param sku Product SKU
+   * @param quantity Quantity to check
+   * @returns Boolean indicating if there's enough inventory
+   */
+  async hasSufficientInventory(sku: string, quantity: number): Promise<boolean> {
+    try {
+      const product = await this.getProductDetails(sku);
+      // If product has no inventory field, consider it as having 0 quantity
+      if (!product.inventory) return quantity <= 0;
+      return product.inventory.quantity >= quantity;
+    } catch (error: any) {
+      console.error(`Error checking inventory for SKU ${sku}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Get products with low inventory (below threshold)
+   * @returns Array of products with low inventory
+   */
+  async getLowInventoryProducts(): Promise<Product[]> {
+    try {
+      const products = await this.getProducts();
+      return products.filter(product => 
+        // Only include products that have inventory data
+        product.inventory && 
+        product.inventory.quantity <= product.inventory.lowStockThreshold
+      );
+    } catch (error: any) {
+      console.error('Error getting low inventory products:', error);
+      return [];
+    }
   }
 }

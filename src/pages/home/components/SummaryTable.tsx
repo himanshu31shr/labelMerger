@@ -18,15 +18,15 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
 }: SummaryTableProps) => {
   const renderActions = (product: ProductSummary) => (
     <>
-      {product.product?.metadata?.flipkartSerialNumber && (
+      {product.product?.platform === 'flipkart' && (
         <ViewFlipkartListingButton
-          flipkartSerialNumber={product.product?.metadata?.flipkartSerialNumber}
+          flipkartSerialNumber={product.product?.metadata?.flipkartSerialNumber || ""}
         />
       )}
 
-      {product.product?.metadata?.amazonSerialNumber && (
+      {product.product?.platform === 'amazon' && (
         <ViewAmazonListingButton
-          amazonSerialNumber={product.product?.metadata?.amazonSerialNumber}
+          amazonSerialNumber={product.product?.metadata?.amazonSerialNumber ?? ''}
         />
       )}
     </>

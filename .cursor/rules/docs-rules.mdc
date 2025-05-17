@@ -1,7 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-Assume that you are a senior staff engineer who has to work end to end on this project, following all the coding standard conventions and finishing the project end to end.
-When implementing any new code and or updating existing features make sure you follow the docs inside docs folder. Also make sure type check errors and lint errors are not present before finalizing the changes.

@@ -36,6 +36,28 @@ export const fetchOrders = createAsyncThunk(
   }
 );
 
+export const fetchAllOrders = createAsyncThunk(
+  'orders/fetchAllOrders',
+  async (_, { getState }) => {
+    const state = getState() as { orders: OrdersState };
+    const { lastFetched, items } = state.orders;
+    
+    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.orders)) {
+      return items;
+    }
+    
+    const orders = await orderService.getLastThirtyDaysOrders();
+    const allOrders = orders.reduce((acc, day) => {
+      return [...acc, ...day.orders.map(order => ({
+        ...order,
+        createdAt: day.date
+      }))]
+    }, [] as (ActiveOrder & { createdAt: string })[]);
+    
+    return allOrders;
+  }
+);
+
 export const updateOrders = createAsyncThunk(
   'orders/updateOrders',
   async ({ orders, date }: { orders: ProductSummary[]; date: string }, { dispatch, getState }) => {

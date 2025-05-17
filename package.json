@@ -6,6 +6,7 @@
   "homepage": "https://himanshu31shr.github.io/flipkart-amazon-tools/",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --host lcl.himanshu31shr.github.io --port 3000",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",

@@ -5,7 +5,9 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import LabelIcon from "@mui/icons-material/Label";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import InventoryIcon from "@mui/icons-material/Inventory";
+import InventoryManagementIcon from "@mui/icons-material/Warehouse";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
   Box,
   Container,
@@ -21,12 +23,19 @@ import {
   IconButton,
   Typography,
   alpha,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { AppBar } from "../../components/appbar";
 
-const DRAWER_WIDTH = 250;
+// Responsive drawer width
+const DRAWER_WIDTH = {
+  xs: 240,  // Smaller on mobile
+  sm: 240,  // Same on tablet
+  md: 250,  // Default on desktop
+};
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -65,10 +74,22 @@ const StyledListItemText = styled(ListItemText)(({ theme }) => ({
 
 const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })<{
   open?: boolean;
-}>((_) => ({
+}>(({ theme, open }) => ({
   flexGrow: 1,
+  transition: theme.transitions.create(['margin', 'width'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
   marginLeft: 0,
   width: "100%",
+  ...(open && {
+    [theme.breakpoints.up('sm')]: {
+      transition: theme.transitions.create(['margin', 'width'], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    }
+  }),
 }));
 
 export const DefaultContainer = ({
@@ -80,21 +101,40 @@ export const DefaultContainer = ({
   toggleTheme: () => void;
   mode: "light" | "dark";
 }) => {
-  const [open, setOpen] = React.useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Initialize drawer state - closed by default on mobile
+  const [open, setOpen] = React.useState(!isMobile);
+
+  // Update drawer state when screen size changes
+  React.useEffect(() => {
+    setOpen(!isMobile);
+  }, [isMobile]);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
 
+  // Function to handle navigation and close drawer on mobile
+  const handleNavigation = () => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
+
   const DrawerList = (
-    <Box sx={{ width: DRAWER_WIDTH }} role="presentation">
+    <Box sx={{ width: { xs: DRAWER_WIDTH.xs, sm: DRAWER_WIDTH.sm, md: DRAWER_WIDTH.md } }} role="presentation">
       <DrawerHeader>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+        <Typography variant="h6" noWrap component="div" sx={{
+          fontWeight: 600,
+          fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
+        }}>
           Sacred Sutra
         </Typography>
-        <IconButton 
+        <IconButton
           onClick={toggleDrawer(false)}
-          sx={{ 
+          sx={{
             color: 'inherit',
             '&:hover': {
               backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -111,6 +151,7 @@ export const DefaultContainer = ({
           to={"/flipkart-amazon-tools/"}
           data-testid="dashboard"
           style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
         >
           <ListItem key={"Dashboard"} disablePadding>
             <StyledListItemButton>
@@ -127,6 +168,7 @@ export const DefaultContainer = ({
           to={"/flipkart-amazon-tools/home/"}
           data-testid="merge-labels"
           style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
         >
           <ListItem key={"Merge Labels"} disablePadding>
             <StyledListItemButton>
@@ -143,6 +185,7 @@ export const DefaultContainer = ({
           to={"/flipkart-amazon-tools/activeOrders/"}
           data-testid="merge-labels"
           style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
         >
           <ListItem key={"Active Orders"} disablePadding>
             <StyledListItemButton>
@@ -159,6 +202,7 @@ export const DefaultContainer = ({
           to={"/flipkart-amazon-tools/products/"}
           data-testid="products"
           style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
         >
           <ListItem key={"Products"} disablePadding>
             <StyledListItemButton>
@@ -174,6 +218,7 @@ export const DefaultContainer = ({
           to={"/flipkart-amazon-tools/transactions/"}
           data-testid="transactions"
           style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
         >
           <ListItem key={"Transaction Analytics"} disablePadding>
             <StyledListItemButton>
@@ -181,6 +226,40 @@ export const DefaultContainer = ({
                 <AnalyticsIcon />
               </StyledListItemIcon>
               <StyledListItemText primary={"Transaction Analytics"} />
+            </StyledListItemButton>
+          </ListItem>
+        </Link>
+
+        <Link
+          component={RouterLink}
+          to={"/flipkart-amazon-tools/hidden-products/"}
+          data-testid="hidden-products"
+          style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
+        >
+          <ListItem key={"Hidden Products"} disablePadding>
+            <StyledListItemButton>
+              <StyledListItemIcon>
+                <VisibilityOffIcon />
+              </StyledListItemIcon>
+              <StyledListItemText primary={"Hidden Products"} />
+            </StyledListItemButton>
+          </ListItem>
+        </Link>
+
+        <Link
+          component={RouterLink}
+          to={"/flipkart-amazon-tools/inventory/"}
+          data-testid="inventory-management"
+          style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
+        >
+          <ListItem key={"Inventory Management"} disablePadding>
+            <StyledListItemButton>
+              <StyledListItemIcon>
+                <InventoryManagementIcon />
+              </StyledListItemIcon>
+              <StyledListItemText primary={"Inventory Management"} />
             </StyledListItemButton>
           </ListItem>
         </Link>
@@ -198,10 +277,14 @@ export const DefaultContainer = ({
       />
       <Drawer
         sx={{
-          width: open ? DRAWER_WIDTH : 0,
+          width: open
+            ? { xs: DRAWER_WIDTH.xs, sm: DRAWER_WIDTH.sm, md: DRAWER_WIDTH.md }
+            : 0,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: open ? DRAWER_WIDTH : 0,
+            width: open
+              ? { xs: DRAWER_WIDTH.xs, sm: DRAWER_WIDTH.sm, md: DRAWER_WIDTH.md }
+              : 0,
             boxSizing: "border-box",
             borderRight: 'none',
             boxShadow: '0 0 35px 0 rgba(154,161,171,.15)',
@@ -220,6 +303,8 @@ export const DefaultContainer = ({
           sx={{
             maxWidth: "100%",
             mt: 8, // Add margin top to account for AppBar
+            px: { xs: 2, sm: 3 }, // Add responsive padding
+            transition: "padding 0.3s ease-in-out"
           }}
         >
           {children}

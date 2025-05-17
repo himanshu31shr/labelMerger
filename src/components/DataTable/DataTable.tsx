@@ -5,10 +5,15 @@ import {
   TableContainer,
   TablePagination,
   Box,
+  useMediaQuery,
+  useTheme,
+  Stack,
 } from "@mui/material";
 import React from "react";
 import { TableHeader } from "./TableHeader";
 import { TableRowComponent } from "./TableRowComponent";
+import { MobileDataRow } from "./MobileDataRow";
+import { MobileFilters } from "./MobileFilters";
 
 export interface Column<T> {
   id: keyof T | string;
@@ -16,6 +21,7 @@ export interface Column<T> {
   filter?: boolean;
   align?: "right" | "left" | "center";
   format?: (value: unknown, row: T | undefined) => React.ReactNode;
+  priorityOnMobile?: boolean; // New property to indicate if column should be displayed prominently on mobile
 }
 
 export interface DataTableProps<T> {
@@ -41,15 +47,27 @@ export function DataTable<T>({
   defaultRowsPerPage = 10,
   id = "data-table",
 }: DataTableProps<T>) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [orderBy, setOrderBy] = React.useState(defaultSortColumn);
   const [order, setOrder] = React.useState<"asc" | "desc">(
     defaultSortDirection
   );
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(defaultRowsPerPage);
+  const [rowsPerPage, setRowsPerPage] = React.useState(
+    isMobile ? Math.min(5, defaultRowsPerPage) : defaultRowsPerPage
+  );
   const [filters, setFilters] = React.useState<
     Partial<Record<keyof T | string, string>>
   >({});
+
+  // Update rows per page when screen size changes
+  React.useEffect(() => {
+    if (isMobile && rowsPerPage > 5) {
+      setRowsPerPage(5);
+    }
+  }, [isMobile, rowsPerPage]);
 
   const handleRequestSort = (property: keyof T) => {
     const isAsc = orderBy === property && order === "asc";
@@ -132,6 +150,62 @@ export function DataTable<T>({
     return filteredAndSortedData.slice(startIndex, startIndex + rowsPerPage);
   }, [filteredAndSortedData, page, rowsPerPage]);
 
+  // Check for initial search value from filters
+  const getInitialSearchText = (): string => {
+    if (!isMobile) return '';
+
+    const filterValues = Object.values(filters);
+    const activeFilter = filterValues.find(v => v && typeof v === 'string' && v.length > 0);
+    return activeFilter || '';
+  };
+
+  // Render mobile view
+  if (isMobile) {
+    return (
+      <Box sx={{ width: "100%" }}>
+        <MobileFilters
+          columns={columns}
+          orderBy={orderBy as keyof T}
+          order={order}
+          filters={filters}
+          onRequestSort={handleRequestSort}
+          onFilterChange={handleFilterChange}
+        />
+
+        <Stack spacing={1}>
+          {paginatedData.map((row, index) => (
+            <MobileDataRow
+              key={index}
+              row={row}
+              columns={columns}
+              index={index}
+              onClick={onRowClick}
+            />
+          ))}
+        </Stack>
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10]}
+          component="div"
+          count={filteredAndSortedData.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{
+            '.MuiTablePagination-selectLabel': {
+              display: { xs: 'none', sm: 'block' }
+            },
+            '.MuiTablePagination-displayedRows': {
+              margin: '0 auto'
+            }
+          }}
+        />
+      </Box>
+    );
+  }
+
+  // Render desktop view
   return (
     <Box sx={{ width: "100%" }}>
       <TableContainer component={Paper}>
