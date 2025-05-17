@@ -1,1 +1,0 @@
-import{j as e}from"./mui-vendor-DRv-9YCh.js";const o=({value:r})=>{const t=new Intl.NumberFormat("en-US",{style:"currency",currency:"INR"});return e.jsx("span",{children:t.format(r)})};export{o as F};
