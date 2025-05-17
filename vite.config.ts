@@ -47,7 +47,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: "/",
+  base: "/flipkart-amazon-tools/",
   server: {
     port: 5173, // Use Vite's default port
     strictPort: false, // Allow fallback to another port if needed
