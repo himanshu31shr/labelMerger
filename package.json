@@ -39,7 +39,7 @@
     "react": "latest",
     "react-dom": "latest",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^7.1.1",
+    "react-router-dom": "^7.6.0",
     "recharts": "^2.15.3",
     "redux-persist": "^6.0.0",
     "styled-components": "^6.1.13",
