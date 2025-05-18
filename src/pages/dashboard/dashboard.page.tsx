@@ -1,39 +1,32 @@
-import React, { useEffect } from 'react';
-import { format } from 'date-fns';
 import {
     Box,
+    CircularProgress,
+    Divider,
     Grid,
     Paper,
-    Typography,
-    Card,
-    CardContent,
-    CircularProgress,
-    Button,
-    Divider,
+    Typography
 } from '@mui/material';
-import WarningIcon from '@mui/icons-material/Warning';
-import { HiddenProductsWidget, HighPricedProductsWidget } from './components/ProductAlertWidgets';
+import { useEffect } from 'react';
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
     CartesianGrid,
-    Tooltip,
     Legend,
-    ResponsiveContainer,
-    LineChart,
     Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis
 } from 'recharts';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchProducts } from '../../store/slices/productsSlice';
-import { fetchOrders } from '../../store/slices/ordersSlice';
-import { fetchOrderHistory } from '../../store/slices/orderHistorySlice';
-import { fetchLowStockItems } from '../../store/slices/inventorySlice';
+import NotificationTester from '../../components/NotificationTester';
 import { ProductSummary } from '../../pages/home/services/base.transformer';
 import { ActiveOrderSchema } from '../../services/todaysOrder.service';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchLowStockItems } from '../../store/slices/inventorySlice';
+import { fetchOrderHistory } from '../../store/slices/orderHistorySlice';
+import { fetchOrders } from '../../store/slices/ordersSlice';
+import { fetchProducts } from '../../store/slices/productsSlice';
 import LowInventoryWidget from './components/LowInventoryWidget';
-import NotificationTester from '../../components/NotificationTester';
+import { HiddenProductsWidget, HighPricedProductsWidget } from './components/ProductAlertWidgets';
 
 export const DashboardPage = () => {
     const dispatch = useAppDispatch();

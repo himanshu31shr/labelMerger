@@ -27,7 +27,7 @@ interface ProductAlertWidgetProps {
 // Hidden Products Widget
 export const HiddenProductsWidget: React.FC<ProductAlertWidgetProps> = ({ products, loading }) => {
   // Filter to only hidden products
-  const hiddenProducts = products.filter(product => product.visibility === 'hidden');
+  const hiddenProducts = products.filter(product => !product.existsOnSellerPage);
   
   // Show at most 5 items in the widget
   const displayItems = hiddenProducts.slice(0, 5);

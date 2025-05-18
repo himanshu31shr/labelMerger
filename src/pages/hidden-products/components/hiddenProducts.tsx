@@ -32,11 +32,11 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
       )
       .filter(
         (product: Product) =>
-          product?.competitionAnalysis &&
-          !!product?.competitionAnalysis?.competitorPrice &&
-          product.sellingPrice -
-            Number(product?.competitionAnalysis?.competitorPrice) >
-            0
+          products.filter(product =>
+            product.competitionAnalysis &&
+            Number(product.competitionAnalysis.competitorPrice) > 0 &&
+            product.sellingPrice > Number(product.competitionAnalysis.competitorPrice)
+          )
       );
   } else {
     hiddenProducts = products.filter(

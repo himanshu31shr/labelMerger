@@ -62,7 +62,11 @@ export const HiddenProductsPage: React.FC = () => {
   };
 
   const hiddenProducts = filteredProducts.filter(product => !product.existsOnSellerPage);
-  const updatePricingProducts = filteredProducts;
+  const updatePricingProducts = filteredProducts.filter(product =>
+    product.competitionAnalysis &&
+    Number(product.competitionAnalysis.competitorPrice) > 0 &&
+    product.sellingPrice > Number(product.competitionAnalysis.competitorPrice)
+  );
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -76,60 +80,60 @@ export const HiddenProductsPage: React.FC = () => {
           <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: tabValue === 0 ? 'info.dark' : 'error.dark' }}>
             {tabValue === 0 ? 'Hidden Products' : 'Price Management'}
           </Typography>
-          <Chip 
-            label={tabValue === 0 ? `${hiddenProducts.length} Hidden` : `${updatePricingProducts.length} Products`} 
-            color={tabValue === 0 ? "info" : "error"} 
+          <Chip
+            label={tabValue === 0 ? `${hiddenProducts.length} Hidden` : `${updatePricingProducts.length} Products`}
+            color={tabValue === 0 ? "info" : "error"}
             sx={{ ml: 2, fontWeight: 'bold' }}
           />
         </Box>
-        
+
         <Divider sx={{ mb: 3 }} />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs 
-          value={tabValue} 
-          onChange={handleTabChange} 
-          aria-label="product management tabs"
-          sx={{
-            '& .MuiTab-root': { fontWeight: 'bold' },
-            '& .Mui-selected': { color: tabValue === 0 ? 'info.main' : 'error.main' },
-            '& .MuiTabs-indicator': { backgroundColor: tabValue === 0 ? 'info.main' : 'error.main' },
-          }}
-        >
-          <Tab label="Hidden Products" {...a11yProps(0)} />
-          <Tab label="Update Pricing" {...a11yProps(1)} />
-        </Tabs>
-      </Box>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="product management tabs"
+            sx={{
+              '& .MuiTab-root': { fontWeight: 'bold' },
+              '& .Mui-selected': { color: tabValue === 0 ? 'info.main' : 'error.main' },
+              '& .MuiTabs-indicator': { backgroundColor: tabValue === 0 ? 'info.main' : 'error.main' },
+            }}
+          >
+            <Tab label="Hidden Products" {...a11yProps(0)} />
+            <Tab label="Update Pricing" {...a11yProps(1)} />
+          </Tabs>
+        </Box>
 
-      <TabPanel value={tabValue} index={0}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" m={4}>
-            <CircularProgress color="info" />
-          </Box>
-        ) : (
-          <Box>
-            <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary' }}>
-              Manage products that are currently hidden from your listings. You can update visibility status or adjust pricing.
-            </Typography>
-            <HiddenProducts mode="hidden" />
-          </Box>
-        )}
-      </TabPanel>
+        <TabPanel value={tabValue} index={0}>
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" m={4}>
+              <CircularProgress color="info" />
+            </Box>
+          ) : (
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary' }}>
+                Manage products that are currently hidden from your listings. You can update visibility status or adjust pricing.
+              </Typography>
+              <HiddenProducts mode="hidden" />
+            </Box>
+          )}
+        </TabPanel>
 
-      <TabPanel value={tabValue} index={1}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" m={4}>
-            <CircularProgress color="error" />
-          </Box>
-        ) : (
-          <Box>
-            <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary' }}>
-              Identify products where your price is higher than competitors. Adjust pricing to remain competitive.
-            </Typography>
-            <HiddenProducts />
-          </Box>
-        )}
-      </TabPanel>
+        <TabPanel value={tabValue} index={1}>
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" m={4}>
+              <CircularProgress color="error" />
+            </Box>
+          ) : (
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary' }}>
+                Identify products where your price is higher than competitors. Adjust pricing to remain competitive.
+              </Typography>
+              <HiddenProducts />
+            </Box>
+          )}
+        </TabPanel>
       </Paper>
     </Container>
   );
