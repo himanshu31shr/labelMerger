@@ -138,9 +138,9 @@ export const HiddenProductsWidget: React.FC<ProductAlertWidgetProps> = ({ produc
 export const HighPricedProductsWidget: React.FC<ProductAlertWidgetProps> = ({ products, loading }) => {
   // Filter to only high-priced products (where our price is higher than competitor)
   const highPricedProducts = products.filter(product => 
-    product.competetionAnalysis && 
-    Number(product.competetionAnalysis.competitorPrice) > 0 &&
-    product.sellingPrice > Number(product.competetionAnalysis.competitorPrice)
+    product.competitionAnalysis && 
+    Number(product.competitionAnalysis.competitorPrice) > 0 &&
+    product.sellingPrice > Number(product.competitionAnalysis.competitorPrice)
   );
   
   // Show at most 5 items in the widget
@@ -206,7 +206,7 @@ export const HighPricedProductsWidget: React.FC<ProductAlertWidgetProps> = ({ pr
                       Our price: <FormattedCurrency value={product.sellingPrice} />
                     </Typography>
                     <Typography variant="caption" color="success.main">
-                      Competitor: <FormattedCurrency value={Number(product.competetionAnalysis?.competitorPrice || 0)} />
+                      Competitor: <FormattedCurrency value={Number(product.competitionAnalysis?.competitorPrice || 0)} />
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>

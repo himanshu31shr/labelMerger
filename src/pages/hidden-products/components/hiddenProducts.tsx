@@ -12,40 +12,37 @@ import {
 import { useAppSelector } from "../../../store/hooks";
 
 interface HiddenProductsProps {
-  mode?: 'hidden' | 'price'
+  mode?: "hidden" | "price";
 }
 export const HiddenProducts: React.FC<HiddenProductsProps> = ({
-  mode = 'price'
+  mode = "price",
 }) => {
-  const { items: products, loading } = useAppSelector(state => state.products);
+  const { items: products, loading } = useAppSelector(
+    (state) => state.products
+  );
 
   let hiddenProducts = [];
 
-  if (mode === 'price') {
+  if (mode === "price") {
     hiddenProducts = products
       .filter(
         (product: Product) =>
-          product?.competetionAnalysis &&
-          Number(product?.competetionAnalysis?.competitorPrice) > 0
+          product?.competitionAnalysis &&
+          Number(product?.competitionAnalysis?.competitorPrice) > 0
       )
       .filter(
         (product: Product) =>
-          product?.competetionAnalysis &&
-          !!product?.competetionAnalysis?.competitorPrice &&
+          product?.competitionAnalysis &&
+          !!product?.competitionAnalysis?.competitorPrice &&
           product.sellingPrice -
-          Number(product?.competetionAnalysis?.competitorPrice) >
-          0
+            Number(product?.competitionAnalysis?.competitorPrice) >
+            0
       );
   } else {
-    hiddenProducts = products
-      .filter(
-        (product: Product) =>
-          product?.visibility &&
-          product?.visibility === 'hidden'
-      )
-
+    hiddenProducts = products.filter(
+      (product: Product) => !product?.existsOnSellerPage
+    );
   }
-
 
   const columns: Column<Product>[] = [
     { id: "sku", label: "SKU", filter: true },
@@ -64,36 +61,56 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
       },
     },
     {
-      id: 'costPrice',
-      label: 'Cost Price',
-      align: 'center',
-      format: (value, row?: Product) => <>
-        <FormattedCurrency color={colors.green[500]} value={(row?.costPrice ?? 0) * (Number(row?.metadata?.moq ?? '0'))} />
-        <Box fontSize={12}>
-          <FormattedCurrency value={row?.costPrice ?? 0} /> x {row?.metadata?.moq}
-        </Box>
-      </>,
+      id: "costPrice",
+      label: "Cost Price",
+      align: "center",
+      format: (value, row?: Product) => (
+        <>
+          <FormattedCurrency
+            color={colors.green[500]}
+            value={(row?.costPrice ?? 0) * Number(row?.metadata?.moq ?? "0")}
+          />
+          <Box fontSize={12}>
+            <FormattedCurrency value={row?.costPrice ?? 0} /> x{" "}
+            {row?.metadata?.moq}
+          </Box>
+        </>
+      ),
     },
     {
       id: "sellingPrice",
       label: "Selling Price",
       align: "center",
-      format: (value, row?: Product) => <>
-        <FormattedCurrency value={value as number} />
-        <Box gap={1} color="red" fontSize={12} display={'flex'} alignContent={'center'} justifyContent={'center'}>
-          <FormattedCurrency value={((row?.sellingPrice ?? 0) - Number(row?.competetionAnalysis?.competitorPrice))} />
-          <ArrowUpwardOutlined style={{ fontSize: 12 }} />
-        </Box>
-      </>,
+      format: (value, row?: Product) => (
+        <>
+          <FormattedCurrency value={value as number} />
+          <Box
+            gap={1}
+            color="red"
+            fontSize={12}
+            display={"flex"}
+            alignContent={"center"}
+            justifyContent={"center"}
+          >
+            <FormattedCurrency
+              value={
+                (row?.sellingPrice ?? 0) -
+                Number(row?.competitionAnalysis?.competitorPrice)
+              }
+            />
+            <ArrowUpwardOutlined style={{ fontSize: 12 }} />
+          </Box>
+        </>
+      ),
     },
     {
       id: "competitorPrice",
       label: "Competitor Price",
       align: "right",
       format: (value, row?: Product) =>
-        row?.competetionAnalysis?.competitorPrice ? (
+        row?.competitionAnalysis?.competitorPrice ? (
           <FormattedCurrency
-            value={Number(row.competetionAnalysis.competitorPrice)}
+            value={Number(row.competitionAnalysis.competitorPrice)}
           />
         ) : null,
     },
@@ -125,7 +142,14 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "200px",
+        }}
+      >
         <CircularProgress />
       </Box>
     );

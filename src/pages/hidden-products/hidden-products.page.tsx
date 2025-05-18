@@ -1,12 +1,11 @@
-import { Box, CircularProgress, Tab, Tabs, Typography, Paper, Container, Chip, Divider } from "@mui/material";
-import React, { useEffect } from "react";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import PriceChangeIcon from "@mui/icons-material/PriceChange";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { Box, Chip, CircularProgress, Container, Divider, Paper, Tab, Tabs, Typography } from "@mui/material";
+import React, { useEffect } from "react";
 
-import { HiddenProducts } from "./components/hiddenProducts";
 import { useAppDispatch, useAppSelector } from "../../store";
-import { Product } from "../../services/product.service";
 import { fetchProducts, setFilters } from "../../store/slices/productsSlice";
+import { HiddenProducts } from "./components/hiddenProducts";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -43,8 +42,7 @@ function a11yProps(index: number) {
 
 export const HiddenProductsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { items: products, filteredItems: filteredProducts, loading } = useAppSelector(state => state.products);
-  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
+  const { filteredItems: filteredProducts, loading } = useAppSelector(state => state.products);
   const [tabValue, setTabValue] = React.useState(0);
 
   useEffect(() => {
@@ -63,7 +61,7 @@ export const HiddenProductsPage: React.FC = () => {
     }
   };
 
-  const hiddenProducts = filteredProducts.filter(product => product.visibility === "hidden");
+  const hiddenProducts = filteredProducts.filter(product => !product.existsOnSellerPage);
   const updatePricingProducts = filteredProducts;
 
   return (

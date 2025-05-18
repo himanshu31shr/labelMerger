@@ -1,4 +1,4 @@
-import { Timestamp, orderBy, where, increment } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { DEFAULT_PRODUCT_PRICES } from "../constants/defaultPrices";
@@ -25,13 +25,17 @@ export interface Product {
     moq?: string;
     flipkartSerialNumber?: string;
     amazonSerialNumber?: string;
+    existsOnSellerPage?: boolean;
   };
-  competetionAnalysis?: {
+  competitionAnalysis?: {
     competitorName: string;
     competitorPrice: string;
     ourPrice: number;
     visibility: string;
-  }
+    existsOnSellerPage: boolean;
+    totalSellers: number;
+  };
+  existsOnSellerPage?: boolean;
 }
 
 export interface ProductFilter {
@@ -129,13 +133,13 @@ export class ProductService extends FirebaseService {
     const workbook = XLSX.read(buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const rawData = XLSX.utils.sheet_to_json(worksheet);
-    rawData.shift()
+    rawData.shift();
 
     if (!Array.isArray(rawData) || rawData.length === 0) {
       throw new Error("File is empty");
     }
 
-    return this.flipkartAdapter((rawData as unknown as RawFlipkartData[]));
+    return this.flipkartAdapter(rawData as unknown as RawFlipkartData[]);
   }
 
   private isAmazonFormat(file: File): boolean {
@@ -145,7 +149,7 @@ export class ProductService extends FirebaseService {
   private isFlipkartFormat(file: File): boolean {
     return (
       file.type ===
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       file.type === "application/vnd.ms-excel"
     );
   }
@@ -166,7 +170,7 @@ export class ProductService extends FirebaseService {
       inventory: {
         quantity: Number(row["quantity"]) || 0,
         lowStockThreshold: 5,
-        lastUpdated: Timestamp.now()
+        lastUpdated: Timestamp.now(),
       },
       metadata: {
         listingStatus: "active",
@@ -186,14 +190,16 @@ export class ProductService extends FirebaseService {
       sku: row["Seller SKU Id"],
       name: row["Product Title"],
       description:
-        prices.get(row["Seller SKU Id"])?.description ?? row["Product Name"] ?? '',
+        prices.get(row["Seller SKU Id"])?.description ??
+        row["Product Name"] ??
+        "",
       sellingPrice: Number(row["Your Selling Price"]) || 0,
       costPrice: prices.get(row["Seller SKU Id"])?.costPrice ?? 0,
       platform: "flipkart" as const,
       inventory: {
         quantity: 0, // Default to 0 as Flipkart data may not have quantity
         lowStockThreshold: 5,
-        lastUpdated: Timestamp.now()
+        lastUpdated: Timestamp.now(),
       },
       metadata: {
         listingStatus: row["Listing Status"],
@@ -205,8 +211,13 @@ export class ProductService extends FirebaseService {
   }
 
   async saveProducts(products: Product[]): Promise<void> {
-    const allSkus = (await this.getDocuments<Product>(this.COLLECTION_NAME))
-    const newProducts = products.filter(product => allSkus.filter(sku => sku.sku === product.sku && sku.platform === product.platform).length === 0)
+    const allSkus = await this.getDocuments<Product>(this.COLLECTION_NAME);
+    const newProducts = products.filter(
+      (product) =>
+        allSkus.filter(
+          (sku) => sku.sku === product.sku && sku.platform === product.platform
+        ).length === 0
+    );
 
     return this.batchOperation(
       newProducts,
@@ -278,7 +289,7 @@ export class ProductService extends FirebaseService {
     try {
       // First get the current product to ensure it exists
       const product = await this.getProductDetails(sku);
-      
+
       // Initialize inventory if it doesn't exist
       if (!product.inventory) {
         // Create a new inventory object for products that don't have one
@@ -286,28 +297,30 @@ export class ProductService extends FirebaseService {
           inventory: {
             quantity: quantityChange, // Allow any value including negative
             lowStockThreshold: 5,
-            lastUpdated: Timestamp.now()
-          }
+            lastUpdated: Timestamp.now(),
+          },
         });
       } else {
         // Calculate the new quantity for existing inventory - allow negative values
         const newQuantity = product.inventory.quantity + quantityChange;
-        
+
         // Update the product with the new inventory quantity
         await this.updateDocument(this.COLLECTION_NAME, sku, {
           inventory: {
             ...product.inventory,
             quantity: newQuantity,
-            lastUpdated: Timestamp.now()
-          }
+            lastUpdated: Timestamp.now(),
+          },
         });
       }
-      
+
       // Return the updated product
       return this.getProductDetails(sku);
     } catch (error: any) {
       console.error(`Error updating inventory for SKU ${sku}:`, error);
-      throw new Error(`Failed to update inventory: ${error.message || 'Unknown error'}`);
+      throw new Error(
+        `Failed to update inventory: ${error.message || "Unknown error"}`
+      );
     }
   }
 
@@ -317,7 +330,10 @@ export class ProductService extends FirebaseService {
    * @param quantity Quantity ordered
    * @returns Updated product
    */
-  async reduceInventoryForOrder(sku: string, quantity: number): Promise<Product> {
+  async reduceInventoryForOrder(
+    sku: string,
+    quantity: number
+  ): Promise<Product> {
     return this.updateInventory(sku, -Math.abs(quantity));
   }
 
@@ -327,7 +343,10 @@ export class ProductService extends FirebaseService {
    * @param quantity Quantity to check
    * @returns Boolean indicating if there's enough inventory
    */
-  async hasSufficientInventory(sku: string, quantity: number): Promise<boolean> {
+  async hasSufficientInventory(
+    sku: string,
+    quantity: number
+  ): Promise<boolean> {
     try {
       const product = await this.getProductDetails(sku);
       // If product has no inventory field, consider it as having 0 quantity
@@ -346,13 +365,14 @@ export class ProductService extends FirebaseService {
   async getLowInventoryProducts(): Promise<Product[]> {
     try {
       const products = await this.getProducts();
-      return products.filter(product => 
-        // Only include products that have inventory data
-        product.inventory && 
-        product.inventory.quantity <= product.inventory.lowStockThreshold
+      return products.filter(
+        (product) =>
+          // Only include products that have inventory data
+          product.inventory &&
+          product.inventory.quantity <= product.inventory.lowStockThreshold
       );
     } catch (error: any) {
-      console.error('Error getting low inventory products:', error);
+      console.error("Error getting low inventory products:", error);
       return [];
     }
   }
