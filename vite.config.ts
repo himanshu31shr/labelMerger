@@ -14,7 +14,7 @@ export default defineConfig({
         background_color: "#ffffff",
         display: "standalone",
         scope: "/",
-        start_url: "/",
+        start_url: "/flipkart-amazon-tools/",
         icons: [
           {
             src: "favicon.ico",
