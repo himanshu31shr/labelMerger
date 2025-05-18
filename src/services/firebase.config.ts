@@ -1,6 +1,12 @@
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import { Auth, getAuth } from 'firebase/auth';
-import { Firestore, getFirestore } from 'firebase/firestore';
+import { 
+  Firestore, 
+  getFirestore, 
+  enableIndexedDbPersistence, 
+  initializeFirestore, 
+  CACHE_SIZE_UNLIMITED 
+} from 'firebase/firestore';
 import { getMessaging, isSupported, Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -50,15 +56,41 @@ if (process.env.NODE_ENV === 'test') {
   // Real Firebase initialization for non-test environments
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
   
-  // Initialize messaging if supported by the browser
+  // Initialize Firestore with custom configuration
+  db = initializeFirestore(app, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    experimentalForceLongPolling: true // Better for certain network conditions
+  });
+  
+  // Enable offline persistence
+  const enablePersistence = async () => {
+    try {
+      await enableIndexedDbPersistence(db, { 
+        forceOwnership: false // Allow multiple tabs to share the same persistence
+      });
+      console.log('Firestore persistence enabled');
+    } catch (err: any) {
+      if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab at a time
+        console.warn('Firestore persistence failed: Multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        // The current browser does not support all of the features required
+        console.warn('Firestore persistence is not available in this browser');
+      } else {
+        console.error('Error enabling Firestore persistence:', err);
+      }
+    }
+  };
+  
+  // Initialize persistence in the background
+  enablePersistence();
+  
   // Initialize messaging if supported by the browser
   const initMessaging = async () => {
     try {
       if (await isSupported()) {
         const serviceWorkerPath = `${import.meta.env.BASE_URL || ''}firebase-messaging-sw.js`;
-        console.log("🚀 ~ initMessaging ~ serviceWorkerPath:", serviceWorkerPath);
         
         // Initialize messaging with the default app
         messaging = getMessaging(app);
@@ -71,8 +103,7 @@ if (process.env.NODE_ENV === 'test') {
         
         // You can use the registration for other purposes if needed
         // For example, you might want to store it in a variable or use it elsewhere
-        console.log('Service Worker registered with scope:', registration.scope);
-      }
+       }
     } catch (error) {
       console.error('Firebase messaging not supported:', error);
     }
