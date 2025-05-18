@@ -4,6 +4,51 @@ This file serves as a centralized repository for common knowledge, recurring ins
 
 ---
 
+## 0. Hidden Products & Price Management
+
+### 0.1. Overview
+The application provides a dedicated interface for managing hidden products and price competitiveness across platforms. This feature helps sellers identify and take action on products that are either hidden or have uncompetitive pricing.
+
+### 0.2. Key Features
+
+#### Hidden Products Tab
+- Displays products that are not visible on the seller's storefront
+- Shows key metrics including SKU, product name, platform, cost price, and selling price
+- Provides quick actions for each product:
+  - View/edit product details
+  - View on Amazon/Flipkart
+  - Additional actions through the action menu
+
+#### Price Management Tab
+- Identifies products where your price is higher than competitors
+- Highlights the price difference for quick assessment
+- Shows competitor price for comparison
+- Enables quick price adjustments to stay competitive
+
+### 0.3. Implementation Details
+- **Component Structure**:
+  - `HiddenProductsPage`: Main container component with tab navigation
+  - `HiddenProducts`: Reusable component that handles both hidden products and price management views
+  - `DataTable`: Generic table component for displaying product data
+
+- **State Management**:
+  - Uses Redux for state management
+  - Filters products based on visibility and pricing criteria
+  - Handles loading states and error handling
+
+- **Key Dependencies**:
+  - Material-UI for UI components
+  - Redux for state management
+  - Custom formatters for currency and data display
+
+### 0.4. Usage Guidelines
+- Navigate to the Hidden Products section from the main menu
+- Switch between "Hidden Products" and "Price Management" tabs as needed
+- Use the filter functionality to find specific products
+- Take appropriate actions using the action buttons for each product
+
+---
+
 ## 1. Notification System
 
 ### 1.1. Service Worker Registration
