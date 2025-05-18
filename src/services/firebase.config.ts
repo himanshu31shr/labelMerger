@@ -53,15 +53,25 @@ if (process.env.NODE_ENV === 'test') {
   db = getFirestore(app);
   
   // Initialize messaging if supported by the browser
+  // Initialize messaging if supported by the browser
   const initMessaging = async () => {
     try {
       if (await isSupported()) {
         const serviceWorkerPath = `${import.meta.env.BASE_URL || ''}firebase-messaging-sw.js`;
-        messaging = getMessaging({
-          ...app,
-          // @ts-ignore - serviceWorkerRegistration is not in the type definition but is supported
-          serviceWorkerRegistration: await navigator.serviceWorker.register(serviceWorkerPath, { scope: import.meta.env.BASE_URL || '/' })
-        });
+        console.log("🚀 ~ initMessaging ~ serviceWorkerPath:", serviceWorkerPath);
+        
+        // Initialize messaging with the default app
+        messaging = getMessaging(app);
+        
+        // Register service worker
+        const registration = await navigator.serviceWorker.register(
+          serviceWorkerPath, 
+          { scope: import.meta.env.BASE_URL || '/' }
+        );
+        
+        // You can use the registration for other purposes if needed
+        // For example, you might want to store it in a variable or use it elsewhere
+        console.log('Service Worker registered with scope:', registration.scope);
       }
     } catch (error) {
       console.error('Firebase messaging not supported:', error);
