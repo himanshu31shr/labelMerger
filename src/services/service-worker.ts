@@ -35,8 +35,8 @@ export const registerFirebaseServiceWorker =
       const existingRegistration =
         await navigator.serviceWorker.getRegistration("/");
 
-      // The path to the service worker file
-      const swPath = "/flipkart-amazon-tools/firebase-messaging-sw.js";
+      // The path to the service worker file - using base URL from Vite config
+      const swPath = `${import.meta.env.BASE_URL || ''}firebase-messaging-sw.js`;
 
       // If we already have a registration with the correct scope, use it
       if (existingRegistration) {
