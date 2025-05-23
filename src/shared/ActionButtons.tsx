@@ -38,12 +38,13 @@ export const ViewAmazonListingButton: React.FC<{
 
 export const ShowProductEditPageButton: React.FC<{
   sku: string;
-}> = ({ sku }) => (
+  platform: string;
+}> = ({ sku, platform }) => (
   <Link
     title="Show Product Edit Page"
     target="_blank"
     rel="noopener noreferrer"
-    href={`https://seller.flipkart.com/index.html#dashboard/listings-management?listingState=ACTIVE&listingsSearchQuery=${sku}&partnerContext=ALL`}
+    href={platform === "flipkart" ? `https://seller.flipkart.com/index.html#dashboard/listings-management?listingState=ACTIVE&listingsSearchQuery=${sku}&partnerContext=ALL` : `https://sellercentral.amazon.in/myinventory/inventory?fulfilledBy=all&page=1&pageSize=25&searchField=all&searchTerm=${sku}&sort=date_created_desc&status=all&ref_=xx_invmgr_dnav_xx`}
   >
     <IconButton size="small">
       <SellOutlined />

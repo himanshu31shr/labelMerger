@@ -49,6 +49,7 @@ export class AmazonPDFTransformer extends BaseTransformer {
 
     const productDetails = lines.slice(index, index + 4).join(" ");
     let [name, info] = productDetails.split("|");
+    console.log("🚀 ~ AmazonPDFTransformer ~ extractProductInfo ~ info:", info)
     if (name.indexOf("₹") !== -1) {
       name = name.substring(0, name.indexOf("₹") - 1);
     }
@@ -68,13 +69,16 @@ export class AmazonPDFTransformer extends BaseTransformer {
     }
 
     let quantity = "1";
-    const rest = info
-      .split(" ")
-      .filter((str) => !!str && /[()]/.test(str) === false);
 
-    const idx = this.recurseQuantity(rest);
-    if (idx > -1) {
-      quantity = rest[idx] || "1";
+    if(info) {
+      const rest = info
+        .split(" ")
+        .filter((str) => !!str && /[()]/.test(str) === false);
+  
+      const idx = this.recurseQuantity(rest);
+      if (idx > -1) {
+        quantity = rest[idx] || "1";
+      }
     }
 
     return {

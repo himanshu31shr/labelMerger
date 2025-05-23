@@ -29,15 +29,9 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
         (product: Product) =>
           product?.competitionAnalysis &&
           Number(product?.competitionAnalysis?.competitorPrice) > 0
+          &&
+          product.sellingPrice > Number(product.competitionAnalysis.competitorPrice)
       )
-      .filter(
-        (product: Product) =>
-          products.filter(product =>
-            product.competitionAnalysis &&
-            Number(product.competitionAnalysis.competitorPrice) > 0 &&
-            product.sellingPrice > Number(product.competitionAnalysis.competitorPrice)
-          )
-      );
   } else {
     hiddenProducts = products.filter(
       (product: Product) => !product?.existsOnSellerPage
@@ -50,15 +44,7 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
     {
       id: "platform",
       label: "Platform",
-      format: (value: unknown) => {
-        const platform = value as string;
-        return (
-          <Chip
-            label={platform.toUpperCase()}
-            color={value === "amazon" ? "default" : "primary"}
-          />
-        );
-      },
+      filter: true,
     },
     {
       id: "costPrice",
@@ -124,19 +110,19 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
 
   const renderActions = (product: Product) => (
     <>
-      {product.metadata?.flipkartSerialNumber && (
+      {product.metadata?.flipkartSerialNumber && product.platform === "flipkart" && (
         <ViewFlipkartListingButton
           flipkartSerialNumber={product.metadata.flipkartSerialNumber}
         />
       )}
 
-      {product.metadata?.amazonSerialNumber && (
+      {product.metadata?.amazonSerialNumber && product.platform === "amazon" && (
         <ViewAmazonListingButton
           amazonSerialNumber={product.metadata.amazonSerialNumber}
         />
       )}
 
-      <ShowProductEditPageButton sku={product.sku} />
+      <ShowProductEditPageButton sku={product.sku} platform={product.platform} />
     </>
   );
 

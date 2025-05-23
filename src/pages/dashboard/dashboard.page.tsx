@@ -51,7 +51,7 @@ export const DashboardPage = () => {
         return sum + (price * quantity);
     }, 0);
 
-    if (productsLoading || ordersLoading || historyLoading || inventoryLoading) {
+    if (productsLoading || inventoryLoading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <CircularProgress />
@@ -149,39 +149,39 @@ export const DashboardPage = () => {
                             Orders Overview
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart 
+                            <LineChart
                                 data={chartData}
                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis 
-                                    dataKey="date" 
+                                <XAxis
+                                    dataKey="date"
                                     tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     interval={2}
                                 />
                                 <YAxis />
-                                <Tooltip 
+                                <Tooltip
                                     labelFormatter={(date) => new Date(date).toLocaleDateString()}
                                     formatter={(value) => [`${value} orders`, 'Orders']}
                                 />
                                 <Legend />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="orders" 
+                                <Line
+                                    type="monotone"
+                                    dataKey="orders"
                                     name="Orders"
-                                    stroke="#8884d8" 
-                                    activeDot={{ r: 8 }} 
+                                    stroke="#8884d8"
+                                    activeDot={{ r: 8 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
                 </Grid>
-                
+
                 {/* Low Inventory Widget */}
                 <Grid item xs={12} md={4}>
-                    <LowInventoryWidget 
-                        items={lowStockItems} 
-                        loading={inventoryLoading} 
+                    <LowInventoryWidget
+                        items={lowStockItems}
+                        loading={inventoryLoading}
                     />
                 </Grid>
             </Grid>
@@ -190,21 +190,21 @@ export const DashboardPage = () => {
             <Grid container spacing={3} sx={{ mt: 1 }}>
                 {/* Hidden Products Widget */}
                 <Grid item xs={12} md={6}>
-                    <HiddenProductsWidget 
-                        products={products} 
-                        loading={productsLoading} 
+                    <HiddenProductsWidget
+                        products={products}
+                        loading={productsLoading}
                     />
                 </Grid>
-                
+
                 {/* High-Priced Products Widget */}
                 <Grid item xs={12} md={6}>
-                    <HighPricedProductsWidget 
-                        products={products} 
-                        loading={productsLoading} 
+                    <HighPricedProductsWidget
+                        products={products}
+                        loading={productsLoading}
                     />
                 </Grid>
             </Grid>
-            
+
             {/* Notification Testing Section */}
             <Box sx={{ mt: 4 }}>
                 <Divider sx={{ mb: 3 }}>
