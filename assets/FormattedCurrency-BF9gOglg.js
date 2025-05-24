@@ -1,1 +1,0 @@
-import{j as n}from"./mui-vendor-DQHf4ke8.js";const s=({value:r,color:t})=>{const e=new Intl.NumberFormat("en-US",{style:"currency",currency:"INR"});return n.jsx("span",{style:{color:t??"inherit"},children:e.format(r)})};export{s as F};
