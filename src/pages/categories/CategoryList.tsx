@@ -6,27 +6,17 @@ import {
   createCategory, 
   updateCategory, 
   deleteCategory, 
-  selectCategory, 
   clearCategoriesError
 } from '../../store/slices/categoriesSlice';
-// Import the Category type and Timestamp from firebase
 import { Category as ServiceCategory } from '../../services/category.service';
 import { Timestamp } from 'firebase/firestore';
+import { DataTable, Column } from '../../components/DataTable/DataTable';
 
-// Import Material-UI components
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   IconButton,
-  List,
-  ListItem,
-  ListItemSecondaryAction,
-  ListItemText,
   Typography,
-  Divider,
   Alert,
   Snackbar,
   Dialog,
@@ -35,7 +25,6 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
-  ListItemButton,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { CategoryForm } from './CategoryForm';
@@ -45,9 +34,7 @@ type CategoryFormData = {
   description?: string;
 }
 
-interface CategoryListProps {
-  // Add any props if needed
-}
+type CategoryListProps = Record<string, never>;
 
 interface SnackbarState {
   open: boolean;
@@ -55,7 +42,6 @@ interface SnackbarState {
   severity: 'success' | 'error' | 'info' | 'warning';
 }
 
-// Extend the service's Category type to handle both Timestamp and Date/string
 interface Category extends Omit<ServiceCategory, 'createdAt' | 'updatedAt'> {
   id?: string;
   name: string;
@@ -65,7 +51,6 @@ interface Category extends Omit<ServiceCategory, 'createdAt' | 'updatedAt'> {
 }
 
 const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
-  // Redux state
   const dispatch = useAppDispatch();
   const { 
     items: categories = [],
@@ -73,27 +58,24 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
     error = null
   } = useAppSelector((state: RootState) => state.categories || {});
 
-  // State for form and dialogs
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
     severity: 'info',
   });
 
-  // Memoize categories to prevent unnecessary re-renders
-  const memoizedCategories = useMemo(() => categories, [categories]);
   const safeCategories = useMemo(() => Array.isArray(categories) ? categories : [], [categories]);
 
-  // Fetch categories on component mount
   useEffect(() => {
     const loadCategories = async () => {
       try {
         await dispatch(fetchCategories()).unwrap();
-      } catch (err) {
+      } catch {
         setSnackbar({
           open: true,
           message: 'Failed to load categories',
@@ -105,7 +87,6 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
     loadCategories();
   }, [dispatch]);
 
-  // Clear error when component unmounts
   useEffect(() => {
     return () => {
       if (error) {
@@ -114,7 +95,6 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
     };
   }, [dispatch, error]);
 
-  // Handle error state changes
   useEffect(() => {
     if (error) {
       setSnackbar({
@@ -123,7 +103,6 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
         severity: 'error',
       });
       
-      // Clear the error after showing it
       const timer = setTimeout(() => {
         if (clearCategoriesError) {
           dispatch(clearCategoriesError());
@@ -137,13 +116,12 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
   const handleFormSubmit = async (data: CategoryFormData) => {
     try {
       if (editingCategory?.id) {
-        // Create a minimal update object with only the necessary fields
         const updateData = {
           id: editingCategory.id,
           name: data.name,
           description: data.description || ''
         };
-        await dispatch(updateCategory(updateData as any)).unwrap();
+        await dispatch(updateCategory(updateData)).unwrap();
         setSnackbar({
           open: true,
           message: 'Category updated successfully',
@@ -159,7 +137,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
       }
       setIsFormOpen(false);
       setEditingCategory(null);
-    } catch (err) {
+    } catch {
       setSnackbar({
         open: true,
         message: 'An error occurred',
@@ -195,6 +173,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
   const handleDeleteConfirm = async () => {
     if (!categoryToDelete?.id) return;
     
+    setIsDeleting(true);
     try {
       await dispatch(deleteCategory(categoryToDelete.id)).unwrap();
       setSnackbar({
@@ -202,156 +181,153 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
         message: 'Category deleted successfully',
         severity: 'success',
       });
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Failed to delete category',
+        message: error instanceof Error ? error.message : 'Failed to delete category',
         severity: 'error',
       });
     } finally {
-      setDeleteDialogOpen(false);
-      setCategoryToDelete(null);
+      setIsDeleting(false);
     }
   };
 
   const handleCloseDeleteDialog = () => {
-    setDeleteDialogOpen(false);
-    setCategoryToDelete(null);
+    if (!isDeleting) {
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
+    }
   };
 
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  const handleEditCategory = (category: Category) => (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setEditingCategory(category);
+  const handleAddCategory = () => {
+    setEditingCategory(null);
     setIsFormOpen(true);
   };
 
-  const handleAddCategory = (event: React.MouseEvent) => {
-    event.preventDefault();
-    setIsFormOpen(true);
-  };
+  const columns: Column<Category>[] = [
+    { id: 'id', label: 'ID', filter: true },
+    { id: 'name', label: 'Name', filter: true },
+    { id: 'tag', label: 'Tag', filter: true },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'center',
+      format: (_, row) => {
+        if (!row) return null;
+        return (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={handleEditClick(row)}
+              aria-label="edit"
+              disabled={loading || isDeleting}
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleDeleteClick(row)}
+              aria-label="delete"
+              disabled={loading || isDeleting}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        );
+      },
+    },
+  ];
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader
-        title="Product Categories"
-        action={
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleAddCategory}
-            disabled={loading}
-          >
-            Add Category
-          </Button>
-        }
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" component="h2">
+          Categories
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={handleAddCategory}
+          disabled={loading || isDeleting}
+        >
+          Add Category
+        </Button>
+      </Box>
+
+      <DataTable
+        columns={columns}
+        data={safeCategories}
+        defaultSortColumn="name"
+        defaultSortDirection="asc"
+        rowsPerPageOptions={[10, 25, 50]}
+        defaultRowsPerPage={10}
       />
-      <CardContent>
-        {loading && !memoizedCategories.length ? (
-          <Box display="flex" justifyContent="center" p={3}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error">{String(error)}</Alert>
-        ) : (
-          <List>
-            {memoizedCategories.map((category) => (
-              <React.Fragment key={category.id}>
-                <ListItem
-                  component="div"
-                  sx={{ cursor: 'pointer' }}
-                  onClick={() => category.id && dispatch(selectCategory(category.id))}
-                >
-                  <ListItemText 
-                    primary={category.name} 
-                    secondary={category.description} 
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      aria-label="edit"
-                      onClick={handleEditClick(category)}
-                      disabled={loading}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={handleDeleteClick(category)}
-                      disabled={loading}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider component="li" />
-              </React.Fragment>
-            ))}
-          </List>
-        )}
-      </CardContent>
 
-      {/* Category Form Dialog */}
-      <Dialog open={isFormOpen} onClose={handleCloseForm} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
-        <DialogContent>
-          <CategoryForm
-            open={isFormOpen}
-            onClose={handleCloseForm}
-            onSubmit={handleFormSubmit}
-            defaultValues={editingCategory || undefined}
-            isSubmitting={loading}
-          />
-        </DialogContent>
-      </Dialog>
+      <CategoryForm
+        open={isFormOpen}
+        onClose={handleCloseForm}
+        onSubmit={handleFormSubmit}
+        defaultValues={editingCategory || undefined}
+        isSubmitting={loading || isDeleting}
+      />
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">Delete Category</DialogTitle>
+        <DialogTitle>Delete Category</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
+          <DialogContentText>
             Are you sure you want to delete this category? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} color="primary" disabled={loading}>
+          <Button 
+            onClick={handleCloseDeleteDialog} 
+            disabled={isDeleting}
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleDeleteConfirm} 
             color="error" 
-            autoFocus 
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
+            disabled={isDeleting}
+            startIcon={isDeleting ? <CircularProgress size={20} /> : null}
           >
-            {loading ? 'Deleting...' : 'Delete'}
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Card>
+    </Box>
   );
 };
 
