@@ -1,207 +1,500 @@
-# E-commerce Tools Suite
+# E-commerce Management Dashboard
 
 ## Overview
-The E-commerce Tools Suite is a comprehensive web application designed to help e-commerce sellers manage their business across multiple platforms. The application provides tools for processing orders, analyzing transactions, and managing product catalogs with a focus on platforms like Amazon and Flipkart.
+A comprehensive e-commerce management platform built with React, TypeScript, and Material-UI. The application provides tools for managing products, orders, inventory, and analytics across multiple e-commerce platforms including Amazon and Flipkart.
 
 ## Features
-- **Authentication** ✅
-  - Secure email/password authentication
-  - Remember Me functionality
-  - Password reset capabilities
-  - Role-based access control
-  - Protected routes
 
-- **PDF Label Management** ✅
-  - Upload and merge shipping labels from multiple platforms
-  - Support for Amazon and Flipkart label formats
-  - Preview and download merged PDFs
-  - Batch processing capabilities
+### Core Features
+- **Multi-platform Integration**
+  - Unified dashboard for Amazon and Flipkart
+  - Platform-specific product management
+  - Cross-platform inventory synchronization
 
-- **Transaction Analytics** ✅
-  - Upload and process transaction data from CSV/Excel
-  - Real-time price and sales analytics
-  - Financial summary and reporting
-  - Interactive data visualization with Recharts
-  - Platform-wise performance comparison
+### Product Management
+- **Product Catalog**
+  - Bulk import/export (CSV/Excel)
+  - SKU management with custom attributes
+  - Product variations and bundles
+  - Image gallery management
 
-- **Product Management** ✅
-  - Import/export product catalogs
-  - Bulk price updates
-  - Inventory tracking
-  - Real-time synchronization with Firestore
-  - SKU management
+### Inventory & Pricing
+- **Real-time Inventory Tracking**
+  - Stock level monitoring
+  - Low stock alerts
+  - Multi-warehouse support
+- **Competitive Pricing**
+  - Price comparison with competitors
+  - Automated repricing rules
+  - Margin calculation
+
+### Order Processing
+- **Unified Order Management**
+  - Order status tracking
+  - Bulk order processing
+  - Shipping label generation
+- **PDF Label Management**
+  - Multi-platform label merging
+  - Batch processing
+  - Print optimization
+
+### Analytics & Reporting
+- **Sales Analytics**
+  - Revenue and profit tracking
+  - Sales performance by SKU/category
+  - Custom report generation
+- **Business Intelligence**
+  - Trend analysis
+  - Inventory forecasting
+  - Sales predictions
 
 ## Tech Stack
-- **Frontend**: React 18 with TypeScript
-- **UI Framework**: Material-UI v6 with styled-components
-- **State Management**: Redux Toolkit with Redux Persist
+
+### Core Technologies
+- **Frontend Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite 6
+- **Package Manager**: npm / Yarn
+- **Language**: TypeScript 5.x
+
+### UI & Styling
+- **Component Library**: Material-UI (MUI) v6+
+- **Styling**: Emotion (CSS-in-JS)
+- **Icons**: Material Icons
+- **Theming**: Custom theme with light/dark mode support
+
+### State Management
+- **Global State**: Redux Toolkit with Redux Persist
+- **Local State**: React Hooks (useState, useReducer, useContext)
+- **Data Fetching**: RTK Query
+
+### Backend & Storage
 - **Authentication**: Firebase Authentication
-- **Data Storage**: Firebase Firestore with offline support
-- **PDF Processing**: pdf-lib, pdfjs-dist, @react-pdf/renderer
-- **Data Handling**: papaparse, xlsx
+- **Database**: Cloud Firestore with offline persistence
+- **File Storage**: Firebase Storage
+- **Hosting**: Firebase Hosting
+
+### Data Processing
+- **PDF Generation**: @react-pdf/renderer, pdf-lib
+- **Spreadsheet Handling**: xlsx, papaparse
 - **Data Visualization**: Recharts
+- **Date Handling**: date-fns
+
+### Development Tools
 - **Testing**: Jest, React Testing Library
-- **Progressive Web App**: Vite PWA plugin
-- **Deployment**: GitHub Pages
+- **Linting**: ESLint with TypeScript support
+- **Code Formatting**: Prettier
+- **Version Control**: Git with GitHub
+- **CI/CD**: GitHub Actions
+- **Performance**: React.memo, useMemo, useCallback
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm (v9 or higher) or yarn
-- Git
+- Node.js v18 or later
+- npm v9+ or Yarn 1.22+
 - Firebase account with a project
-- GitHub account (for deployment)
+- Git (for version control)
 
-### Installation
+### Quick Start
 
-1. Clone the repository:
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/himanshu31shr/flipkart-amazon-tools.git
-   cd flipkart-amazon-tools
+   git clone https://github.com/your-username/ecommerce-dashboard.git
+   cd ecommerce-dashboard
    ```
 
-2. Install dependencies:
+2. **Install dependencies**
    ```bash
    npm install
    # or
    yarn
    ```
 
-3. Configure Firebase:
-   - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
-   - Enable Authentication with email/password provider
-   - Set up Firestore Database in production mode
-   - Create a web app in your Firebase project
+3. **Set up environment variables**
    - Copy `.env.example` to `.env.local`
-   - Update the Firebase configuration in `.env.local`:
-     ```
+   - Update with your Firebase configuration:
+     ```env
      VITE_FIREBASE_API_KEY=your-api-key
-     VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+     VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
      VITE_FIREBASE_PROJECT_ID=your-project-id
-     VITE_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+     VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
      VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
      VITE_FIREBASE_APP_ID=your-app-id
+     VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
      ```
 
-4. Start the development server:
+4. **Initialize Firebase**
+   - Enable Authentication (Email/Password)
+   - Set up Firestore in production mode
+   - Configure Storage rules
+
+5. **Start development server**
    ```bash
+   # Standard development
    npm run dev
-   # or
+   
+   # Development with custom host
+   npm run dev:local
+   
+   # Or with Yarn
    yarn dev
    ```
 
-5. For local development with custom host:
+6. **Build for production**
    ```bash
-   npm run dev:local
+   npm run build
+   npm run preview
    ```
 
-### Configuration Options
+## Configuration
 
-#### Authentication Configuration
-- Customize session persistence in `src/services/auth.service.ts`
-- Modify password requirements in Firebase Console
-- Configure authentication providers in Firebase Console
+### Environment Variables
 
-#### Firebase Configuration
+Create a `.env.local` file in the root directory with the following variables:
 
-To enable offline persistence in your Firebase application, update the `firebase.config.ts` file as follows:
+```env
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 
-1. First, modify the imports to include `enableIndexedDbPersistence`:
-   ```typescript
-   import { FirebaseApp, initializeApp } from 'firebase/app';
-   import { Auth, getAuth } from 'firebase/auth';
-   import { Firestore, getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
-   import { getMessaging, isSupported, Messaging } from 'firebase/messaging';
-   ```
+# Application Settings
+VITE_APP_NAME="E-commerce Dashboard"
+VITE_API_BASE_URL=/api/v1
+VITE_ENABLE_ANALYTICS=false
+VITE_DEFAULT_PAGE_SIZE=25
+```
 
-2. Then, after initializing Firestore, add the persistence configuration:
-   ```typescript
-   // Initialize Firebase
-   app = initializeApp(firebaseConfig);
-   auth = getAuth(app);
-   db = getFirestore(app);
-   
-   // Enable offline persistence
-   enableIndexedDbPersistence(db)
-     .catch((err) => {
-       if (err.code === 'failed-precondition') {
-         console.warn('Offline persistence can only be enabled in one tab at a time.');
-       } else if (err.code === 'unimplemented') {
-         console.warn('The current browser does not support all of the features required to enable offline persistence.');
-       }
-     });
-   ```
+### Firebase Setup
 
-3. For more advanced caching strategies, you can also configure:
-   ```typescript
-   import { initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
-   
-   // Initialize Firestore with custom settings
-   const db = initializeFirestore(app, {
-     cacheSizeBytes: CACHE_SIZE_UNLIMITED, // or a specific number of bytes
-     experimentalForceLongPolling: true // useful for certain network conditions
-   });
-   ```
+1. **Authentication**
+   - Enable Email/Password authentication
+   - Configure password reset templates
+   - Set up OAuth providers if needed (Google, Facebook, etc.)
 
-#### Theme Customization
-- Modify `src/theme.tsx` to customize:
-  - Color palette
-  - Typography
-  - Component styles
-  - Dark mode preferences
+2. **Firestore Database**
+   - Create collections: `products`, `orders`, `inventory`, `transactions`
+   - Set up security rules
+   - Configure indexes for complex queries
 
-#### Performance Settings
-- Adjust batch sizes for large operations in `src/services/firebase.service.ts`
-- Configure cache settings in `firebase.config.ts`
-- Modify pagination settings in DataTable components
+3. **Storage**
+   - Set up rules for file uploads
+   - Configure CORS settings
 
-### Available Scripts
+### Theme Customization
 
-- `npm run dev` or `yarn dev` - Start development server
-- `npm run dev:local` - Start dev server with custom host configuration
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build locally
-- `npm run test` - Run unit tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint and formatting issues
-- `npm run type-check` - Check TypeScript types
-- `npm run deploy` - Deploy to GitHub Pages
-- `npm run predeploy` - Build for production before deployment
+Edit `src/theme/theme.ts` to customize:
+
+```typescript
+import { createTheme } from '@mui/material/styles';
+
+export const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+    mode: 'light', // or 'dark'
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h1: { fontSize: '2.5rem', fontWeight: 500 },
+    // ... other typography settings
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: { textTransform: 'none' },
+      },
+    },
+    // ... other component overrides
+  },
+});
+```
+
+### Feature Flags
+
+Enable/disable features in `src/config/features.ts`:
+
+```typescript
+export const featureFlags = {
+  enableAdvancedAnalytics: false,
+  enableMultiCurrency: false,
+  enableBulkActions: true,
+  // ... other feature flags
+};
+```
+
+### API Configuration
+
+Configure API endpoints in `src/services/api/endpoints.ts`:
+
+```typescript
+export const API_ENDPOINTS = {
+  PRODUCTS: '/products',
+  ORDERS: '/orders',
+  INVENTORY: '/inventory',
+  // ... other endpoints
+};
+```
+
+## Available Scripts
+
+### Development
+```bash
+# Start development server
+npm run dev
+
+# Start with custom host configuration
+npm run dev:local
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Code Quality
+```bash
+# Run ESLint
+npm run lint
+
+# Fix ESLint and formatting issues
+npm run lint:fix
+
+# Check TypeScript types
+npm run type-check
+
+# Run full code quality check (lint + type check)
+npm run check
+```
+
+### Build & Deploy
+```bash
+# Build for production
+npm run build
+
+# Preview production build locally
+npm run preview
+
+# Build and deploy to Firebase Hosting
+npm run deploy
+
+# Deploy only Firestore rules
+npm run deploy:firestore
+
+# Deploy only Firebase functions
+npm run deploy:functions
+```
+
+### Utilities
+```bash
+# Generate component boilerplate
+npm run generate:component ComponentName
+
+# Generate page boilerplate
+npm run generate:page PageName
+
+# Generate Redux slice
+npm run generate:slice sliceName
+```
 
 ## Project Structure
 
 ```
 src/
-├── components/       # Reusable UI components
-├── constants/        # Application constants
-├── containers/       # Container components
-├── pages/            # Application pages
-│   ├── Auth/         # Authentication pages
-│   ├── Dashboard/    # Main dashboard
-│   ├── Products/     # Product management
-│   └── Transactions/ # Transaction analysis
-├── services/         # API and business logic
-│   ├── auth.service.ts
-│   ├── firebase.service.ts
-│   ├── merge.service.ts
-│   └── transactionAnalysis.service.ts
-├── store/            # Redux store configuration
-│   ├── slices/       # Redux slices
-│   └── index.ts      # Store configuration
-├── types/            # TypeScript type definitions
-└── utils/            # Utility functions
+├── assets/               # Static assets (images, fonts, etc.)
+├── components/           # Reusable UI components
+│   ├── common/           # Common components (buttons, inputs, etc.)
+│   ├── layout/           # Layout components (header, sidebar, etc.)
+│   └── ui/               # Basic UI elements
+├── config/               # App configuration
+│   ├── features.ts       # Feature flags
+│   └── routes.tsx        # Route configurations
+├── constants/            # Application constants
+│   ├── api.ts            # API endpoints
+│   └── theme.ts          # Theme constants
+├── features/             # Feature modules
+│   ├── auth/             # Authentication
+│   ├── products/         # Product management
+│   ├── orders/           # Order processing
+│   └── analytics/        # Analytics and reporting
+├── hooks/                # Custom React hooks
+├── layouts/              # Page layouts
+├── pages/                # Application pages
+│   ├── Dashboard/        # Main dashboard
+│   ├── Products/         # Product management
+│   ├── Orders/           # Order management
+│   ├── Inventory/        # Inventory tracking
+│   └── Settings/         # Application settings
+├── services/             # API and business logic
+│   ├── api/              # API client setup
+│   ├── auth/             # Authentication services
+│   ├── products/         # Product services
+│   └── firebase/         # Firebase services
+├── store/                # State management
+│   ├── slices/           # Redux slices
+│   ├── hooks.ts          # Typed hooks
+│   └── store.ts          # Store configuration
+├── theme/                # Theme configuration
+│   ├── components/       # Component overrides
+│   └── theme.ts          # Theme definition
+├── types/                # TypeScript type definitions
+│   ├── api/              # API types
+│   └── models/           # Data models
+└── utils/                # Utility functions
+    ├── formatters/       # Data formatting utils
+    └── validators/       # Validation utils
 ```
 
 ### Key Components
 
-#### Pages
-- **Authentication**: Login, Registration, Password Reset
-- **Dashboard**: Overview and quick actions
-- **Products**: Catalog management, bulk updates
-- **Transactions**: Sales analysis, reports
+#### Features
+- **Authentication**: Secure login, registration, and password management
+- **Product Management**: CRUD operations, bulk actions, and inventory tracking
+- **Order Processing**: Order management and fulfillment
+- **Analytics**: Sales reports, inventory analytics, and business insights
+- **Settings**: User preferences and application configuration
+
+#### State Management
+- **Redux Toolkit**: Centralized state management
+- **RTK Query**: Data fetching and caching
+- **Local State**: React Context and hooks for component-level state
+
+#### UI/UX
+- **Material-UI**: Comprehensive component library
+- **Responsive Design**: Mobile-first approach
+- **Theming**: Customizable themes with dark/light mode
+- **Accessibility**: WCAG 2.1 AA compliance
+
+#### Performance
+- **Code Splitting**: Route-based code splitting
+- **Lazy Loading**: On-demand component loading
+- **Optimized Builds**: Production-optimized builds with Vite
+## Development Guide
+
+### Code Style
+- Follow the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
+- Use TypeScript for all new code
+- Write functional components with hooks
+- Follow the existing project structure and naming conventions
+
+### Git Workflow
+
+1. **Branch Naming**
+   - `feature/feature-name` for new features
+   - `bugfix/description` for bug fixes
+   - `hotfix/description` for critical fixes
+   - `chore/description` for maintenance tasks
+
+2. **Commit Messages**
+   - Use the [Conventional Commits](https://www.conventionalcommits.org/) specification
+   - Example: `feat(products): add bulk edit functionality`
+
+### Testing
+
+Write tests for:
+- All new components (React Testing Library)
+- Complex utility functions
+- Redux reducers and actions
+- Custom hooks
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### API Integration
+
+1. **API Client**
+   - Use `src/services/api/client.ts` for all API calls
+   - Configure base URL and headers in `src/config/api.ts`
+
+2. **RTK Query**
+   - Define API endpoints in `src/services/api/endpoints/`
+   - Export hooks from feature-specific API slices
+
+## Deployment
+
+### Prerequisites
+- Firebase CLI installed (`npm install -g firebase-tools`)
+- Firebase project set up
+- Required permissions for deployment
+
+### Deployment Process
+
+1. **Build the application**
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy to Firebase Hosting**
+   ```bash
+   firebase login
+   firebase use your-project-id
+   npm run deploy
+   ```
+
+3. **Deploy Firebase Functions (if applicable)**
+   ```bash
+   cd functions
+   npm run deploy:functions
+   ```
+
+### Environment Configuration
+
+1. **Production**
+   - Set up in Firebase Console
+   - Configure environment variables in `.env.production`
+
+2. **Staging**
+   - Use a separate Firebase project
+   - Configure in `.env.staging`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+### Code Review Process
+- All PRs require at least one approval
+- Ensure all tests pass
+- Update documentation as needed
+- Follow the established coding standards
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please contact [your-email@example.com](mailto:your-email@example.com) or open an issue in the repository.
+
+## Acknowledgments
+
+- [Material-UI](https://mui.com/) for the UI components
+- [Firebase](https://firebase.google.com/) for backend services
+- [Vite](https://vitejs.dev/) for the build tooling
+- [Redux Toolkit](https://redux-toolkit.js.org/) for state management
 - **Label Manager**: PDF label merging
 
 #### Services
@@ -271,8 +564,7 @@ npm run test:coverage
 5. Open a Pull Request
 
 ## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Future Enhancements
 - [ ] Multi-language support
@@ -282,6 +574,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Automated testing with CI/CD
 - [ ] Enhanced data export options
 - [ ] Custom report builder
-
-## License
-This project is licensed under the MIT License.
