@@ -1,7 +1,6 @@
 import {
     Box,
     CircularProgress,
-    Divider,
     Grid,
     Paper,
     Typography
@@ -17,7 +16,6 @@ import {
     XAxis,
     YAxis
 } from 'recharts';
-import NotificationTester from '../../components/NotificationTester';
 import { ProductSummary } from '../../pages/home/services/base.transformer';
 import { ActiveOrderSchema } from '../../services/todaysOrder.service';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -204,16 +202,6 @@ export const DashboardPage = () => {
                     />
                 </Grid>
             </Grid>
-
-            {/* Notification Testing Section */}
-            <Box sx={{ mt: 4 }}>
-                <Divider sx={{ mb: 3 }}>
-                    <Typography variant="h6" color="text.secondary">
-                        Notification Testing
-                    </Typography>
-                </Divider>
-                <NotificationTester />
-            </Box>
         </Box>
     );
 }; 
