@@ -49,6 +49,12 @@ const InventoryPage = React.lazy(() =>
   }))
 );
 
+const CategoriesPage = React.lazy(() =>
+  import("./pages/categories/categories.page").then((module) => ({
+    default: module.CategoriesPage,
+  }))
+);
+
 export default function App({
   toggleTheme,
   mode,
@@ -99,6 +105,10 @@ export default function App({
                     <Route
                       path="/flipkart-amazon-tools/inventory/"
                       element={<InventoryPage />}
+                    />
+                    <Route
+                      path="/flipkart-amazon-tools/categories/"
+                      element={<CategoriesPage />}
                     />
                   </Routes>
                 </DefaultContainer>

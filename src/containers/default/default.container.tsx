@@ -8,6 +8,7 @@ import InventoryIcon from "@mui/icons-material/Inventory";
 import InventoryManagementIcon from "@mui/icons-material/Warehouse";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import CategoryIcon from "@mui/icons-material/Category";
 import {
   Box,
   Container,
@@ -210,6 +211,23 @@ export const DefaultContainer = ({
                 <InventoryIcon />
               </StyledListItemIcon>
               <StyledListItemText primary={"Products"} />
+            </StyledListItemButton>
+          </ListItem>
+        </Link>
+
+        <Link
+          component={RouterLink}
+          to={"/flipkart-amazon-tools/categories/"}
+          data-testid="categories"
+          style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
+        >
+          <ListItem key={"Categories"} disablePadding>
+            <StyledListItemButton>
+              <StyledListItemIcon>
+                <CategoryIcon />
+              </StyledListItemIcon>
+              <StyledListItemText primary={"Categories"} />
             </StyledListItemButton>
           </ListItem>
         </Link>

@@ -8,6 +8,7 @@ import { authReducer } from './slices/authSlice';
 import { pdfMergerReducer } from './slices/pdfMergerSlice';
 import orderHistoryReducer from './slices/orderHistorySlice';
 import inventoryReducer from './slices/inventorySlice';
+import categoriesReducer from './slices/categoriesSlice';
 
 const persistConfig = {
   key: 'root',
@@ -25,6 +26,7 @@ const rootReducer = combineReducers({
   pdfMerger: pdfMergerReducer,
   orderHistory: orderHistoryReducer,
   inventory: inventoryReducer,
+  categories: categoriesReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

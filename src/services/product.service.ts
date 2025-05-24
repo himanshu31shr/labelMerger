@@ -12,6 +12,7 @@ export interface Product {
   platform: "amazon" | "flipkart";
   visibility: "visible" | "hidden";
   sellingPrice: number;
+  categoryId?: string; // Reference to category document ID
   inventory: {
     quantity: number;
     lowStockThreshold: number;

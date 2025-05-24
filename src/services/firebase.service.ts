@@ -16,6 +16,9 @@ import {
   DocumentData,
   WriteBatch,
   getDoc,
+  addDoc,
+  orderBy,
+  where,
 } from "firebase/firestore";
 import { db } from "./firebase.config";
 
@@ -105,12 +108,22 @@ export class FirebaseService {
   ): Promise<void> {
     try {
       const docRef = doc(this.db, collectionName, docId);
-      await setDoc(docRef, {
-        ...data,
-        updatedAt: Timestamp.now(),
-      });
+      await setDoc(docRef, data, { merge: true });
     } catch (error) {
       this.handleError(error as FirestoreError, "setDocument");
+    }
+  }
+
+  protected async addDocument<T extends DocumentData>(
+    collectionName: string,
+    data: T
+  ): Promise<{ id: string }> {
+    try {
+      const docRef = await addDoc(collection(this.db, collectionName), data);
+      return { id: docRef.id };
+    } catch (error) {
+      this.handleError(error as FirestoreError, "addDocument");
+      throw error;
     }
   }
 

@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Typography, Container, Paper, Divider, Chip, Card, CardContent } from "@mui/material";
+import { Box, CircularProgress, Typography, Container, Paper, Divider, Chip, Card, CardContent, Grid } from "@mui/material";
 import React, { useEffect } from "react";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -65,22 +65,24 @@ export const ProductsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems={"center"} m={4}>
-            <CircularProgress color="primary" size={40} thickness={4} />
-          </Box>
-        ) : (
-          <Box>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
-              Product Catalog
-            </Typography>
-            <ProductTable
-              products={filteredProducts}
-              onEdit={setEditingProduct}
-              onFilterChange={handleFilterChange}
-            />
-          </Box>
-        )}
+        <Box sx={{ width: '100%' }}>
+            {loading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" m={4}>
+                <CircularProgress color="primary" size={40} thickness={4} />
+              </Box>
+            ) : (
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
+                  Product Catalog
+                </Typography>
+                <ProductTable
+                  products={filteredProducts}
+                  onEdit={setEditingProduct}
+                  onFilterChange={handleFilterChange}
+                />
+              </Box>
+            )}
+        </Box>
 
         {editingProduct && (
           <ProductEditModal
