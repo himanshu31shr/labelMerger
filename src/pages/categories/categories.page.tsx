@@ -1,5 +1,5 @@
+import { Box, Container, Paper, Typography } from '@mui/material';
 import React from 'react';
-import { Container, Paper, Box, Typography, Card, CardContent } from '@mui/material';
 import CategoryList from './CategoryList';
 
 export const CategoriesPage: React.FC = () => {

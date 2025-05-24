@@ -836,559 +836,206 @@ const getInventoryStatusText = (product: Product) => {
 
 ---
 
-## 8. Performance Optimization Best Practices
+## 8. Navigation System
 
-### 8.1. React Component Optimization
+### 8.1. Drawer Implementation
 ```typescript
-// Use React.memo for expensive components
-const ProductCard = React.memo(({ product }: ProductCardProps) => {
-  // Component implementation
-});
+// Drawer structure with collapsible sections
+const drawerItems = [
+  {
+    title: 'Dashboard',
+    path: '/flipkart-amazon-tools/',
+    icon: <DashboardIcon />,
+    standalone: true
+  },
+  {
+    title: 'Orders',
+    icon: <ShoppingCartIcon />,
+    items: [
+      {
+        title: 'Merge Labels',
+        path: '/flipkart-amazon-tools/home/',
+        icon: <MergeOutlined />
+      },
+      {
+        title: 'Active Orders',
+        path: '/flipkart-amazon-tools/activeOrders/',
+        icon: <ReceiptIcon />
+      }
+    ]
+  },
+  // ... other sections
+];
 
-// Use useMemo for expensive calculations
-const filteredProducts = useMemo(() => {
-  return products.filter(product => {
-    return product.name.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-}, [products, searchTerm]);
+// State management for drawer sections
+const [ordersOpen, setOrdersOpen] = useState(false);
+const [productsOpen, setProductsOpen] = useState(false);
+const [managementOpen, setManagementOpen] = useState(false);
 
-// Use useCallback for event handlers passed to child components
-const handleProductSelect = useCallback((productId: string) => {
-  // Handle product selection
-}, [/* dependencies */]);
-
-// Avoid unnecessary re-renders with proper dependency arrays
+// Route-based section expansion
 useEffect(() => {
-  // Only runs when products or filters change
-  applyFilters();
-}, [products, filters]);
+  const path = location.pathname;
+  setOrdersOpen(path.includes('/home/') || path.includes('/activeOrders/'));
+  setProductsOpen(path.includes('/products/') || path.includes('/hidden-products/'));
+  setManagementOpen(path.includes('/categories/') || path.includes('/inventory/'));
+}, [location]);
 ```
 
-### 8.2. Redux Optimization
+### 8.2. Route Protection
 ```typescript
-// Use createSelector for memoized selectors
-const selectFilteredProducts = createSelector(
-  [selectProducts, selectFilters],
-  (products, filters) => {
-    return products.filter(product => {
-      // Apply filters
-    });
+// Protected route component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { authenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <CircularProgress />;
   }
-);
 
-// Use proper normalization for state
-const initialState = {
-  products: {
-    entities: {},
-    ids: []
+  if (!authenticated) {
+    return <Navigate to="/flipkart-amazon-tools/login" state={{ from: location }} replace />;
   }
-};
 
-// Use Redux Toolkit's createEntityAdapter
-const productsAdapter = createEntityAdapter<Product>({
-  selectId: (product) => product.sku,
-  sortComparer: (a, b) => a.name.localeCompare(b.name)
-});
-```
-
-### 8.3. Firebase Performance Optimization
-```typescript
-// Use compound queries instead of client-side filtering
-const q = query(
-  collection(db, 'products'),
-  where('platform', '==', 'amazon'),
-  where('inventory.quantity', '<=', 5),
-  orderBy('updatedAt', 'desc'),
-  limit(20)
-);
-
-// Use batched writes for multiple operations
-const batch = writeBatch(db);
-products.forEach(product => {
-  const docRef = doc(db, 'products', product.sku);
-  batch.set(docRef, product);
-});
-await batch.commit();
-
-// Use transaction for atomic operations
-const updateInventory = async (sku: string, quantity: number) => {
-  const docRef = doc(db, 'products', sku);
-  await runTransaction(db, async (transaction) => {
-    const docSnap = await transaction.get(docRef);
-    if (!docSnap.exists()) throw new Error('Product not found');
-    
-    const product = docSnap.data();
-    const newQuantity = (product.inventory?.quantity || 0) + quantity;
-    
-    transaction.update(docRef, {
-      'inventory.quantity': newQuantity,
-      'inventory.lastUpdated': serverTimestamp()
-    });
-  });
+  return <>{children}</>;
 };
 ```
 
-### 8.4. Bundle Size Optimization
-- Use dynamic imports for code splitting
-- Implement tree shaking with proper module imports
-- Optimize image assets with proper formats and sizes
-- Use lazy loading for routes and heavy components
-- Configure proper chunking in Vite build configuration
-
-### 8.5. Rendering Optimization
-- Implement virtualized lists for large datasets
-- Use skeleton loaders for content that's loading
-- Implement proper loading states for async operations
-- Defer non-critical rendering with useDeferred value
-- Use CSS transitions instead of JavaScript animations when possible
-
----
-
-## 4. Testing Guidelines
-
-### 4.1. Firebase Mocking
+### 8.3. Theme Integration
 ```typescript
-// Mock Firebase instance
-jest.mock('firebase/app', () => ({
-  initializeApp: jest.fn(() => mockApp)
-}));
-
-// Mock auth functions
-jest.mock('firebase/auth', () => ({
-  getAuth: jest.fn(() => mockAuth),
-  signInWithEmailAndPassword: jest.fn(),
-  signOut: jest.fn()
-}));
-
-// Mock Firestore functions
-jest.mock('firebase/firestore', () => ({
-  getFirestore: jest.fn(() => mockFirestore),
-  collection: jest.fn(() => mockCollection),
-  doc: jest.fn(() => mockDoc),
-  getDocs: jest.fn(() => Promise.resolve(mockQuerySnapshot)),
-  getDoc: jest.fn(() => Promise.resolve(mockDocSnapshot)),
-  setDoc: jest.fn(),
-  updateDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  query: jest.fn(() => mockQuery),
-  where: jest.fn(),
-  orderBy: jest.fn(),
-  limit: jest.fn(),
-  onSnapshot: jest.fn(() => mockUnsubscribe)
+// Theme-aware drawer styling
+const StyledDrawer = styled(Drawer, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open?: boolean }>(({ theme, open }) => ({
+  width: DRAWER_WIDTH,
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+  boxSizing: 'border-box',
+  ...(open && {
+    width: DRAWER_WIDTH,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    overflowX: 'hidden',
+  }),
+  ...(!open && {
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    overflowX: 'hidden',
+    width: theme.spacing(7),
+  }),
 }));
 ```
 
-### 4.2. Test Patterns
-- Test service methods in isolation
-- Mock Firebase responses
-- Test error scenarios
-- Verify cleanup functions
-- Use testing-library/react for component tests
-- Test both success and error paths
-- Use proper assertions for async operations
-- Implement snapshot testing for UI components
-- Test Redux actions and reducers separately
-- Use mock timers for time-dependent tests
-
----
-
-## 6. Inventory Management System
-
-### 6.1. Data Structure
+### 8.4. Mobile Responsiveness
 ```typescript
-// Product inventory structure
-interface Inventory {
-  quantity: number;        // Can be negative for backorders
-  lowStockThreshold: number;
-  lastUpdated: Timestamp;
-}
+// Responsive drawer behavior
+const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-interface Product {
-  sku: string;
-  name: string;
-  platform: string;
-  // ... other product fields
-  inventory?: Inventory;  // Optional inventory field
-}
-```
-
-### 6.2. Inventory Operations
-```typescript
-// Update inventory quantity
-async updateInventory(sku: string, quantityChange: number): Promise<Product> {
-  const product = await this.getProductDetails(sku);
-  if (!product.inventory) {
-    // Initialize inventory if it doesn't exist
-    await this.updateDocument(this.COLLECTION_NAME, sku, {
-      inventory: {
-        quantity: quantityChange,
-        lowStockThreshold: 5,
-        lastUpdated: Timestamp.now()
-      }
-    });
-  } else {
-    // Update existing inventory
-    const newQuantity = product.inventory.quantity + quantityChange;
-    await this.updateDocument(this.COLLECTION_NAME, sku, {
-      inventory: {
-        ...product.inventory,
-        quantity: newQuantity,  // Allow negative values for backorders
-        lastUpdated: Timestamp.now()
-      }
-    });
+const handleDrawerToggle = () => {
+  if (isMobile) {
+    setOpen(false);
   }
-  return this.getProductDetails(sku);
-}
-
-// Check for low stock items
-async getLowStockItems(): Promise<Product[]> {
-  const products = await this.getAllProducts();
-  return products.filter(product => {
-    if (!product.inventory) return false;
-    return product.inventory.quantity <= product.inventory.lowStockThreshold;
-  });
-}
-```
-
-### 6.3. Inventory Status Handling
-```typescript
-// Get inventory status color
-const getInventoryStatusColor = (product: Product) => {
-  if (!product.inventory) return 'error';
-  const { quantity, lowStockThreshold } = product.inventory;
-  if (quantity < 0) return 'error';
-  if (quantity === 0) return 'error';
-  if (quantity <= lowStockThreshold) return 'warning';
-  return 'success';
 };
 
-// Get inventory status text
-const getInventoryStatusText = (product: Product) => {
-  if (!product.inventory) return 'No Inventory Data';
-  const { quantity, lowStockThreshold } = product.inventory;
-  if (quantity < 0) return 'Backorder';
-  if (quantity === 0) return 'Out of Stock';
-  if (quantity <= lowStockThreshold) return 'Low Stock';
-  return 'In Stock';
-};
+// Drawer component with responsive behavior
+<StyledDrawer
+  variant={isMobile ? 'temporary' : 'permanent'}
+  open={open}
+  onClose={handleDrawerToggle}
+  ModalProps={{
+    keepMounted: true, // Better mobile performance
+  }}
+>
+  {/* Drawer content */}
+</StyledDrawer>
 ```
 
----
-
-## 7. Dashboard Widgets
-
-### 7.1. Widget Design Pattern
-- Use consistent styling for alert widgets:
-  - Appropriate background color with good contrast
-  - Matching border color
-  - Consistent icon placement
-  - Clear, readable text with proper contrast
-  - Count indicators with appropriate colors
-  - Limited number of items with "View more" option
-
-### 7.2. Widget Implementation
+### 8.5. Active Route Highlighting
 ```typescript
-// Example widget structure
-<Paper sx={{ p: 2, height: '100%', backgroundColor: '#fff3e0', border: '1px solid #ed6c02' }}>
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-    <WarningIcon sx={{ mr: 1, color: '#ed6c02' }} />
-    <Typography variant="h6" component="h2" sx={{ color: '#9a0007', fontWeight: 'bold' }}>
-      Low Stock Alerts
-    </Typography>
-  </Box>
-  
-  <Divider sx={{ mb: 2 }} />
-  
-  {/* Widget content */}
-  <List dense sx={{ mb: 1 }}>
-    {items.map((item) => (
-      <ListItem key={item.id}>
-        {/* Item content */}
-      </ListItem>
-    ))}
-  </List>
-  
-  {/* View more link/button */}
-  <Box sx={{ textAlign: 'center' }}>
-    <Button 
-      variant="outlined" 
-      size="small"
-      component={RouterLink}
-      to="/relevant-page"
-    >
-      View more items
-    </Button>
-  </Box>
-</Paper>
-```
-
-### 7.3. Dashboard Layout
-- Use Grid system for responsive layout
-- Organize widgets by importance and relation
-- Ensure consistent spacing between widgets
-- Group related widgets together
-- Use appropriate size for each widget based on content
-
----
-
-## 5. Error Handling Standards
-
-### 5.1. Service Layer
-```typescript
-protected handleError(error: unknown, context: string): never {
-  if (error instanceof FirebaseError) {
-    // Handle specific Firebase errors
-  } else if (error instanceof Error) {
-    // Handle generic errors
-  }
-  throw error;
-}
-```
-
-### 5.2. Component Layer
-```typescript
-try {
-  await service.operation();
-} catch (error) {
-  if (error.code === 'permission-denied') {
-    // Handle auth errors
-  } else if (error.code === 'unavailable') {
-    // Handle offline scenarios
-  }
-}
-```
-
----
-
-## 6. Inventory Management System
-
-### 6.1. Data Structure
-```typescript
-// Product inventory structure
-interface Inventory {
-  quantity: number;        // Can be negative for backorders
-  lowStockThreshold: number;
-  lastUpdated: Timestamp;
-}
-
-interface Product {
-  sku: string;
-  name: string;
-  platform: string;
-  // ... other product fields
-  inventory?: Inventory;  // Optional inventory field
-}
-```
-
-### 6.2. Inventory Operations
-```typescript
-// Update inventory quantity
-async updateInventory(sku: string, quantityChange: number): Promise<Product> {
-  const product = await this.getProductDetails(sku);
-  if (!product.inventory) {
-    // Initialize inventory if it doesn't exist
-    await this.updateDocument(this.COLLECTION_NAME, sku, {
-      inventory: {
-        quantity: quantityChange,
-        lowStockThreshold: 5,
-        lastUpdated: Timestamp.now()
-      }
-    });
-  } else {
-    // Update existing inventory
-    const newQuantity = product.inventory.quantity + quantityChange;
-    await this.updateDocument(this.COLLECTION_NAME, sku, {
-      inventory: {
-        ...product.inventory,
-        quantity: newQuantity,  // Allow negative values for backorders
-        lastUpdated: Timestamp.now()
-      }
-    });
-  }
-  return this.getProductDetails(sku);
-}
-
-// Check for low stock items
-async getLowStockItems(): Promise<Product[]> {
-  const products = await this.getAllProducts();
-  return products.filter(product => {
-    if (!product.inventory) return false;
-    return product.inventory.quantity <= product.inventory.lowStockThreshold;
-  });
-}
-```
-
-### 6.3. Inventory Status Handling
-```typescript
-// Get inventory status color
-const getInventoryStatusColor = (product: Product) => {
-  if (!product.inventory) return 'error';
-  const { quantity, lowStockThreshold } = product.inventory;
-  if (quantity < 0) return 'error';
-  if (quantity === 0) return 'error';
-  if (quantity <= lowStockThreshold) return 'warning';
-  return 'success';
+// Active route detection
+const isActiveRoute = (path: string) => {
+  return location.pathname === path;
 };
 
-// Get inventory status text
-const getInventoryStatusText = (product: Product) => {
-  if (!product.inventory) return 'No Inventory Data';
-  const { quantity, lowStockThreshold } = product.inventory;
-  if (quantity < 0) return 'Backorder';
-  if (quantity === 0) return 'Out of Stock';
-  if (quantity <= lowStockThreshold) return 'Low Stock';
-  return 'In Stock';
-};
+// Styled list item with active state
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
+  margin: theme.spacing(0.5, 0),
+  padding: theme.spacing(1, 1.5),
+  borderRadius: theme.shape.borderRadius,
+  '&.Mui-selected': {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
+    '&:hover': {
+      backgroundColor: theme.palette.primary.dark,
+    },
+  },
+}));
 ```
 
----
+### 8.6. Best Practices
+1. **Component Organization**:
+   - Keep navigation-related components in a dedicated directory
+   - Use consistent naming conventions
+   - Implement proper TypeScript types
 
-## 7. Dashboard Widgets
+2. **State Management**:
+   - Use local state for drawer sections
+   - Implement route-based expansion
+   - Handle mobile responsiveness
 
-### 7.1. Widget Design Pattern
-- Use consistent styling for alert widgets:
-  - Appropriate background color with good contrast
-  - Matching border color
-  - Consistent icon placement
-  - Clear, readable text with proper contrast
-  - Count indicators with appropriate colors
-  - Limited number of items with "View more" option
+3. **Performance**:
+   - Lazy load route components
+   - Optimize re-renders with proper hooks
+   - Implement proper memoization
 
-### 7.2. Widget Implementation
-```typescript
-// Example widget structure
-<Paper sx={{ p: 2, height: '100%', backgroundColor: '#fff3e0', border: '1px solid #ed6c02' }}>
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-    <WarningIcon sx={{ mr: 1, color: '#ed6c02' }} />
-    <Typography variant="h6" component="h2" sx={{ color: '#9a0007', fontWeight: 'bold' }}>
-      Low Stock Alerts
-    </Typography>
-  </Box>
-  
-  <Divider sx={{ mb: 2 }} />
-  
-  {/* Widget content */}
-  <List dense sx={{ mb: 1 }}>
-    {items.map((item) => (
-      <ListItem key={item.id}>
-        {/* Item content */}
-      </ListItem>
-    ))}
-  </List>
-  
-  {/* View more link/button */}
-  <Box sx={{ textAlign: 'center' }}>
-    <Button 
-      variant="outlined" 
-      size="small"
-      component={RouterLink}
-      to="/relevant-page"
-    >
-      View more items
-    </Button>
-  </Box>
-</Paper>
-```
+4. **Accessibility**:
+   - Use proper ARIA labels
+   - Implement keyboard navigation
+   - Ensure proper focus management
 
-### 7.3. Dashboard Layout
-- Use Grid system for responsive layout
-- Organize widgets by importance and relation
-- Ensure consistent spacing between widgets
-- Group related widgets together
-- Use appropriate size for each widget based on content
+5. **Theme Integration**:
+   - Use theme-aware styling
+   - Implement proper transitions
+   - Maintain consistent spacing
 
----
+## 9. Performance Optimization Guidelines
 
-## 6. Data Models
-
-### 6.1. Base Types
-```typescript
-interface BaseDocument {
-  id: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-interface UserData extends BaseDocument {
-  email: string;
-  role: 'user' | 'admin';
-  lastLoginAt: Date;
-}
-
-interface TransactionDoc extends BaseDocument {
-  platform: 'amazon' | 'flipkart';
-  orderDate: Timestamp;
-  sku: string;
-  quantity: number;
-  sellingPrice: number;
-  expenses: {
-    shippingFee: number;
-    marketplaceFee: number;
-    otherFees: number;
-  };
-  product: {
-    name: string;
-    costPrice: number;
-    basePrice: number;
-  };
-  hash: string;
-}
-```
-
-### 6.2. Service Types
-```typescript
-interface FirebaseServiceOptions {
-  enablePersistence?: boolean;
-  cacheSizeBytes?: number;
-}
-
-interface QueryOptions {
-  limit?: number;
-  orderBy?: string;
-  orderDirection?: 'asc' | 'desc';
-  where?: Array<{
-    field: string;
-    operator: string;
-    value: any;
-  }>;
-}
-```
-
-## 7. Performance Optimization Guidelines
-
-### 7.1. React Performance
+### 9.1. React Performance
 - Use React.memo for expensive components
 - Implement proper dependency arrays in useEffect
 - Use useCallback for event handlers
 - Implement virtualization for long lists
 
-### 7.2. Firebase Performance
+### 9.2. Firebase Performance
 - Use proper indexing for queries
 - Implement pagination for large datasets
 - Use batch operations for bulk updates
 - Cache frequently accessed data
 
-### 7.3. Bundle Optimization
+### 9.3. Bundle Optimization
 - Implement code splitting
 - Use dynamic imports for large components
 - Optimize third-party dependencies
 - Monitor bundle size regularly
 
-## 8. Security Best Practices
+## 10. Security Best Practices
 
-### 8.1. Authentication
+### 10.1. Authentication
 - Implement proper session management
 - Use secure password policies
 - Implement rate limiting
 - Handle token refresh properly
 
-### 8.2. Data Security
+### 10.2. Data Security
 - Validate all user inputs
 - Implement proper access control
 - Use secure data transmission
 - Implement proper error handling
 
-### 8.3. Firebase Security
+### 10.3. Firebase Security
 - Use proper security rules
 - Implement role-based access
 - Validate data structure

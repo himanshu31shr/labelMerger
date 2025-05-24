@@ -7,7 +7,18 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ## 2. Core Features
 
-### 2.1. Notification System ✅
+### 2.1. Navigation System ✅
+- **Responsive Drawer**: Collapsible navigation with theme support
+- **Route Protection**: Authentication-based access control
+- **Features**:
+  - Collapsible sections for better organization
+  - Active route highlighting
+  - Theme-aware styling
+  - Mobile-responsive design
+  - Automatic section expansion based on route
+  - Route-based title updates
+
+### 2.2. Notification System ✅
 - **Push Notifications**: Real-time browser notifications for important events
 - **Service Worker**: Background message handling and offline support
 - **Features**:
@@ -19,7 +30,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Background sync support
   - Error handling and retry mechanisms
 
-### 2.2. Label Merging ✅
+### 2.3. Label Merging ✅
 - **Input**: CSV files containing order data for Amazon and Flipkart.
 - **Output**: A merged PDF containing labels for both platforms.
 - **Key Functionalities**:
@@ -29,7 +40,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Support for large file processing
   - Error handling and validation
 
-### 2.2. Product Management ✅
+### 2.4. Product Management ✅
 - **Input**: 
   - XLSX files containing product data from Amazon and Flipkart
   - Manual product entries and updates
@@ -48,7 +59,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Dedicated interface for managing hidden products
   - Bulk pricing updates with validation
 
-### 2.3. Inventory Management ✅
+### 2.5. Inventory Management ✅
 - **Input**: 
   - Product data with inventory fields
   - Manual inventory updates
@@ -69,7 +80,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Hidden products monitoring
   - Price comparison with competitors
 
-### 2.4. Transaction Analytics ✅
+### 2.6. Transaction Analytics ✅
 - **Input**: 
   - Transaction data files (.csv for Amazon, .xlsx for Flipkart)
   - Product catalog with pricing information
@@ -98,8 +109,24 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 ## 3. Technical Implementation
 
 ### 3.1. Frontend ✅
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite 6
+- **UI Library**: Material-UI (MUI) v6+
+- **State Management**: Redux Toolkit with RTK Query
+- **Routing**: React Router v6 with lazy loading
+- **Theming**: Material-UI ThemeProvider with light/dark mode
+- **Component Structure**:
+  - Modular, reusable components
+  - Feature-based organization
+  - TypeScript with strict mode
+  - Custom hooks for shared functionality
+- **Navigation**:
+  - Responsive drawer with collapsible sections
+  - Route protection and authentication
+  - Theme-aware styling
+  - Mobile-first design
 
-### 3.2. Service Worker
+### 3.2. Service Worker ✅
 - **File**: `/public/firebase-messaging-sw.js`
 - **Registration**: Automatic on page load
 - **Features**:
@@ -108,7 +135,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Implements Firebase Cloud Messaging
   - Manages notification display and interaction
 
-### 3.3. Firebase Integration
+### 3.3. Firebase Integration ✅
 - **Services Used**:
   - Firebase Cloud Messaging (FCM)
   - Firebase Authentication
@@ -118,7 +145,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Secure token handling
   - CORS and domain restrictions
 
-### 3.4. Performance
+### 3.4. Performance ✅
 - **Optimizations**:
   - Service worker caching strategy
   - Lazy loading of notification components
@@ -141,40 +168,6 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - High-priced products comparison widget with competitor analysis
   - Order overview charts with trend visualization
   - Performance metrics dashboard with real-time updates
-
-### 3.2. Backend (Browser-based) ✅
-- **Data Storage**: 
-  - Firebase Firestore for transaction data, product prices, and product catalog
-  - Real-time updates and offline support via Firebase
-- **Libraries**:
-  - `xlsx` for parsing Excel files
-  - `pdf-lib` for PDF generation and manipulation
-  - `papaparse` for parsing CSV files
-  - `firebase` for cloud data storage and real-time updates
-
-### 3.3. Testing ✅
-- **Framework**: Jest with `@testing-library/react`
-- **Coverage**: Comprehensive unit and integration tests
-- **Mocking**: 
-  - Mock Firebase operations
-  - Mock file processing operations
-  - Mock authentication flows
-
-### 3.4. Data Persistence ✅
-- **Firebase Collections**:
-  - products: Store product catalog with platform-specific details and inventory data
-  - transactions: Store all transaction data from both platforms
-  - productPrices: Store and manage product pricing information
-  - users: Manage user data and permissions
-- **Real-time Updates**:
-  - Live price updates across all connected clients
-  - Real-time inventory tracking and updates
-  - Automatic UI refresh on data changes
-  - Optimistic updates for better UX
-- **Offline Support**:
-  - Firebase offline persistence
-  - Automatic sync when connection is restored
-  - Conflict resolution handling
 
 ## 4. Security Implementation ✅
 
@@ -235,28 +228,25 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ### 6.1. Technical Improvements (Q3-Q4 2025)
 - Enhanced offline capabilities with full IndexedDB integration
-- Advanced data visualization with interactive charts and dashboards
-- Performance monitoring and analytics with real-time metrics
-- Comprehensive automated testing with E2E test coverage
-- Expanded product management features with variant support
-- Enhanced bulk operations with progress tracking and error recovery
-- Real-time collaboration features with user presence indicators
-- Optimized build system with module federation
-- Progressive Web App (PWA) implementation with offline support
+- Advanced data visualization with interactive charts
+- Performance monitoring and analytics
+- Comprehensive automated testing
+- Expanded product management features
+- Enhanced bulk operations
+- Real-time collaboration features
+- Optimized build system
+- Progressive Web App (PWA) implementation
 
 ### 6.2. Feature Enhancements (Q3-Q4 2025)
-- Additional e-commerce platform support (Shopify, WooCommerce, Meesho)
-- Advanced reporting capabilities with customizable templates
-- Bulk operations enhancements with validation and rollback
-- Enhanced user management with fine-grained permissions
-- Advanced analytics features with predictive insights
-- Automated inventory reordering suggestions based on sales velocity
-- Inventory forecasting based on sales history and seasonality
-- Advanced competitor price tracking with automated alerts
-- Customizable dashboard widgets with drag-and-drop interface
-- Multi-language support for international users
-- Barcode scanning for inventory management
-- Mobile-optimized interface for on-the-go management
+- Additional e-commerce platform support
+- Advanced reporting capabilities
+- Bulk operations enhancements
+- Enhanced navigation features:
+  - Customizable drawer sections
+  - User preferences for navigation
+  - Advanced search functionality
+  - Quick access shortcuts
+  - Navigation history tracking
 
 ### 6.3. Integration Enhancements (Q1-Q2 2026)
 - Direct API integration with e-commerce platforms
