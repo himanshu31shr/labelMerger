@@ -1,8 +1,24 @@
-import { Box, CircularProgress, Typography, Container, Paper, Divider, Chip, Card, CardContent, Grid } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Container,
+  Paper,
+  Divider,
+  Chip,
+  Card,
+  CardContent,
+} from "@mui/material";
 import React, { useEffect } from "react";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchProducts, importProducts, updateProduct, setFilters } from "../../store/slices/productsSlice";
+import {
+  fetchProducts,
+  importProducts,
+  updateProduct,
+  setFilters,
+  bulkUpdateProducts,
+} from "../../store/slices/productsSlice";
 import { Product } from "../../services/product.service";
 import { ProductEditModal } from "./components/ProductEditModal";
 import { ProductImportSection } from "./components/ProductImportSection";
@@ -10,8 +26,14 @@ import { ProductTable } from "./components/ProductTable";
 
 export const ProductsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { items: products, filteredItems: filteredProducts, loading } = useAppSelector(state => state.products);
-  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
+  const {
+    items: products,
+    filteredItems: filteredProducts,
+    loading,
+  } = useAppSelector((state) => state.products);
+  const [editingProduct, setEditingProduct] = React.useState<Product | null>(
+    null
+  );
 
   useEffect(() => {
     dispatch(fetchProducts({}));
@@ -34,54 +56,79 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (filters: { platform?: string; search?: string }) => {
+  const handleBulkCategoryUpdate = async (
+    skus: string[],
+    categoryId: string
+  ) => {
+    try {
+      await dispatch(
+        bulkUpdateProducts({ skus, data: { categoryId } })
+      ).unwrap();
+    } catch (error) {
+      console.error("Error updating product categories:", error);
+    }
+  };
+
+  const handleFilterChange = (filters: {
+    platform?: string;
+    search?: string;
+  }) => {
     dispatch(setFilters(filters));
   };
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <InventoryIcon sx={{ fontSize: 32, mr: 2, color: 'primary.main' }} />
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
-            Product Management
-          </Typography>
-          <Chip 
-            label={`${products.length} Products`} 
-            color="primary" 
-            size="medium" 
-            sx={{ ml: 2 }}
-          />
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3, justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <InventoryIcon
+              sx={{ fontSize: 32, mr: 2, color: "primary.main" }}
+            />
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: "bold", color: "primary.dark" }}
+            >
+              Product Management
+            </Typography>
+            <Chip
+              label={`${products.length} Products`}
+              color="primary"
+              size="medium"
+              sx={{ ml: 2 }}
+            />
+          </Box>
+          <ProductImportSection onImport={handleProductImport} />
         </Box>
 
         <Divider sx={{ mb: 3 }} />
-        
-        <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid', borderColor: 'primary.light' }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
-              Import Products
-            </Typography>
-            <ProductImportSection onImport={handleProductImport} />
-          </CardContent>
-        </Card>
 
-        <Box sx={{ width: '100%' }}>
-            {loading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" m={4}>
-                <CircularProgress color="primary" size={40} thickness={4} />
-              </Box>
-            ) : (
-              <Box>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
-                  Product Catalog
-                </Typography>
-                <ProductTable
-                  products={filteredProducts}
-                  onEdit={setEditingProduct}
-                  onFilterChange={handleFilterChange}
-                />
-              </Box>
-            )}
+        <Box sx={{ width: "100%" }}>
+          {loading ? (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              m={4}
+            >
+              <CircularProgress color="primary" size={40} thickness={4} />
+            </Box>
+          ) : (
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{ mb: 2, fontWeight: "bold", color: "primary.dark" }}
+              >
+                Product Catalog
+              </Typography>
+              <ProductTable
+                products={filteredProducts}
+                onEdit={setEditingProduct}
+                onFilterChange={handleFilterChange}
+                onBulkCategoryUpdate={handleBulkCategoryUpdate}
+              />
+            </Box>
+          )}
         </Box>
 
         {editingProduct && (

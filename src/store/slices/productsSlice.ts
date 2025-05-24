@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Product, ProductFilter, ProductService } from '../../services/product.service';
-import { CACHE_DURATIONS, shouldFetchData, createOptimisticUpdate } from '../config';
 
 interface ProductsState {
   items: Product[];
@@ -26,16 +25,8 @@ const productService = new ProductService();
 
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async (filters: ProductFilter, { getState }) => {
-    const state = getState() as { products: ProductsState };
-    const { lastFetched, items } = state.products;
-    
-    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.products)) {
-      return items;
-    }
-    
-    const response = await productService.getProducts(filters);
-    return response;
+  async (filters: ProductFilter) => {
+    return await productService.getProducts(filters);
   }
 );
 
@@ -65,22 +56,18 @@ export const importProducts = createAsyncThunk(
 
 export const updateProduct = createAsyncThunk(
   'products/updateProduct',
-  async ({ sku, data }: { sku: string; data: Partial<Product> }, { dispatch, getState }) => {
-    const state = getState() as { products: ProductsState };
-    const { items } = state.products;
-    
-    // Optimistically update the UI
-    const optimisticItems = createOptimisticUpdate(items, { sku, ...data }, 'sku');
-    dispatch(setOptimisticUpdate(optimisticItems));
-    
-    try {
-      await productService.updateProduct(sku, data);
-      return { sku, data };
-    } catch (error) {
-      // Revert on failure
-      dispatch(setOptimisticUpdate(items));
-      throw error;
-    }
+  async ({ sku, data }: { sku: string; data: Partial<Product> }) => {
+    await productService.updateProduct(sku, data);
+    return { sku, data };
+  }
+);
+
+export const bulkUpdateProducts = createAsyncThunk(
+  'products/bulkUpdateProducts',
+  async ({ skus, data }: { skus: string[]; data: Partial<Product> }) => {
+    const updates = skus.map(sku => productService.updateProduct(sku, data));
+    await Promise.all(updates);
+    return { skus, data };
   }
 );
 
@@ -89,15 +76,21 @@ const productsSlice = createSlice({
   initialState,
   reducers: {
     setFilters: (state, action) => {
-      state.filters = action.payload;
-      state.filteredItems = state.items.filter(
-        (product) =>
-          (state.filters.platform ? product.platform === state.filters.platform : true) &&
-          (state.filters.search
-            ? product.name.toLowerCase().includes(state.filters.search.toLowerCase()) ||
-              product.sku.toLowerCase().includes(state.filters.search.toLowerCase())
-            : true)
-      );
+      state.filters = { ...state.filters, ...action.payload };
+      state.filteredItems = state.items.filter(product => {
+        if (state.filters.platform && product.platform !== state.filters.platform) {
+          return false;
+        }
+        if (state.filters.search) {
+          const searchLower = state.filters.search.toLowerCase();
+          return (
+            product.sku.toLowerCase().includes(searchLower) ||
+            product.name.toLowerCase().includes(searchLower) ||
+            product.description.toLowerCase().includes(searchLower)
+          );
+        }
+        return true;
+      });
     },
     clearFilters: (state) => {
       state.filters = {};
@@ -111,9 +104,7 @@ const productsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state) => {
-        if (state.items.length === 0) {
-          state.loading = true;
-        }
+        state.loading = true;
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
@@ -137,8 +128,7 @@ const productsSlice = createSlice({
       .addCase(importProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.items = [...state.items, ...action.payload];
-        state.filteredItems = state.items;
-        state.lastFetched = Date.now();
+        state.filteredItems = [...state.filteredItems, ...action.payload];
       })
       .addCase(importProducts.rejected, (state, action) => {
         state.loading = false;
@@ -146,12 +136,47 @@ const productsSlice = createSlice({
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
         const { sku, data } = action.payload;
-        const index = state.items.findIndex((p) => p.sku === sku);
+        const index = state.items.findIndex(p => p.sku === sku);
         if (index !== -1) {
           state.items[index] = { ...state.items[index], ...data };
-          state.filteredItems = state.items;
-          state.lastFetched = Date.now();
+          state.filteredItems = state.items.filter(product => {
+            if (state.filters.platform && product.platform !== state.filters.platform) {
+              return false;
+            }
+            if (state.filters.search) {
+              const searchLower = state.filters.search.toLowerCase();
+              return (
+                product.sku.toLowerCase().includes(searchLower) ||
+                product.name.toLowerCase().includes(searchLower) ||
+                product.description.toLowerCase().includes(searchLower)
+              );
+            }
+            return true;
+          });
         }
+      })
+      .addCase(bulkUpdateProducts.fulfilled, (state, action) => {
+        const { skus, data } = action.payload;
+        state.items = state.items.map(product => {
+          if (skus.includes(product.sku)) {
+            return { ...product, ...data };
+          }
+          return product;
+        });
+        state.filteredItems = state.items.filter(product => {
+          if (state.filters.platform && product.platform !== state.filters.platform) {
+            return false;
+          }
+          if (state.filters.search) {
+            const searchLower = state.filters.search.toLowerCase();
+            return (
+              product.sku.toLowerCase().includes(searchLower) ||
+              product.name.toLowerCase().includes(searchLower) ||
+              product.description.toLowerCase().includes(searchLower)
+            );
+          }
+          return true;
+        });
       });
   },
 });
