@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Container,
@@ -9,34 +9,48 @@ import {
   IconButton,
   Badge,
   Button,
-} from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { format } from 'date-fns';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
-import { fetchAllOrdersForAnalytics } from '../../store/slices/allOrdersForAnalyticsSlice';
-import { fetchProducts } from '../../store/slices/productsSlice';
-import { fetchCategories } from '../../store/slices/categoriesSlice';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import CategoryDistributionTable from './components/CategoryDistributionTable';
-import CategoryOrdersChart from './components/CategoryOrdersChart';
-import OrderMetrics from './components/OrderMetrics';
-import SkuOrdersChart from './components/SkuOrdersChart';
-import TopProductsTable from './components/TopProductsTable';
-import DateRangeFilter from './components/DateRangeFilter';
-import FilterPopover from './components/FilterPopover';
-import { useOrderFilters } from './hooks/useOrderFilters';
+} from "@mui/material";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import { format } from "date-fns";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../store";
+import { fetchAllOrdersForAnalytics } from "../../store/slices/allOrdersForAnalyticsSlice";
+import { fetchProducts } from "../../store/slices/productsSlice";
+import { fetchCategories } from "../../store/slices/categoriesSlice";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import CategoryDistributionTable from "./components/CategoryDistributionTable";
+import CategoryOrdersChart from "./components/CategoryOrdersChart";
+import OrderMetrics from "./components/OrderMetrics";
+import SkuOrdersChart from "./components/SkuOrdersChart";
+import TopProductsTable from "./components/TopProductsTable";
+import DateRangeFilter from "./components/DateRangeFilter";
+import FilterPopover from "./components/FilterPopover";
+import { useOrderFilters } from "./hooks/useOrderFilters";
 
 const OrderAnalytics: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: allOrders, loading: allOrdersLoading, error: allOrdersError } = useSelector((state: RootState) => state.allOrdersForAnalytics);
-  const { items: products, loading: productsLoading, error: productsError } = useSelector((state: RootState) => state.products);
-  const { items: categories, loading: categoriesLoading, error: categoriesError } = useSelector((state: RootState) => state.categories);
+  const {
+    items: allOrders,
+    loading: allOrdersLoading,
+    error: allOrdersError,
+  } = useSelector((state: RootState) => state.allOrdersForAnalytics);
+  const {
+    items: products,
+    loading: productsLoading,
+    error: productsError,
+  } = useSelector((state: RootState) => state.products);
+  const {
+    items: categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useSelector((state: RootState) => state.categories);
 
   // State for popovers
-  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
   const [dateAnchorEl, setDateAnchorEl] = useState<null | HTMLElement>(null);
 
   // Use custom hook for filters
@@ -60,7 +74,7 @@ const OrderAnalytics: React.FC = () => {
     if (categories.length === 0 && !categoriesLoading && !categoriesError) {
       dispatch(fetchCategories());
     }
-  }, [dispatch, allOrders.length, allOrdersLoading, allOrdersError, products.length, productsLoading, productsError, categories.length, categoriesLoading, categoriesError]);
+  }, []);
 
   const isLoading = allOrdersLoading || productsLoading || categoriesLoading;
   const error = allOrdersError || productsError || categoriesError;
@@ -88,7 +102,10 @@ const OrderAnalytics: React.FC = () => {
   ].filter(Boolean).length;
 
   // Date range summary
-  const dateSummary = `${format(filterState.dateRange.startDate, 'dd MMM yyyy')} - ${format(filterState.dateRange.endDate, 'dd MMM yyyy')}`;
+  const dateSummary = `${format(
+    filterState.dateRange.startDate,
+    "dd MMM yyyy"
+  )} - ${format(filterState.dateRange.endDate, "dd MMM yyyy")}`;
 
   if (error) {
     return (
@@ -103,20 +120,25 @@ const OrderAnalytics: React.FC = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+        >
           <Typography variant="h4">Order Analytics</Typography>
           <Box display="flex" gap={2}>
             <Button
               variant="outlined"
               startIcon={<CalendarTodayIcon />}
               onClick={handleDateClick}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: "none" }}
             >
               {dateSummary}
             </Button>
             <IconButton
               onClick={handleFilterClick}
-              color={activeFilterCount > 0 ? 'primary' : 'default'}
+              color={activeFilterCount > 0 ? "primary" : "default"}
               sx={{ ml: 1 }}
             >
               <Badge badgeContent={activeFilterCount} color="primary">
@@ -128,7 +150,9 @@ const OrderAnalytics: React.FC = () => {
 
         <DateRangeFilter
           dateRange={filterState.dateRange}
-          onDateRangeChange={(startDate, endDate) => updateFilter('dateRange', { startDate, endDate })}
+          onDateRangeChange={(startDate, endDate) =>
+            updateFilter("dateRange", { startDate, endDate })
+          }
           anchorEl={dateAnchorEl}
           onClose={handleDateClose}
         />
@@ -144,50 +168,79 @@ const OrderAnalytics: React.FC = () => {
           skuOptions={skuOptions}
           platformOptions={platformOptions}
           productOptions={productOptions}
-          onCategoryChange={(category) => updateFilter('selectedCategory', category)}
-          onSkuChange={(sku) => updateFilter('selectedSku', sku)}
-          onPlatformChange={(platform) => updateFilter('selectedPlatform', platform)}
-          onProductChange={(product) => updateFilter('selectedProduct', product)}
+          onCategoryChange={(category) =>
+            updateFilter("selectedCategory", category)
+          }
+          onSkuChange={(sku) => updateFilter("selectedSku", sku)}
+          onPlatformChange={(platform) =>
+            updateFilter("selectedPlatform", platform)
+          }
+          onProductChange={(product) =>
+            updateFilter("selectedProduct", product)
+          }
           onClearFilters={clearFilters}
         />
 
         {isLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            minHeight="400px"
+          >
             <CircularProgress />
           </Box>
         ) : (
           <>
-            <OrderMetrics orders={filteredOrders} products={products} categories={categories} />
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ p: 2, height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>Orders by Category</Typography>
-                  <CategoryOrdersChart orders={filteredOrders} categories={categories} />
-                </Paper>
+            <OrderMetrics
+              orders={filteredOrders}
+              products={products}
+              categories={categories}
+            />
+            <Paper sx={{ p: 2 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={7}>
+                  <Typography variant="h6" gutterBottom>
+                    Category Distribution Details
+                  </Typography>
+                  <CategoryDistributionTable
+                    orders={filteredOrders}
+                    categories={categories}
+                  />
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <Typography variant="h6" gutterBottom>
+                    Orders by Category
+                  </Typography>
+                  <CategoryOrdersChart
+                    orders={filteredOrders}
+                    categories={categories}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ p: 2, height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>Orders by SKU</Typography>
-                  <SkuOrdersChart orders={filteredOrders} categories={categories} />
-                </Paper>
+            </Paper>
+            <Paper sx={{ p: 2, mt:4, height: "100%" }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={7}>
+                  <Typography variant="h6" gutterBottom>
+                    Top Products
+                  </Typography>
+                  <TopProductsTable
+                    orders={filteredOrders}
+                    categories={categories}
+                  />
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <Typography variant="h6" gutterBottom>
+                    Orders by SKU
+                  </Typography>
+                  <SkuOrdersChart
+                    orders={filteredOrders}
+                    categories={categories}
+                  />
+                </Grid>
               </Grid>
-              <Grid item>
-                <Paper sx={{ p: 2 }}>
-                  <Typography variant="h6" gutterBottom>Top Products</Typography>
-                  <TopProductsTable orders={filteredOrders} categories={categories} />
-                  {/* TODO: Implement and add TopProductsChart component here */}
-                  {/* <TopProductsChart orders={filteredOrders} categories={categories} /> */}
-                </Paper>
-              </Grid>
-            </Grid>
-            <Box sx={{ mt: 3 }}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>Category Distribution Details</Typography>
-                <CategoryDistributionTable orders={filteredOrders} categories={categories} />
-                {/* TODO: Implement and add CategoryDistributionChart component here */}
-                {/* <CategoryDistributionChart orders={filteredOrders} categories={categories} /> */}
-              </Paper>
-            </Box>
+            </Paper>
           </>
         )}
       </Container>
@@ -197,4 +250,4 @@ const OrderAnalytics: React.FC = () => {
 
 export default OrderAnalytics;
 
-/* TODO: Create the CategoryDistributionChart component */ 
+/* TODO: Create the CategoryDistributionChart component */

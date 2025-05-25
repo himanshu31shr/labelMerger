@@ -2,10 +2,11 @@ import { FirebaseApp, initializeApp } from 'firebase/app';
 import { Auth, getAuth } from 'firebase/auth';
 import { 
   Firestore, 
-  getFirestore, 
   enableIndexedDbPersistence, 
   initializeFirestore, 
-  CACHE_SIZE_UNLIMITED 
+  CACHE_SIZE_UNLIMITED, 
+  connectFirestoreEmulator,
+  FirestoreError
 } from 'firebase/firestore';
 import { getMessaging, isSupported, Messaging } from 'firebase/messaging';
 
@@ -63,6 +64,18 @@ if (process.env.NODE_ENV === 'test') {
     experimentalForceLongPolling: true // Better for certain network conditions
   });
   
+  // Connect to the emulator if the environment variables are set
+  if (import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT) {
+    console.log('Connecting to Firestore emulator...');
+    connectFirestoreEmulator(
+      db,
+      import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST,
+      parseInt(import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT, 10)
+    );
+  } else {
+      console.log('Using production Firestore.');
+  }
+  
   // Enable offline persistence
   const enablePersistence = async () => {
     try {
@@ -70,21 +83,26 @@ if (process.env.NODE_ENV === 'test') {
         forceOwnership: false // Allow multiple tabs to share the same persistence
       });
       console.log('Firestore persistence enabled');
-    } catch (err: any) {
-      if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time
-        console.warn('Firestore persistence failed: Multiple tabs open');
-      } else if (err.code === 'unimplemented') {
-        // The current browser does not support all of the features required
-        console.warn('Firestore persistence is not available in this browser');
-      } else {
-        console.error('Error enabling Firestore persistence:', err);
+    } catch (err: unknown) {
+      // Add type guard for unknown error type
+      if (typeof err === 'object' && err !== null && 'code' in err) {
+        const firebaseError = err as FirestoreError;
+        if (firebaseError.code === 'failed-precondition') {
+          // Multiple tabs open, persistence can only be enabled in one tab at a time
+          console.warn('Firestore persistence failed: Multiple tabs open');
+        } else if (firebaseError.code === 'unimplemented') {
+          // The current browser does not support all of the features required
+          console.warn('Firestore persistence is not available in this browser');
+        } else {
+          console.error('Error enabling Firestore persistence:', err);
+        }
       }
     }
   };
-  
-  // Initialize persistence in the background
-  enablePersistence();
+
+  if(process.env.NODE_ENV !== 'development') {
+    enablePersistence();
+  }
   
   // Initialize messaging if supported by the browser
   const initMessaging = async () => {
@@ -96,7 +114,7 @@ if (process.env.NODE_ENV === 'test') {
         messaging = getMessaging(app);
         
         // Register service worker
-        const registration = await navigator.serviceWorker.register(
+        await navigator.serviceWorker.register(
           serviceWorkerPath, 
           { scope: import.meta.env.BASE_URL || '/' }
         );

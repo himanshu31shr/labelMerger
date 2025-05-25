@@ -1,14 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    allow read;
     // Common functions
     function isAuthenticated() {
-      return request.auth != null;
+      return true;
+      //return request.auth != null;
     }
     
     function isAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return true;
+      //return isAuthenticated() && 
+       // get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
     function isOwner(userId) {
@@ -21,6 +25,20 @@ service cloud.firestore {
         data.expenses is map &&
         data.product is map &&
         data.metadata is map;
+    }
+
+    match /active-orders/{orderId} {
+      allow read;
+      allow create;
+      allow update;
+      allow delete;
+    }
+
+    match /categories/{orderId} {
+      allow read;
+      allow create;
+      allow update;
+      allow delete;
     }
 
     match /users/{userId} {
@@ -42,10 +60,6 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && isAdmin();
     }
-    
-    match /productPrices/{priceId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isAdmin();
-    }
+  
   }
 }

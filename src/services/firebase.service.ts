@@ -17,8 +17,6 @@ import {
   WriteBatch,
   getDoc,
   addDoc,
-  orderBy,
-  where,
 } from "firebase/firestore";
 import { db } from "./firebase.config";
 
@@ -33,15 +31,19 @@ export class FirebaseService {
 
   private async enableOfflinePersistence() {
     if (!FirebaseService.persistenceEnabled) {
-      try {
-        await enableIndexedDbPersistence(this.db);
-        FirebaseService.persistenceEnabled = true;
-        console.log('Offline persistence enabled');
-      } catch (err) {
-        if ((err as FirestoreError).code === 'failed-precondition') {
-          console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-        } else if ((err as FirestoreError).code === 'unimplemented') {
-          console.warn('The current browser does not support persistence.');
+      // Only enable persistence in production or non-development environments
+      if (process.env.NODE_ENV !== 'development') {
+        console.info("Enabling offline persistence")
+        try {
+          await enableIndexedDbPersistence(this.db);
+          FirebaseService.persistenceEnabled = true;
+          console.log('Offline persistence enabled');
+        } catch (err) {
+          if ((err as FirestoreError).code === 'failed-precondition') {
+            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+          } else if ((err as FirestoreError).code === 'unimplemented') {
+            console.warn('The current browser does not support persistence.');
+          }
         }
       }
     }

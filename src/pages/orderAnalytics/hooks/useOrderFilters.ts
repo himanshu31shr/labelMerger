@@ -132,10 +132,6 @@ export const useOrderFilters = ({ allOrders, categories, products }: UseOrderFil
 
     return matchesCategory && matchesSku && matchesPlatform && matchesProduct;
   }).map(order => {
-
-    if(!order.SKU) {
-      console.log(order)
-    }
     // Find and attach the product data to each order
     const product = products.find(p => p.sku.toLowerCase() === order.SKU?.toLowerCase());
     return { ...order, product };

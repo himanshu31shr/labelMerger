@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { ActiveOrder, TodaysOrder } from '../../services/todaysOrder.service';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { ProductSummary } from '../../pages/home/services/base.transformer';
-import { CACHE_DURATIONS, shouldFetchData, createOptimisticUpdate } from '../config';
+import { ActiveOrder, TodaysOrder } from '../../services/todaysOrder.service';
+import { CACHE_DURATIONS, shouldFetchData } from '../config';
 
 interface OrdersState {
   items: ActiveOrder[];
@@ -60,8 +60,7 @@ export const fetchAllOrders = createAsyncThunk(
 
 export const updateOrders = createAsyncThunk(
   'orders/updateOrders',
-  async ({ orders, date }: { orders: ProductSummary[]; date: string }, { dispatch, getState }) => {
-    const state = getState() as { orders: OrdersState };
+  async ({ orders, date }: { orders: ProductSummary[]; date: string }, { dispatch }) => {
     
     // Optimistically update the UI
     dispatch(setPendingUpdate({ date, orders }));
