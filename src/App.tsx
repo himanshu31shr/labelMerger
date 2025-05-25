@@ -55,6 +55,12 @@ const CategoriesPage = React.lazy(() =>
   }))
 );
 
+const OrderAnalytics = React.lazy(() =>
+  import("./pages/orderAnalytics").then((module) => ({
+    default: module.default,
+  }))
+);
+
 export default function App({
   toggleTheme,
   mode,
@@ -109,6 +115,10 @@ export default function App({
                     <Route
                       path="/flipkart-amazon-tools/categories/"
                       element={<CategoriesPage />}
+                    />
+                    <Route
+                      path="/flipkart-amazon-tools/order-analytics/"
+                      element={<OrderAnalytics />}
                     />
                   </Routes>
                 </DefaultContainer>

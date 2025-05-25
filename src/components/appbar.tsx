@@ -46,6 +46,8 @@ const getRouteTitle = (pathname: string): string => {
       return "Products";
     case "/flipkart-amazon-tools/hidden-products/":
       return "Hidden Products";
+    case "/flipkart-amazon-tools/order-analytics/":
+      return "Order Analytics";
     default:
       return "Label Merger";
   }

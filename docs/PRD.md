@@ -31,7 +31,7 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Error handling and retry mechanisms
 
 ### 2.3. Label Merging ✅
-- **Input**: CSV files containing order data for Amazon and Flipkart.
+- **Input**: PDF files containing labels for Amazon and Flipkart orders.
 - **Output**: A merged PDF containing labels for both platforms.
 - **Key Functionalities**:
   - Parse and process uploaded CSV files
@@ -140,6 +140,9 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Firebase Cloud Messaging (FCM)
   - Firebase Authentication
   - Cloud Firestore
+  - Firebase Storage
+  - Firebase Hosting (for application deployment)
+  - Cloud Functions for Firebase (for serverless backend logic)
 - **Security**:
   - Environment variables for sensitive data
   - Secure token handling

@@ -27,6 +27,7 @@
     "@mui/icons-material": "^6.1.9",
     "@mui/material": "latest",
     "@mui/styled-engine-sc": "^6.1.9",
+    "@mui/x-date-pickers": "^8.4.0",
     "@react-pdf/renderer": "^4.3.0",
     "@reduxjs/toolkit": "^2.8.1",
     "@types/recharts": "^2.0.1",

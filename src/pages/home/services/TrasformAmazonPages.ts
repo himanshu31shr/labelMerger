@@ -49,7 +49,6 @@ export class AmazonPDFTransformer extends BaseTransformer {
 
     const productDetails = lines.slice(index, index + 4).join(" ");
     let [name, info] = productDetails.split("|");
-    console.log("🚀 ~ AmazonPDFTransformer ~ extractProductInfo ~ info:", info)
     if (name.indexOf("₹") !== -1) {
       name = name.substring(0, name.indexOf("₹") - 1);
     }

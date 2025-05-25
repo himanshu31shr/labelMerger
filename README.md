@@ -71,6 +71,7 @@ A comprehensive e-commerce management platform built with React, TypeScript, and
 - **Authentication**: Firebase Authentication
 - **Database**: Cloud Firestore with offline persistence
 - **File Storage**: Firebase Storage
+- **Firebase Backend Services**: Used for authentication, database, and file storage.
 - **Hosting**: Firebase Hosting
 
 ### Data Processing
@@ -248,10 +249,10 @@ export const API_ENDPOINTS = {
 
 ### Development
 ```bash
-# Start development server
+# Starts the development server
 npm run dev
 
-# Start with custom host configuration
+# Starts the development server with a custom host and port
 npm run dev:local
 
 # Run tests
@@ -266,35 +267,29 @@ npm run test:coverage
 
 ### Code Quality
 ```bash
-# Run ESLint
+# Runs ESLint to check for code quality issues
 npm run lint
 
-# Fix ESLint and formatting issues
-npm run lint:fix
+# Runs ESLint and automatically fixes issues, also checks TypeScript types
+npm run lint-full
 
-# Check TypeScript types
+# Checks TypeScript types (included in lint-full)
 npm run type-check
-
-# Run full code quality check (lint + type check)
-npm run check
 ```
 
 ### Build & Deploy
 ```bash
-# Build for production
+# Builds the application for production
 npm run build
 
-# Preview production build locally
-npm run preview
+# Prepares for deployment by running the build script
+npm run predeploy
 
-# Build and deploy to Firebase Hosting
+# Deploys the production build using gh-pages
 npm run deploy
 
-# Deploy only Firestore rules
-npm run deploy:firestore
-
-# Deploy only Firebase functions
-npm run deploy:functions
+# Previews the production build locally
+npm run preview
 ```
 
 ### Utilities

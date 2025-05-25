@@ -605,6 +605,8 @@ const getInventoryStatusText = (product: Product) => {
 
 ## 3. Firebase Integration Best Practices
 
+This section outlines best practices and technical details for integrating with Firebase services, including Authentication, Cloud Firestore, Firebase Storage, Firebase Hosting, and Cloud Functions.
+
 ### 3.1. Base Service Usage
 - Always extend FirebaseService for Firebase operations
 - Use strongly typed methods for all Firebase operations
@@ -695,150 +697,27 @@ window.addEventListener('online', () => {
 - Cache frequently accessed data
 - Use batch operations for bulk updates
 
----
+### 3.7. Firebase Storage
+- Use Firebase Storage for file storage and retrieval
+- Implement proper file naming conventions
+- Handle file upload and download operations
+- Ensure secure access and permissions
 
-## 6. Inventory Management System
+### 3.8. Firebase Hosting
+- Use Firebase Hosting for static file hosting
+- Implement proper domain configuration
+- Handle SSL/TLS certificates
+- Ensure high availability and scalability
 
-### 6.1. Data Structure
-```typescript
-// Product inventory structure
-interface Inventory {
-  quantity: number;        // Can be negative for backorders
-  lowStockThreshold: number;
-  lastUpdated: Timestamp;
-}
+### 3.9. Firebase Cloud Functions
+- Use Firebase Cloud Functions for serverless backend operations
+- Implement proper function naming conventions
+- Handle function deployment and execution
+- Ensure secure access and permissions
 
-interface Product {
-  sku: string;
-  name: string;
-  platform: string;
-  // ... other product fields
-  inventory?: Inventory;  // Optional inventory field
-}
-```
+## 4. Navigation System
 
-### 6.2. Inventory Operations
-```typescript
-// Update inventory quantity
-async updateInventory(sku: string, quantityChange: number): Promise<Product> {
-  const product = await this.getProductDetails(sku);
-  if (!product.inventory) {
-    // Initialize inventory if it doesn't exist
-    await this.updateDocument(this.COLLECTION_NAME, sku, {
-      inventory: {
-        quantity: quantityChange,
-        lowStockThreshold: 5,
-        lastUpdated: Timestamp.now()
-      }
-    });
-  } else {
-    // Update existing inventory
-    const newQuantity = product.inventory.quantity + quantityChange;
-    await this.updateDocument(this.COLLECTION_NAME, sku, {
-      inventory: {
-        ...product.inventory,
-        quantity: newQuantity,  // Allow negative values for backorders
-        lastUpdated: Timestamp.now()
-      }
-    });
-  }
-  return this.getProductDetails(sku);
-}
-
-// Check for low stock items
-async getLowStockItems(): Promise<Product[]> {
-  const products = await this.getAllProducts();
-  return products.filter(product => {
-    if (!product.inventory) return false;
-    return product.inventory.quantity <= product.inventory.lowStockThreshold;
-  });
-}
-```
-
-### 6.3. Inventory Status Handling
-```typescript
-// Get inventory status color
-const getInventoryStatusColor = (product: Product) => {
-  if (!product.inventory) return 'error';
-  const { quantity, lowStockThreshold } = product.inventory;
-  if (quantity < 0) return 'error';
-  if (quantity === 0) return 'error';
-  if (quantity <= lowStockThreshold) return 'warning';
-  return 'success';
-};
-
-// Get inventory status text
-const getInventoryStatusText = (product: Product) => {
-  if (!product.inventory) return 'No Inventory Data';
-  const { quantity, lowStockThreshold } = product.inventory;
-  if (quantity < 0) return 'Backorder';
-  if (quantity === 0) return 'Out of Stock';
-  if (quantity <= lowStockThreshold) return 'Low Stock';
-  return 'In Stock';
-};
-```
-
----
-
-## 7. Dashboard Widgets
-
-### 7.1. Widget Design Pattern
-- Use consistent styling for alert widgets:
-  - Appropriate background color with good contrast
-  - Matching border color
-  - Consistent icon placement
-  - Clear, readable text with proper contrast
-  - Count indicators with appropriate colors
-  - Limited number of items with "View more" option
-
-### 7.2. Widget Implementation
-```typescript
-// Example widget structure
-<Paper sx={{ p: 2, height: '100%', backgroundColor: '#fff3e0', border: '1px solid #ed6c02' }}>
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-    <WarningIcon sx={{ mr: 1, color: '#ed6c02' }} />
-    <Typography variant="h6" component="h2" sx={{ color: '#9a0007', fontWeight: 'bold' }}>
-      Low Stock Alerts
-    </Typography>
-  </Box>
-  
-  <Divider sx={{ mb: 2 }} />
-  
-  {/* Widget content */}
-  <List dense sx={{ mb: 1 }}>
-    {items.map((item) => (
-      <ListItem key={item.id}>
-        {/* Item content */}
-      </ListItem>
-    ))}
-  </List>
-  
-  {/* View more link/button */}
-  <Box sx={{ textAlign: 'center' }}>
-    <Button 
-      variant="outlined" 
-      size="small"
-      component={RouterLink}
-      to="/relevant-page"
-    >
-      View more items
-    </Button>
-  </Box>
-</Paper>
-```
-
-### 7.3. Dashboard Layout
-- Use Grid system for responsive layout
-- Organize widgets by importance and relation
-- Ensure consistent spacing between widgets
-- Group related widgets together
-- Use appropriate size for each widget based on content
-
----
-
-## 8. Navigation System
-
-### 8.1. Drawer Implementation
+### 4.1. Drawer Implementation
 ```typescript
 // Drawer structure with collapsible sections
 const drawerItems = [
@@ -881,7 +760,7 @@ useEffect(() => {
 }, [location]);
 ```
 
-### 8.2. Route Protection
+### 4.2. Route Protection
 ```typescript
 // Protected route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -900,7 +779,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 ```
 
-### 8.3. Theme Integration
+### 4.3. Theme Integration
 ```typescript
 // Theme-aware drawer styling
 const StyledDrawer = styled(Drawer, {
@@ -929,7 +808,7 @@ const StyledDrawer = styled(Drawer, {
 }));
 ```
 
-### 8.4. Mobile Responsiveness
+### 4.4. Mobile Responsiveness
 ```typescript
 // Responsive drawer behavior
 const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -953,7 +832,7 @@ const handleDrawerToggle = () => {
 </StyledDrawer>
 ```
 
-### 8.5. Active Route Highlighting
+### 4.5. Active Route Highlighting
 ```typescript
 // Active route detection
 const isActiveRoute = (path: string) => {
@@ -975,7 +854,7 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
 }));
 ```
 
-### 8.6. Best Practices
+### 4.6. Best Practices
 1. **Component Organization**:
    - Keep navigation-related components in a dedicated directory
    - Use consistent naming conventions
@@ -1001,41 +880,41 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
    - Implement proper transitions
    - Maintain consistent spacing
 
-## 9. Performance Optimization Guidelines
+## 5. Performance Optimization Guidelines
 
-### 9.1. React Performance
+### 5.1. React Performance
 - Use React.memo for expensive components
 - Implement proper dependency arrays in useEffect
 - Use useCallback for event handlers
 - Implement virtualization for long lists
 
-### 9.2. Firebase Performance
+### 5.2. Firebase Performance
 - Use proper indexing for queries
 - Implement pagination for large datasets
 - Use batch operations for bulk updates
 - Cache frequently accessed data
 
-### 9.3. Bundle Optimization
+### 5.3. Bundle Optimization
 - Implement code splitting
 - Use dynamic imports for large components
 - Optimize third-party dependencies
 - Monitor bundle size regularly
 
-## 10. Security Best Practices
+## 6. Security Best Practices
 
-### 10.1. Authentication
+### 6.1. Authentication
 - Implement proper session management
 - Use secure password policies
 - Implement rate limiting
 - Handle token refresh properly
 
-### 10.2. Data Security
+### 6.2. Data Security
 - Validate all user inputs
 - Implement proper access control
 - Use secure data transmission
 - Implement proper error handling
 
-### 10.3. Firebase Security
+### 6.3. Firebase Security
 - Use proper security rules
 - Implement role-based access
 - Validate data structure

@@ -342,6 +342,22 @@ export const DefaultContainer = ({
             </StyledListItemButton>
           </ListItem>
         </Link>
+        <Link
+          component={RouterLink}
+          to={"/flipkart-amazon-tools/order-analytics/"}
+          data-testid="order-analytics"
+          style={{ textDecoration: 'none', color: 'inherit' }}
+          onClick={handleNavigation}
+        >
+          <ListItem key={"Order Analytics"} disablePadding>
+            <StyledListItemButton selected={isActiveRoute("/flipkart-amazon-tools/order-analytics/")}>
+              <StyledListItemIcon>
+                <AnalyticsIcon />
+              </StyledListItemIcon>
+              <StyledListItemText primary={"Order Analytics"} />
+            </StyledListItemButton>
+          </ListItem>
+        </Link>
       </List>
     </Box>
   );
