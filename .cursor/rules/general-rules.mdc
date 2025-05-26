@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+1. Always read docs and memory before proceeding.
+3. Always document before proceeding to implement any feature.
+4. Always document the changes in the docs folder.
+5. Always document the changes in the memory.
+6. Always document the changes in the code.
+7. Always document the changes in the README.md file.
+8. Always follow conding conventions
+9. Always follow the best practices

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { AuthService } from '../../services/auth.service';
 import { User } from 'firebase/auth';
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;

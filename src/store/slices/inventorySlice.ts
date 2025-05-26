@@ -2,12 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Product, ProductService } from '../../services/product.service';
 import { CACHE_DURATIONS, shouldFetchData } from '../../utils/api';
 
-interface InventoryState {
+export interface InventoryState {
   items: Product[];
   lowStockItems: Product[];
   loading: boolean;
   error: string | null;
-  lastFetched: number | null;
+  lastFetchTime: number | null;
+  lastLowStockFetchTime: number | null;
 }
 
 const initialState: InventoryState = {
@@ -15,7 +16,8 @@ const initialState: InventoryState = {
   lowStockItems: [],
   loading: false,
   error: null,
-  lastFetched: null,
+  lastFetchTime: null,
+  lastLowStockFetchTime: null,
 };
 
 const productService = new ProductService();
@@ -24,9 +26,9 @@ export const fetchInventory = createAsyncThunk(
   'inventory/fetchInventory',
   async (_, { getState }) => {
     const state = getState() as { inventory: InventoryState };
-    const { lastFetched, items } = state.inventory;
+    const { lastFetchTime, items } = state.inventory;
     
-    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.products)) {
+    if (!shouldFetchData(lastFetchTime, items, CACHE_DURATIONS.products)) {
       return items;
     }
     
@@ -79,7 +81,7 @@ const inventorySlice = createSlice({
       .addCase(fetchInventory.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload;
-        state.lastFetched = Date.now();
+        state.lastFetchTime = Date.now();
       })
       .addCase(fetchInventory.rejected, (state, action) => {
         state.loading = false;
@@ -87,6 +89,7 @@ const inventorySlice = createSlice({
       })
       .addCase(fetchLowStockItems.fulfilled, (state, action) => {
         state.lowStockItems = action.payload;
+        state.lastLowStockFetchTime = Date.now();
       })
       .addCase(updateProductInventory.fulfilled, (state, action) => {
         const updatedProduct = action.payload;

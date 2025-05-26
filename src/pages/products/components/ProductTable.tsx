@@ -82,6 +82,7 @@ export const ProductTable: React.FC<Props> = ({
     },
     { id: "sku", label: "SKU", filter: true },
     { id: "name", label: "Name", filter: true },
+    { id: "description", label: "Description", filter: true },
     {
       id: "categoryId",
       label: "Category",

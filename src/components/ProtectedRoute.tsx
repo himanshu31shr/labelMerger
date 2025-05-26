@@ -3,12 +3,12 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 import { AuthService } from '../services/auth.service';
 
-// Create a single instance of AuthService outside the component
-const authService = new AuthService();
-
 export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
+
+  // Move instantiation inside the component
+  const authService = new AuthService();
 
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged((user) => {
