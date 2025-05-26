@@ -10,7 +10,8 @@ import {
   Button,
   Divider,
   CircularProgress,
-  Link
+  Link,
+  Stack
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Link as RouterLink } from 'react-router-dom';
@@ -45,10 +46,10 @@ const LowInventoryWidget: React.FC<LowInventoryWidgetProps> = ({ items, loading 
   }
 
   return (
-    <Paper sx={{ p: 2, height: '100%', backgroundColor: '#fff3e0', border: '1px solid #ed6c02' }}>
+    <Paper sx={{ p: 2, height: '100%', border: '1px solid', borderColor: 'warning.main' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <WarningIcon sx={{ mr: 1, color: '#ed6c02' }} />
-        <Typography variant="h6" component="h2" sx={{ color: '#9a0007', fontWeight: 'bold' }}>
+        <WarningIcon sx={{ mr: 1, color: 'warning.main' }} />
+        <Typography variant="h6" component="h2" sx={{ color: 'warning.dark', fontWeight: 'bold' }}>
           Low Stock Alerts
         </Typography>
       </Box>
@@ -63,7 +64,8 @@ const LowInventoryWidget: React.FC<LowInventoryWidgetProps> = ({ items, loading 
               mb: 1, 
               borderRadius: 1,
               bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'action.hover' }
+              '&:hover': { bgcolor: 'action.hover' },
+              py: 1
             }}
           >
             <ListItemText
@@ -73,17 +75,17 @@ const LowInventoryWidget: React.FC<LowInventoryWidgetProps> = ({ items, loading 
                 </Typography>
               }
               secondary={
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
                   <Chip 
                     size="small" 
                     color={product.inventory?.quantity < 0 ? 'error' : 'warning'} 
                     label={`${product.inventory?.quantity || 0} in stock`} 
-                    sx={{ mr: 1, height: 20 }}
+                    sx={{ height: 20 }}
                   />
                   <Typography variant="caption" color="text.secondary">
                     SKU: {product.sku}
                   </Typography>
-                </Box>
+                </Stack>
               }
             />
           </ListItem>

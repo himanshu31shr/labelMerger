@@ -19,7 +19,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button
+  Button,
+  Stack
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -121,20 +122,20 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, loading, onUpdat
         <Table stickyHeader aria-label="inventory table">
           <TableHead>
             <TableRow>
-              <TableCell>SKU</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Platform</TableCell>
-              <TableCell>Current Stock</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Low Stock Threshold</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>SKU</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Platform</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Current Stock</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Low Stock Threshold</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((product) => (
-                <TableRow key={`${product.sku}-${product.platform}`}>
+                <TableRow key={`${product.sku}-${product.platform}`} hover>
                   <TableCell>{product.sku}</TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>
@@ -154,33 +155,35 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ items, loading, onUpdat
                   </TableCell>
                   <TableCell>{product.inventory?.lowStockThreshold || 5}</TableCell>
                   <TableCell>
-                    <Tooltip title="Add 1">
-                      <IconButton 
-                        size="small" 
-                        color="primary" 
-                        onClick={() => handleQuickUpdate(product.sku, 1)}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Remove 1">
-                      <IconButton 
-                        size="small" 
-                        color="error" 
-                        onClick={() => handleQuickUpdate(product.sku, -1)}
-                      >
-                        <RemoveIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit Inventory">
-                      <IconButton 
-                        size="small" 
-                        color="info" 
-                        onClick={() => handleOpenEditDialog(product)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <Stack direction="row" spacing={0.5}>
+                      <Tooltip title="Add 1">
+                        <IconButton 
+                          size="small" 
+                          color="primary" 
+                          onClick={() => handleQuickUpdate(product.sku, 1)}
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Remove 1">
+                        <IconButton 
+                          size="small" 
+                          color="error" 
+                          onClick={() => handleQuickUpdate(product.sku, -1)}
+                        >
+                          <RemoveIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Inventory">
+                        <IconButton 
+                          size="small" 
+                          color="info" 
+                          onClick={() => handleOpenEditDialog(product)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}

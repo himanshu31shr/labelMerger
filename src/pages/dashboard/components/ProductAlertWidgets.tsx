@@ -52,17 +52,17 @@ export const HiddenProductsWidget: React.FC<ProductAlertWidgetProps> = ({ produc
   }
 
   return (
-    <Paper sx={{ p: 2, height: '100%', backgroundColor: '#e3f2fd', border: '1px solid #2196f3' }}>
+    <Paper sx={{ p: 2, height: '100%', border: '1px solid', borderColor: 'info.main' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <VisibilityOffIcon sx={{ mr: 1, color: '#1565c0' }} />
-        <Typography variant="h6" component="h2" sx={{ color: '#0d47a1', fontWeight: 'bold' }}>
+        <VisibilityOffIcon sx={{ mr: 1, color: 'info.main' }} />
+        <Typography variant="h6" component="h2" sx={{ color: 'info.dark', fontWeight: 'bold' }}>
           Hidden Products
         </Typography>
         <Chip 
           label={hiddenProducts.length} 
           color="primary" 
           size="small" 
-          sx={{ ml: 1, bgcolor: '#1565c0', color: 'white' }}
+          sx={{ ml: 1 }}
         />
       </Box>
       
@@ -76,7 +76,8 @@ export const HiddenProductsWidget: React.FC<ProductAlertWidgetProps> = ({ produc
               mb: 1, 
               borderRadius: 1,
               bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'action.hover' }
+              '&:hover': { bgcolor: 'action.hover' },
+              py: 1
             }}
           >
             <ListItemText
@@ -86,17 +87,17 @@ export const HiddenProductsWidget: React.FC<ProductAlertWidgetProps> = ({ produc
                 </Typography>
               }
               secondary={
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
                   <Chip 
                     size="small" 
                     color={product.platform === 'amazon' ? 'primary' : 'secondary'} 
                     label={product.platform} 
-                    sx={{ mr: 1, height: 20 }}
+                    sx={{ height: 20 }}
                   />
                   <Typography variant="caption" color="text.secondary">
                     SKU: {product.sku}
                   </Typography>
-                </Box>
+                </Stack>
               }
             />
           </ListItem>
