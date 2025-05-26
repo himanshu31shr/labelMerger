@@ -24,9 +24,6 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Don't register the service worker for firebase-messaging-sw.js
-        // as we'll handle it manually
-        navigateFallbackDenylist: [/^\/firebase-messaging-sw\.js$/],
         // Skip waiting on install and activate immediately
         skipWaiting: true,
         // Take control of clients immediately
@@ -35,7 +32,7 @@ export default defineConfig({
         disableDevLogs: true,
       },
       // Include firebase-messaging-sw.js in the build
-      includeAssets: ["favicon.ico", "firebase-messaging-sw.js"],
+      includeAssets: ["favicon.ico"],
       // Use manual registration for better control
       injectRegister: null,
       // Use minimal strategy for development

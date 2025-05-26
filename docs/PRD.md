@@ -18,18 +18,6 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Automatic section expansion based on route
   - Route-based title updates
 
-### 2.2. Notification System ✅
-- **Push Notifications**: Real-time browser notifications for important events
-- **Service Worker**: Background message handling and offline support
-- **Features**:
-  - Automatic service worker registration on page load
-  - Secure handling of Firebase Cloud Messaging (FCM)
-  - Support for both HTTPS and ngrok development environments
-  - Token management for push notifications
-  - Permission handling with user consent
-  - Background sync support
-  - Error handling and retry mechanisms
-
 ### 2.3. Label Merging ✅
 - **Input**: PDF files containing labels for Amazon and Flipkart orders.
 - **Output**: A merged PDF containing labels for both platforms.

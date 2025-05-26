@@ -8,7 +8,6 @@ import {
   connectFirestoreEmulator,
   FirestoreError
 } from 'firebase/firestore';
-import { getMessaging, isSupported, Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'test-api-key',
@@ -23,7 +22,6 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
-let messaging: Messaging | null = null;
 
 // Check if we're in a test environment
 if (process.env.NODE_ENV === 'test') {
@@ -93,8 +91,6 @@ if (process.env.NODE_ENV === 'test') {
         } else if (firebaseError.code === 'unimplemented') {
           // The current browser does not support all of the features required
           console.warn('Firestore persistence is not available in this browser');
-        } else {
-          console.error('Error enabling Firestore persistence:', err);
         }
       }
     }
@@ -103,31 +99,6 @@ if (process.env.NODE_ENV === 'test') {
   if(process.env.NODE_ENV !== 'development') {
     enablePersistence();
   }
-  
-  // Initialize messaging if supported by the browser
-  const initMessaging = async () => {
-    try {
-      if (await isSupported()) {
-        const serviceWorkerPath = `${import.meta.env.BASE_URL || ''}firebase-messaging-sw.js`;
-        
-        // Initialize messaging with the default app
-        messaging = getMessaging(app);
-        
-        // Register service worker
-        await navigator.serviceWorker.register(
-          serviceWorkerPath, 
-          { scope: import.meta.env.BASE_URL || '/' }
-        );
-        
-        // You can use the registration for other purposes if needed
-        // For example, you might want to store it in a variable or use it elsewhere
-       }
-    } catch (error) {
-      console.error('Firebase messaging not supported:', error);
-    }
-  };
-  
-  initMessaging();
 }
 
-export { app, auth, db, messaging };
+export { app, auth, db };
