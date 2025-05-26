@@ -43,6 +43,7 @@ export interface ProductFilter {
   platform?: "amazon" | "flipkart";
   search?: string;
   visibility?: "visible" | "hidden";
+  categoryId?: string;
 }
 
 interface RawFlipkartData {

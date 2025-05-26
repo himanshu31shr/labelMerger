@@ -1,15 +1,19 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-// Define a simplified Category interface for the form
+import { Timestamp } from 'firebase/firestore'; // Import Timestamp
+
+// Define a simplified Category interface for the form, aligning with service model
 interface Category {
   id?: string;
   name: string;
   description?: string;
-  createdAt?: any; // Flexible type for Firestore Timestamp or Date
-  updatedAt?: any; // Flexible type for Firestore Timestamp or Date
+  tag?: string;
+  createdAt?: Timestamp | Date | string; // Use more specific types
+  updatedAt?: Timestamp | Date | string; // Use more specific types
 }
+
 import {
   Dialog,
   DialogTitle,
@@ -19,11 +23,13 @@ import {
   Button,
   Stack,
   CircularProgress,
+  Autocomplete, // Import Autocomplete
 } from '@mui/material';
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
+  tag: z.string().optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -32,40 +38,43 @@ interface CategoryFormProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: CategoryFormData) => Promise<void>;
-  defaultValues?: Omit<Category, 'id' | 'createdAt' | 'updatedAt'> & {
-    id?: string;
-    createdAt?: any;
-    updatedAt?: any;
-  };
+  // Align defaultValues type with the expected structure
+  defaultValues?: Category; 
   isSubmitting: boolean;
+  existingTags: string[]; // Add the existingTags prop
 }
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({
   open,
   onClose,
   onSubmit,
-  defaultValues = {} as any, // Type assertion to handle flexible types
+  defaultValues, // No longer asserting 'as any'
   isSubmitting,
+  existingTags,
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    control, // Get control from useForm
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
-    defaultValues,
+    defaultValues, // Use defaultValues directly
   });
 
   const handleFormSubmit = async (data: CategoryFormData) => {
     try {
       await onSubmit(data);
-      reset();
-      onClose();
     } catch (error) {
       console.error('Failed to save category:', error);
     }
   };
+
+  // Reset form when defaultValues or open state changes
+  React.useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, open, reset]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -92,6 +101,31 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               error={!!errors.description}
               helperText={errors.description?.message}
               disabled={isSubmitting}
+            />
+            <Controller
+              name="tag"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  options={existingTags}
+                  freeSolo
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Tag"
+                      fullWidth
+                      error={!!errors.tag}
+                      helperText={errors.tag?.message}
+                      disabled={isSubmitting}
+                    />
+                  )}
+                  onChange={(event, newValue) => {
+                    field.onChange(newValue);
+                  }}
+                  value={field.value || ''}
+                />
+              )}
             />
           </Stack>
         </DialogContent>

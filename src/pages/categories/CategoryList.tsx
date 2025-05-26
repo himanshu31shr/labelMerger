@@ -32,6 +32,7 @@ import { CategoryForm } from './CategoryForm';
 type CategoryFormData = {
   name: string;
   description?: string;
+  tag?: string;
 }
 
 type CategoryListProps = Record<string, never>;
@@ -46,6 +47,7 @@ interface Category extends Omit<ServiceCategory, 'createdAt' | 'updatedAt'> {
   id?: string;
   name: string;
   description?: string;
+  tag?: string;
   createdAt?: Timestamp | Date | string;
   updatedAt?: Timestamp | Date | string;
 }
@@ -70,6 +72,13 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
   });
 
   const safeCategories = useMemo(() => Array.isArray(categories) ? categories : [], [categories]);
+
+  const existingTags = useMemo(() => {
+    const tags = safeCategories
+      .map(category => category.tag)
+      .filter(tag => tag !== undefined && tag !== '');
+    return Array.from(new Set(tags as string[]));
+  }, [safeCategories]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -119,7 +128,8 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
         const updateData = {
           id: editingCategory.id,
           name: data.name,
-          description: data.description || ''
+          description: data.description || '',
+          tag: data.tag || '',
         };
         await dispatch(updateCategory(updateData)).unwrap();
         setSnackbar({
@@ -153,11 +163,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
 
   const handleEditClick = (category: Category) => (event: React.MouseEvent) => {
     event.stopPropagation();
-    setEditingCategory({
-      ...category,
-      name: category.name || '',
-      description: category.description || ''
-    });
+    setEditingCategory(category);
     setIsFormOpen(true);
   };
 
@@ -284,6 +290,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
         onSubmit={handleFormSubmit}
         defaultValues={editingCategory || undefined}
         isSubmitting={loading || isDeleting}
+        existingTags={existingTags}
       />
 
       <Dialog

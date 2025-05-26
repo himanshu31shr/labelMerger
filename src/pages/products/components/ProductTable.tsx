@@ -1,15 +1,21 @@
 import EditIcon from "@mui/icons-material/Edit";
-import { Box, Chip, IconButton, MenuItem, TextField, Checkbox, Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import {
+  Box,
+  Chip,
+  IconButton,
+  Checkbox,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product, ProductFilter } from "../../../services/product.service";
-import { Category, CategoryService } from "../../../services/category.service";
 import {
   ViewAmazonListingButton,
   ViewFlipkartListingButton,
 } from "../../../shared/ActionButtons";
-import CategoryIcon from '@mui/icons-material/Category';
+import { ProductTableToolbar } from "./ProductTableToolbar";
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { fetchCategories, selectCategories } from '../../../store/slices/productsSlice';
 
 interface Props {
   products: Product[];
@@ -24,44 +30,19 @@ export const ProductTable: React.FC<Props> = ({
   onFilterChange,
   onBulkCategoryUpdate,
 }) => {
-  const [platform, setPlatform] = useState<"amazon" | "flipkart" | undefined>(
-    undefined
-  );
-  const [search, setSearch] = useState("");
+  const dispatch = useAppDispatch();
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const categoryService = new CategoryService();
+  const [currentFilters, setCurrentFilters] = useState<ProductFilter>({});
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const fetchedCategories = await categoryService.getCategories();
-        setCategories(fetchedCategories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
-  const handlePlatformChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value as "" | "amazon" | "flipkart";
-    setPlatform(value === "" ? undefined : value);
-    onFilterChange({
-      platform: value === "" ? undefined : value,
-      search,
-    });
-  };
+  const categories = useAppSelector(selectCategories);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearch(value);
-    onFilterChange({
-      platform,
-      search: value,
-    });
+  const handleFilterChange = (filters: ProductFilter) => {
+    setCurrentFilters(filters);
+    onFilterChange(filters);
   };
 
   const handleSelectProduct = (sku: string) => {
@@ -73,16 +54,17 @@ export const ProductTable: React.FC<Props> = ({
     });
   };
 
-  const handleBulkCategoryUpdate = () => {
-    if (selectedProducts.length > 0 && selectedCategory && onBulkCategoryUpdate) {
-      onBulkCategoryUpdate(selectedProducts, selectedCategory);
-      setCategoryDialogOpen(false);
-      setSelectedProducts([]);
+  const handleBulkCategoryUpdate = (skus: string[], categoryId: string) => {
+    if (onBulkCategoryUpdate) {
+      onBulkCategoryUpdate(skus, categoryId);
     }
   };
 
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId) return "-";
+    if (!Array.isArray(categories)) {
+        return "-";
+    }
     const category = categories.find(c => c.id === categoryId);
     return category ? category.name : "-";
   };
@@ -100,9 +82,9 @@ export const ProductTable: React.FC<Props> = ({
     },
     { id: "sku", label: "SKU", filter: true },
     { id: "name", label: "Name", filter: true },
-    { 
-      id: "categoryId", 
-      label: "Category", 
+    {
+      id: "categoryId",
+      label: "Category",
       filter: true,
       format: (value) => <Chip label={getCategoryName(value as string)} size="small" />
     },
@@ -165,51 +147,14 @@ export const ProductTable: React.FC<Props> = ({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Box sx={{
-        mb: 2,
-        display: "flex",
-        flexDirection: { xs: "column", sm: "row" },
-        gap: 2
-      }}>
-        <TextField
-          select
-          label="Platform"
-          value={platform ?? ""}
-          onChange={handlePlatformChange}
-          sx={{
-            minWidth: { xs: "100%", sm: 200 },
-            flexGrow: { xs: 1, sm: 0 }
-          }}
-        >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="amazon">Amazon</MenuItem>
-          <MenuItem value="flipkart">Flipkart</MenuItem>
-        </TextField>
-
-        <TextField
-          label="Search"
-          value={search}
-          onChange={handleSearchChange}
-          sx={{
-            minWidth: { xs: "100%", sm: 200 },
-            flexGrow: 1
-          }}
-        />
-
-        {selectedProducts.length > 0 && (
-          <Button
-            variant="contained"
-            startIcon={<CategoryIcon />}
-            onClick={() => setCategoryDialogOpen(true)}
-            sx={{
-              minWidth: { xs: "100%", sm: 200 },
-              flexGrow: { xs: 1, sm: 0 }
-            }}
-          >
-            Assign Category ({selectedProducts.length})
-          </Button>
-        )}
-      </Box>
+      <ProductTableToolbar
+        platform={currentFilters.platform}
+        search={currentFilters.search}
+        selectedProducts={selectedProducts}
+        categories={categories}
+        onFilterChange={handleFilterChange}
+        onBulkCategoryUpdate={handleBulkCategoryUpdate}
+      />
 
       <DataTable
         columns={columns}
@@ -219,37 +164,6 @@ export const ProductTable: React.FC<Props> = ({
         rowsPerPageOptions={[10, 25, 50]}
         defaultRowsPerPage={10}
       />
-
-      {/* Category Selection Dialog */}
-      <Dialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)}>
-        <DialogTitle>Assign Category</DialogTitle>
-        <DialogContent>
-          <TextField
-            select
-            fullWidth
-            label="Category"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            sx={{ mt: 2 }}
-          >
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
-              </MenuItem>
-            ))}
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCategoryDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleBulkCategoryUpdate}
-            variant="contained"
-            disabled={!selectedCategory}
-          >
-            Assign
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

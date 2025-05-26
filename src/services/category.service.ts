@@ -5,6 +5,7 @@ export interface Category {
   id?: string;
   name: string;
   description?: string;
+  tag?: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

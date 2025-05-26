@@ -1,11 +1,25 @@
-import { messaging } from './firebase.config';
-import { getToken, onMessage, isSupported } from 'firebase/messaging';
+// Remove unused import: import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken, onMessage, isSupported, Messaging } from 'firebase/messaging';
 import { auth } from './firebase.config';
-import { saveToken, removeToken } from './token.service';
+// Remove the import from token.service
+// import { saveToken, removeToken } from './token.service';
 import { registerFirebaseServiceWorker, isServiceWorkerSupported } from './service-worker';
 
 // Firebase Cloud Messaging Vapid Key
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || 'YOUR_VAPID_KEY';
+
+// Initialize Firebase Messaging (as a Promise to be awaited)
+const messagingPromise = isSupported().then(yes => yes ? getMessaging() : null).catch(() => null);
+
+// Interface for FCM message payload
+interface FcmMessagePayload {
+  notification?: {
+    title?: string;
+    body?: string;
+  };
+  data?: Record<string, string>;
+  // Add other potential properties if needed
+}
 
 /**
  * Request notification permission from the user
@@ -40,6 +54,9 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
  */
 export const getFCMToken = async (): Promise<string | null> => {
   try {
+    // Await the messaging instance
+    const messaging = await messagingPromise;
+
     // Check if messaging is supported
     if (!messaging) {
       // Firebase messaging is not initialized
@@ -68,7 +85,7 @@ export const getFCMToken = async (): Promise<string | null> => {
           // Got token with default VAPID key
           return token;
         }
-      } catch (error) {
+      } catch {
         // Error getting token with default VAPID key
       }
       return null;
@@ -84,8 +101,8 @@ export const getFCMToken = async (): Promise<string | null> => {
         // Save token to Firestore if user is authenticated
         const user = auth.currentUser;
         if (user) {
-          // Saving token for user
-          await saveToken(currentToken, user.uid);
+          // Saving token for user (removed call to saveToken)
+          // await saveToken(currentToken, user.uid);
         } else {
           // User not authenticated, token not saved to Firestore
         }
@@ -103,12 +120,12 @@ export const getFCMToken = async (): Promise<string | null> => {
         }
         return null;
       }
-    } catch (tokenError) {
+    } catch {
       // Error getting FCM token
       return null;
     }
   } catch (error) {
-    // Error in getFCMToken
+    console.error('Error in getFCMToken:', error);
     return null;
   }
 };
@@ -124,11 +141,11 @@ export const deleteFCMToken = async (token: string): Promise<boolean> => {
       return false;
     }
     
-    // Remove token from Firestore
-    const user = auth.currentUser;
-    if (user) {
-      await removeToken(token, user.uid);
-    }
+    // Remove token from Firestore (removed call to removeToken)
+    // const user = auth.currentUser;
+    // if (user) {
+    //   await removeToken(token, user.uid);
+    // }
     
     // Remove token from local storage
     const storedToken = localStorage.getItem('fcmToken');
@@ -145,16 +162,13 @@ export const deleteFCMToken = async (token: string): Promise<boolean> => {
 
 /**
  * Set up foreground message handler
+ * @param messaging - The Firebase Messaging instance
  * @param callback - Function to call when message is received
  */
 export const setupForegroundMessageHandler = (
-  callback: (payload: any) => void
+  messaging: Messaging,
+  callback: (payload: FcmMessagePayload) => void
 ): (() => void) => {
-  if (!messaging) {
-    console.error('Firebase messaging is not supported in this browser');
-    return () => {};
-  }
-
   // Set up message handler
   const unsubscribe = onMessage(messaging, (payload) => {
     console.log('Message received in foreground:', payload);
@@ -178,9 +192,12 @@ export const setupForegroundMessageHandler = (
  * @returns Promise<{ token: string | null, unsubscribe: () => void }>
  */
 export const initializeNotifications = async (
-  onMessageCallback?: (payload: any) => void
+  onMessageCallback?: (payload: FcmMessagePayload) => void
 ): Promise<{ token: string | null, unsubscribe: () => void }> => {
   try {
+    // Await the messaging instance
+    const messaging = await messagingPromise;
+
     // Check if service workers are supported
     if (!isServiceWorkerSupported()) {
       console.warn('Service workers are not supported in this environment');
@@ -204,10 +221,11 @@ export const initializeNotifications = async (
       console.log('FCM token obtained:', token ? 'success' : 'failed');
     }
     
-    // Set up foreground message handler
-    const unsubscribe = onMessageCallback 
-      ? setupForegroundMessageHandler(onMessageCallback)
-      : () => {};
+    // Set up foreground message handler ONLY if messaging is available and a callback is provided
+    let unsubscribe = () => {};
+    if (messaging && onMessageCallback) {
+      unsubscribe = setupForegroundMessageHandler(messaging, onMessageCallback);
+    }
     
     return { token, unsubscribe };
   } catch (error) {
