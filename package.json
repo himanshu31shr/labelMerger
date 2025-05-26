@@ -18,7 +18,15 @@
     "test:watch": "npm run test -- --watch",
     "test:coverage": "npm run test -- --coverage",
     "test:watch:coverage": "npm run test:coverage -- --watch",
-    "test:ci": "npm run test -- --coverage --watchAll=false"
+    "test:ci": "npm run test -- --coverage --watchAll=false",
+    "pre-commit": "lint-staged",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "npm run test:ci -- --findRelatedTests --passWithNoTests"
+    ]
   },
   "dependencies": {
     "@emotion/react": "latest",
@@ -71,7 +79,9 @@
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.3",
     "globals": "^15.14.0",
+    "husky": "^9.1.7",
     "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^16.0.0",
     "msw": "^2.8.4",
     "node-fetch": "^2.7.0",
     "sharp": "^0.34.1",
