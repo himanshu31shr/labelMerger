@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Product, ProductFilter, ProductService } from '../../services/product.service';
 import { Category, CategoryService } from '../../services/category.service';
 
-interface ProductsState {
+export interface ProductsState {
   items: Product[];
   filteredItems: Product[];
   loading: boolean;
@@ -231,7 +231,7 @@ const productsSlice = createSlice({
         state.categoriesLoading = true;
         state.categoriesError = null;
       })
-      .addCase(addCategory.fulfilled, (state, action) => {
+      .addCase(addCategory.fulfilled, (state) => {
         state.categoriesLoading = false;
         // The payload is now the new category ID (string)
         // We need to refetch categories to get the updated list

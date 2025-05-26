@@ -435,17 +435,17 @@ describe('HighPricedProductsWidget', () => {
         createMockProduct({ 
           name: 'Normal Priced Product',
           sellingPrice: 100,
-          competitionAnalysis: { competitorPrice: '120' }
+          competitionAnalysis: createMockCompetitionAnalysis('120')
         }),
         createMockProduct({ 
           name: 'High Priced Product',
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: '120' }
+          competitionAnalysis: createMockCompetitionAnalysis('120')
         }),
         createMockProduct({ 
           name: 'Another Normal Product',
           sellingPrice: 90,
-          competitionAnalysis: { competitorPrice: '100' }
+          competitionAnalysis: createMockCompetitionAnalysis('100')
         }),
       ];
 
@@ -462,7 +462,7 @@ describe('HighPricedProductsWidget', () => {
         createMockProduct({ 
           name: 'High Priced Product',
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: '120' }
+          competitionAnalysis: createMockCompetitionAnalysis('120')
         }),
       ];
 
@@ -477,12 +477,12 @@ describe('HighPricedProductsWidget', () => {
         createMockProduct({ 
           name: 'Zero Competitor Price',
           sellingPrice: 100,
-          competitionAnalysis: { competitorPrice: '0' }
+          competitionAnalysis: createMockCompetitionAnalysis('0')
         }),
         createMockProduct({ 
           name: 'High Priced Product',
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: '120' }
+          competitionAnalysis: createMockCompetitionAnalysis('120')
         }),
       ];
 
@@ -500,7 +500,7 @@ describe('HighPricedProductsWidget', () => {
           sku: `HIGH-${i + 1}`,
           name: `High Priced Product ${i + 1}`,
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: '120' },
+          competitionAnalysis: createMockCompetitionAnalysis('120'),
         })
       );
 
@@ -521,7 +521,7 @@ describe('HighPricedProductsWidget', () => {
           sku: `HIGH-${i + 1}`,
           name: `High Priced Product ${i + 1}`,
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: '120' },
+          competitionAnalysis: createMockCompetitionAnalysis('120'),
         })
       );
 
@@ -537,7 +537,7 @@ describe('HighPricedProductsWidget', () => {
     it('should have proper heading structure', () => {
       const highPricedProducts = [createMockProduct({ 
         sellingPrice: 150,
-        competitionAnalysis: { competitorPrice: '120' }
+        competitionAnalysis: createMockCompetitionAnalysis('120')
       })];
       renderWithProviders(<HighPricedProductsWidget products={highPricedProducts} loading={false} />);
       
@@ -549,12 +549,12 @@ describe('HighPricedProductsWidget', () => {
       const highPricedProducts = [
         createMockProduct({ 
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: '120' }
+          competitionAnalysis: createMockCompetitionAnalysis('120')
         }),
         createMockProduct({ 
           sku: 'HIGH-002',
           sellingPrice: 200,
-          competitionAnalysis: { competitorPrice: '180' }
+          competitionAnalysis: createMockCompetitionAnalysis('180')
         }),
       ];
       renderWithProviders(<HighPricedProductsWidget products={highPricedProducts} loading={false} />);
@@ -569,7 +569,7 @@ describe('HighPricedProductsWidget', () => {
     it('should have accessible links', () => {
       const highPricedProducts = [createMockProduct({ 
         sellingPrice: 150,
-        competitionAnalysis: { competitorPrice: '120' }
+        competitionAnalysis: createMockCompetitionAnalysis('120')
       })];
       renderWithProviders(<HighPricedProductsWidget products={highPricedProducts} loading={false} />);
       
@@ -590,7 +590,7 @@ describe('HighPricedProductsWidget', () => {
         createMockProduct({ 
           name: 'Invalid Price Product',
           sellingPrice: 150,
-          competitionAnalysis: { competitorPrice: 'invalid' }
+          competitionAnalysis: createMockCompetitionAnalysis('invalid')
         }),
       ];
 

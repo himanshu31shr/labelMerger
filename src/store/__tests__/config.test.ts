@@ -141,7 +141,7 @@ describe('store config utilities', () => {
 
     it('should handle empty arrays', () => {
       const update = { id: 1, name: 'Test' };
-      const result = createOptimisticUpdate([], update, 'id');
+      const result = createOptimisticUpdate<TestItem>([], update, 'id');
 
       expect(result).toEqual([]);
     });

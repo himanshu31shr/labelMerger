@@ -73,7 +73,7 @@ export class TodaysOrder extends FirebaseService {
             date: dateStr
           });
         }
-      } catch (error) {
+      } catch {
         orders.push({
           id: dateStr,
           orders: [],

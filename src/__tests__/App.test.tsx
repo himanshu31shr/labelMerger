@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -20,7 +20,7 @@ jest.mock('../services/firebase.config', () => ({
   db: {},
 }));
 
-const createMockStore = (authState: any = {}) => {
+const createMockStore = (authState: Record<string, unknown> = {}) => {
   return configureStore({
     reducer: {
       auth: authReducer,
@@ -36,13 +36,14 @@ const createMockStore = (authState: any = {}) => {
   });
 };
 
-const renderApp = (authState?: any) => {
+const renderApp = (authState?: Record<string, unknown>) => {
   const store = createMockStore(authState);
+  const mockToggleTheme = jest.fn();
   
   return render(
     <Provider store={store}>
       <BrowserRouter>
-        <App />
+        <App toggleTheme={mockToggleTheme} mode="light" />
       </BrowserRouter>
     </Provider>
   );

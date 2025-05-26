@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProductService, Product, ProductFilter } from '../product.service';
 import { Timestamp } from 'firebase/firestore';
 import Papa from 'papaparse';
@@ -101,9 +102,12 @@ describe('ProductService', () => {
     it('should parse Amazon CSV file', async () => {
       const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       
-      mockPapaParse.mockImplementation((file, options) => {
+      (mockPapaParse as any).mockImplementation((file: any, options: any) => {
         if (options?.complete) {
-          options.complete({ data: mockAmazonData } as any);
+          // Simulate async behavior
+          setTimeout(() => {
+            options.complete({ data: mockAmazonData });
+          }, 0);
         }
       });
 
@@ -162,7 +166,7 @@ describe('ProductService', () => {
       const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       
       // Mock Papa.parse to call complete with empty data, but in a way that allows the error to be caught
-      mockPapaParse.mockImplementation((file, options) => {
+      (mockPapaParse as any).mockImplementation((file: any, options: any) => {
         // Schedule the callback to run on the next tick so the promise handling can be set up
         setTimeout(() => {
           if (options && options.complete) {
@@ -185,9 +189,11 @@ describe('ProductService', () => {
     it('should handle Papa parse errors', async () => {
       const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       
-      mockPapaParse.mockImplementation((file, options) => {
+      (mockPapaParse as any).mockImplementation((file: any, options: any) => {
         if (options?.error) {
-          options.error(new Error('Parse error'));
+          setTimeout(() => {
+            options.error(new Error('Parse error'));
+          }, 0);
         }
       });
 
@@ -293,8 +299,11 @@ describe('ProductService', () => {
         }
       };
       jest.spyOn(service, 'getProductDetails')
-        .mockImplementation(async (sku) => {
-          if (updateSpy.mock.calls.length > 0) {
+        .mockImplementation(async (sku: string) => {
+          // Return updated product only for TEST-SKU-1 after update
+          const isTargetSku = sku === 'TEST-SKU-1';
+          const hasBeenUpdated = updateSpy.mock.calls.length > 0;
+          if (isTargetSku && hasBeenUpdated) {
             return updatedProduct;
           }
           return mockProduct;

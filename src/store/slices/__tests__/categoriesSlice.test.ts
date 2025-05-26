@@ -9,6 +9,7 @@ import categoriesReducer, {
 } from '../categoriesSlice';
 import { Category } from '../../../services/category.service';
 import { Timestamp } from 'firebase/firestore';
+import { RootState } from '../../types';
 
 // Mock the category service
 jest.mock('../../../services/category.service', () => ({
@@ -38,7 +39,7 @@ const mockCategory2: Category = {
 };
 
 describe('categoriesSlice', () => {
-  let store: ReturnType<typeof configureStore>;
+  let store: ReturnType<typeof configureStore<{ categories: RootState['categories'] }>>;
 
   beforeEach(() => {
     store = configureStore({
@@ -122,7 +123,7 @@ describe('categoriesSlice', () => {
   describe('async thunks', () => {
     describe('fetchCategories', () => {
       it('should set loading to true when pending', () => {
-        const action = { type: fetchCategories.pending.type } as any;
+        const action = { type: fetchCategories.pending.type };
         const state = categoriesReducer(undefined, action);
 
         expect(state.loading).toBe(true);

@@ -318,11 +318,10 @@ export class ProductService extends FirebaseService {
 
       // Return the updated product
       return this.getProductDetails(sku);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error updating inventory for SKU ${sku}:`, error);
-      throw new Error(
-        `Failed to update inventory: ${error.message || "Unknown error"}`
-      );
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to update inventory: ${errorMessage}`);
     }
   }
 
@@ -354,7 +353,7 @@ export class ProductService extends FirebaseService {
       // If product has no inventory field, consider it as having 0 quantity
       if (!product.inventory) return quantity <= 0;
       return product.inventory.quantity >= quantity;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error checking inventory for SKU ${sku}:`, error);
       return false;
     }
@@ -373,7 +372,7 @@ export class ProductService extends FirebaseService {
           product.inventory &&
           product.inventory.quantity <= product.inventory.lowStockThreshold
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error getting low inventory products:", error);
       return [];
     }

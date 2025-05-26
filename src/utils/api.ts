@@ -6,7 +6,7 @@ export const CACHE_DURATIONS = {
 
 export const shouldFetchData = (
   lastFetched: number | null,
-  items: any[],
+  items: unknown[],
   cacheDuration: number
 ): boolean => {
   if (!lastFetched) return true;

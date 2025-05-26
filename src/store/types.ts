@@ -1,8 +1,10 @@
 import { CategoriesState } from './slices/categoriesSlice';
+import { ProductsState } from './slices/productsSlice';
 
-// Define a simplified RootState with just the categories for now
+// Define the RootState with both categories and products
 export interface RootState {
   categories: CategoriesState;
+  products: ProductsState;
 }
 
 export type AppThunk = (
@@ -11,6 +13,6 @@ export type AppThunk = (
 ) => Promise<void>;
 
 export interface AppDispatch {
-  (action: any): any;
+  (action: {type: string; payload?: unknown}): {type: string; payload?: unknown};
   <T>(thunk: (dispatch: AppDispatch, getState: () => RootState) => T): T;
 }
