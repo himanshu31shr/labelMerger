@@ -58,6 +58,8 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Toggle product visibility (hidden/visible)
   - Dedicated interface for managing hidden products
   - Bulk pricing updates with validation
+  - Product categorization (create, read, update, delete categories and check if a category is in use)
+  - Dedicated Price Management Modal for editing product prices
 
 ### 2.5. Inventory Management ✅
 - **Input**: 
@@ -105,6 +107,42 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
   - Error handling and validation
   - Loading state management
   - Direct navigation to price management
+
+### 2.7. Today's Orders ✅
+- **Input**:
+  - Real-time order data
+  - Product catalog with pricing information
+- **Output**:
+  - Summary of today's orders (Total Orders, Total Revenue, Total Cost, Profit Margin)
+  - List of individual orders for the current day
+- **Key Features**:
+  - Display key metrics for today's sales
+  - Provide a detailed list of all orders placed today
+  - Integration with product data for cost and revenue calculation
+
+### 2.8. Dashboard ✅
+- **Output**:
+  - High-level summary of key application metrics
+  - Visual representation of order trends
+  - Alerts for low inventory, hidden products, and potentially high-priced products
+- **Key Features**:
+  - Display summary cards for Total Orders, Total Revenue, Recent Orders, and Total Products
+  - Visualize daily order history with a line chart
+  - Provide quick access to alerts for Low Inventory, Hidden Products, and High-Priced Products
+
+### 2.9. Order Analytics ✅
+- **Input**:
+  - Filtered order data
+  - Product and category data
+- **Output**:
+  - Filtered view of order metrics, distributions, and top products
+  - Visualizations of order data by category and SKU
+- **Key Features**:
+  - Filter orders by date range, category, SKU, platform, and product
+  - Display summary metrics for filtered orders
+  - Analyze order distribution by category with a table and chart
+  - Identify top-performing products with a dedicated table
+  - Visualize order trends by SKU with a chart
 
 ## 3. Technical Implementation
 
@@ -195,37 +233,13 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 
 ## 5. Performance Optimization ✅
 
-### 5.1. Current Metrics
-- Initial load time: ~1.2s (improved from 1.5s)
-- Firebase operation latency: ~150ms (improved from 200ms)
-- Batch operation throughput: 750 items/batch (improved from 500 items/batch)
-- Offline sync success rate: 99.5% (improved from 98%)
-- PDF generation time: ~800ms for up to 50 labels
-- Component render time: ~120ms for complex data tables
-
-### 5.2. Target Metrics
+### 5.1. Target Metrics
 - Initial load time: < 1s
 - Firebase operation latency: < 100ms
 - Batch operation throughput: 1000 items/batch
 - Offline sync success rate: 99.9%
 - PDF generation time: < 500ms for up to 50 labels
 - Component render time: < 80ms for complex data tables
-
-### 5.3. Implemented Optimizations
-- Pagination for large datasets in transaction and product tables
-- Optimized Firebase queries with proper indexing
-- Enhanced caching mechanisms with service worker implementation
-- Improved batch processing with chunking and progress tracking
-- Implemented proper indexing for all critical queries
-- Code splitting and lazy loading for route-based components
-- Memoization of expensive calculations and component renders
-
-### 5.4. Ongoing Optimization Strategies
-- Further Firebase query optimization with composite indexes
-- Implementation of virtual scrolling for large datasets
-- Enhanced offline capabilities with IndexedDB caching
-- Optimized asset loading with preloading and prefetching
-- Component-level code splitting for feature-heavy pages
 
 ## 6. Future Enhancements 🚀
 
@@ -274,23 +288,3 @@ The Label Merger and Analytics Tool is a web-based application designed to proce
 - < 2s response time for operations
 - 99.9% uptime
 - Positive user feedback
-
-## 8. Development Guidelines
-
-### 8.1. Code Quality
-- Follow TypeScript best practices
-- Maintain comprehensive tests
-- Document code changes
-- Follow Material-UI patterns
-
-### 8.2. Performance Standards
-- Monitor bundle size
-- Optimize render performance
-- Implement proper caching
-- Follow Firebase best practices
-
-### 8.3. Testing Requirements
-- Unit test all components
-- Integration test key flows
-- Performance test critical operations
-- Security test authentication flows
