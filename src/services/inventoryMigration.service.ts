@@ -2,7 +2,7 @@ import {
   collection, 
   doc, 
   getDocs, 
-  query, 
+  getDoc,
   Timestamp,
   runTransaction,
   writeBatch
@@ -225,7 +225,6 @@ export class InventoryMigrationService {
       return result;
     } catch (error) {
       const endTime = new Date();
-      const duration = endTime.getTime() - startTime.getTime();
       
       await this.updateMigrationStatus({
         status: 'failed',
@@ -405,8 +404,8 @@ export class InventoryMigrationService {
    * Update migration status
    */
   private async updateMigrationStatus(status: Partial<MigrationStatus>): Promise<void> {
-    const statusRef = doc(db, this.migrationStatusCollection, 'current');
     await runTransaction(db, async (transaction) => {
+      const statusRef = doc(db, this.migrationStatusCollection, 'current');
       const statusDoc = await transaction.get(statusRef);
       const currentStatus = statusDoc.exists() ? statusDoc.data() as MigrationStatus : {};
       
@@ -423,13 +422,13 @@ export class InventoryMigrationService {
   async getMigrationStatus(): Promise<MigrationStatus | null> {
     try {
       const statusRef = doc(db, this.migrationStatusCollection, 'current');
-      const statusDoc = await getDocs(query(collection(db, this.migrationStatusCollection)));
+      const statusDoc = await getDoc(statusRef);
       
-      if (statusDoc.empty) {
+      if (!statusDoc.exists()) {
         return null;
       }
 
-      return statusDoc.docs[0].data() as MigrationStatus;
+      return statusDoc.data() as MigrationStatus;
     } catch (error) {
       console.error('Error getting migration status:', error);
       return null;
