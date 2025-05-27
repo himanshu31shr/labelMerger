@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MigrationPage from '../MigrationPage';
 import { inventoryMigrationService } from '../../../services/inventoryMigration.service';
 import { MigrationStatus, MigrationRule, ValidationResult } from '../../../types/categoryInventory.types';
+import { Timestamp } from 'firebase/firestore';
 
 // Mock the migration service
 jest.mock('../../../services/inventoryMigration.service', () => ({
@@ -16,6 +17,11 @@ jest.mock('../../../services/inventoryMigration.service', () => ({
 }));
 
 const mockMigrationService = inventoryMigrationService as jest.Mocked<typeof inventoryMigrationService>;
+
+// Mock Timestamp
+const mockTimestamp = {
+  toDate: () => new Date(),
+} as Timestamp;
 
 describe('MigrationPage', () => {
   beforeEach(() => {
@@ -87,7 +93,7 @@ describe('MigrationPage', () => {
         currentPhase: 'Migrating inventory data',
         categoriesProcessed: 5,
         totalCategories: 10,
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
       };
       mockMigrationService.getMigrationStatus.mockResolvedValue(mockStatus);
 
@@ -97,9 +103,15 @@ describe('MigrationPage', () => {
       // Assert
       await waitFor(() => {
         expect(screen.getByText('IN-PROGRESS')).toBeInTheDocument();
-        expect(screen.getByText('Phase: Migrating inventory data')).toBeInTheDocument();
-        expect(screen.getByText('Progress: 50%')).toBeInTheDocument();
-        expect(screen.getByText('Categories: 5/10')).toBeInTheDocument();
+        expect(screen.getByText((content, element) => {
+          return element?.tagName === 'P' && element?.textContent === 'Phase: Migrating inventory data';
+        })).toBeInTheDocument();
+        expect(screen.getAllByText((content, element) => {
+          return element?.tagName === 'P' && element?.textContent === 'Progress: 50%';
+        })[0]).toBeInTheDocument();
+        expect(screen.getByText((content, element) => {
+          return element?.tagName === 'P' && element?.textContent === 'Categories: 5/10';
+        })).toBeInTheDocument();
       });
     });
 
@@ -110,7 +122,9 @@ describe('MigrationPage', () => {
         progress: 25,
         currentPhase: 'Migration failed',
         lastError: 'Database connection failed',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 2,
+        totalCategories: 8,
       };
       mockMigrationService.getMigrationStatus.mockResolvedValue(mockStatus);
 
@@ -143,6 +157,12 @@ describe('MigrationPage', () => {
 
       // Act
       render(<MigrationPage />);
+      
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(screen.getByText('Analyze Migration')).not.toBeDisabled();
+      });
+      
       fireEvent.click(screen.getByText('Analyze Migration'));
 
       // Assert
@@ -170,6 +190,12 @@ describe('MigrationPage', () => {
 
       // Act
       render(<MigrationPage />);
+      
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(screen.getByText('Start Migration')).not.toBeDisabled();
+      });
+      
       fireEvent.click(screen.getByText('Start Migration'));
 
       // Assert
@@ -191,7 +217,9 @@ describe('MigrationPage', () => {
         status: 'completed',
         progress: 100,
         currentPhase: 'Migration completed',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 10,
+        totalCategories: 10,
       });
       mockMigrationService.validateMigration.mockResolvedValue(mockValidation);
 
@@ -218,7 +246,9 @@ describe('MigrationPage', () => {
         status: 'completed',
         progress: 100,
         currentPhase: 'Migration completed',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 10,
+        totalCategories: 10,
       });
       mockMigrationService.rollbackMigration.mockResolvedValue(undefined);
 
@@ -243,6 +273,12 @@ describe('MigrationPage', () => {
 
       // Act
       render(<MigrationPage />);
+      
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(mockMigrationService.getMigrationStatus).toHaveBeenCalledTimes(1);
+      });
+      
       fireEvent.click(screen.getByText('Refresh'));
 
       // Assert
@@ -262,7 +298,7 @@ describe('MigrationPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText('Failed to load migration status')).toBeInTheDocument();
+        expect(screen.getByText('Failed to load status')).toBeInTheDocument();
       });
     });
 
@@ -273,11 +309,17 @@ describe('MigrationPage', () => {
 
       // Act
       render(<MigrationPage />);
+      
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(screen.getByText('Analyze Migration')).not.toBeDisabled();
+      });
+      
       fireEvent.click(screen.getByText('Analyze Migration'));
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText('Failed to analyze migration')).toBeInTheDocument();
+        expect(screen.getByText('Analysis failed')).toBeInTheDocument();
       });
     });
 
@@ -288,11 +330,17 @@ describe('MigrationPage', () => {
 
       // Act
       render(<MigrationPage />);
+      
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(screen.getByText('Start Migration')).not.toBeDisabled();
+      });
+      
       fireEvent.click(screen.getByText('Start Migration'));
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText('Migration execution failed')).toBeInTheDocument();
+        expect(screen.getByText('Execution failed')).toBeInTheDocument();
       });
     });
 
@@ -304,14 +352,14 @@ describe('MigrationPage', () => {
       render(<MigrationPage />);
       
       await waitFor(() => {
-        expect(screen.getByText('Failed to load migration status')).toBeInTheDocument();
+        expect(screen.getByText('Failed to load status')).toBeInTheDocument();
       });
       
       fireEvent.click(screen.getByLabelText('Close'));
 
       // Assert
       await waitFor(() => {
-        expect(screen.queryByText('Failed to load migration status')).not.toBeInTheDocument();
+        expect(screen.queryByText('Failed to load status')).not.toBeInTheDocument();
       });
     });
   });
@@ -338,7 +386,9 @@ describe('MigrationPage', () => {
         status: 'completed',
         progress: 100,
         currentPhase: 'Migration completed',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 10,
+        totalCategories: 10,
       });
       mockMigrationService.validateMigration.mockResolvedValue(mockValidation);
 
@@ -372,7 +422,9 @@ describe('MigrationPage', () => {
         status: 'in-progress',
         progress: 50,
         currentPhase: 'Migrating data',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 5,
+        totalCategories: 10,
       });
 
       // Act
@@ -390,7 +442,9 @@ describe('MigrationPage', () => {
         status: 'pending',
         progress: 0,
         currentPhase: 'Waiting to start',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 0,
+        totalCategories: 10,
       });
 
       // Act
@@ -408,7 +462,9 @@ describe('MigrationPage', () => {
         status: 'pending',
         progress: 0,
         currentPhase: 'Waiting to start',
-        startedAt: { toDate: () => new Date() } as any,
+        startedAt: mockTimestamp,
+        categoriesProcessed: 0,
+        totalCategories: 10,
       });
 
       // Act

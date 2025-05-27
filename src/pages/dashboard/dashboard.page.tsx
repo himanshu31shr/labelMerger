@@ -19,12 +19,12 @@ import {
 import { ProductSummary } from '../../pages/home/services/base.transformer';
 import { ActiveOrderSchema } from '../../services/todaysOrder.service';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchLowStockItems } from '../../store/slices/inventorySlice';
+import { fetchLowStockCategories } from '../../store/slices/categoryInventorySlice';
 import { fetchOrderHistory } from '../../store/slices/orderHistorySlice';
 import { fetchOrders } from '../../store/slices/ordersSlice';
 import { fetchProducts } from '../../store/slices/productsSlice';
 import { selectIsAuthenticated } from '../../store/slices/authSlice';
-import LowInventoryWidget from './components/LowInventoryWidget';
+import CategoryLowInventoryWidget from './components/CategoryLowInventoryWidget';
 import { HiddenProductsWidget, HighPricedProductsWidget } from './components/ProductAlertWidgets';
 
 export const DashboardPage = () => {
@@ -32,7 +32,7 @@ export const DashboardPage = () => {
     const { items: products, loading: productsLoading } = useAppSelector(state => state.products);
     const { items: orders } = useAppSelector(state => state.orders);
     const { dailyOrders } = useAppSelector(state => state.orderHistory);
-    const { lowStockItems, loading: inventoryLoading } = useAppSelector(state => state.inventory);
+    const { lowStockCategories, loading: categoryInventoryLoading } = useAppSelector(state => state.categoryInventory);
     const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
     useEffect(() => {
@@ -41,7 +41,7 @@ export const DashboardPage = () => {
             dispatch(fetchProducts({}));
             dispatch(fetchOrders());
             dispatch(fetchOrderHistory());
-            dispatch(fetchLowStockItems());
+            dispatch(fetchLowStockCategories());
         }
     }, [dispatch, isAuthenticated]);
 
@@ -54,7 +54,7 @@ export const DashboardPage = () => {
         return sum + (price * quantity);
     }, 0);
 
-    if (productsLoading || inventoryLoading) {
+    if (productsLoading || categoryInventoryLoading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <CircularProgress />
@@ -180,11 +180,11 @@ export const DashboardPage = () => {
                     </Paper>
                 </Grid>
 
-                {/* Low Inventory Widget */}
+                {/* Category Low Inventory Widget */}
                 <Grid item xs={12} md={4}>
-                    <LowInventoryWidget
-                        items={lowStockItems}
-                        loading={inventoryLoading}
+                    <CategoryLowInventoryWidget
+                        categories={lowStockCategories}
+                        loading={categoryInventoryLoading}
                     />
                 </Grid>
             </Grid>

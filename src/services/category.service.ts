@@ -25,19 +25,36 @@ export class CategoryService extends FirebaseService {
   }
 
   async createCategory(category: Omit<Category, 'id'>): Promise<string> {
-    const docRef = await this.addDocument(this.COLLECTION_NAME, {
-      ...category,
+    // Sanitize the data to ensure Firestore compatibility
+    const sanitizedCategory = {
+      name: category.name,
+      description: category.description || '',
+      tag: category.tag || '',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-    });
+    };
+    
+    const docRef = await this.addDocument(this.COLLECTION_NAME, sanitizedCategory);
     return docRef.id;
   }
 
   async updateCategory(id: string, category: Partial<Omit<Category, 'id'>>): Promise<void> {
-    await this.updateDocument(this.COLLECTION_NAME, id, {
-      ...category,
+    // Sanitize the data to ensure Firestore compatibility
+    const sanitizedUpdates: Partial<Category> & { updatedAt: Timestamp } = {
       updatedAt: Timestamp.now(),
-    });
+    };
+    
+    if (category.name !== undefined) {
+      sanitizedUpdates.name = category.name;
+    }
+    if (category.description !== undefined) {
+      sanitizedUpdates.description = category.description || '';
+    }
+    if (category.tag !== undefined) {
+      sanitizedUpdates.tag = category.tag || '';
+    }
+    
+    await this.updateDocument(this.COLLECTION_NAME, id, sanitizedUpdates);
   }
 
   async deleteCategory(id: string): Promise<void> {

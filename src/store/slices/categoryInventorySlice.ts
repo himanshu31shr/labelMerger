@@ -55,6 +55,25 @@ export const updateCategoryInventory = createAsyncThunk(
   }
 );
 
+export const updateCategoryThreshold = createAsyncThunk(
+  'categoryInventory/updateCategoryThreshold',
+  async ({ categoryId, threshold }: {
+    categoryId: string;
+    threshold: number;
+  }, { rejectWithValue }) => {
+    try {
+      await categoryInventoryService.updateCategoryThreshold(categoryId, threshold);
+      const updatedCategory = await categoryInventoryService.getCategoryInventory(categoryId);
+      if (!updatedCategory) {
+        throw new Error('Category not found after update');
+      }
+      return updatedCategory;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to update threshold');
+    }
+  }
+);
+
 export const fetchLowStockCategories = createAsyncThunk(
   'categoryInventory/fetchLowStockCategories',
   async (_, { rejectWithValue }) => {
@@ -62,6 +81,20 @@ export const fetchLowStockCategories = createAsyncThunk(
       return await categoryInventoryService.getLowStockCategories();
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch low stock categories');
+    }
+  }
+);
+
+export const fetchCategoryInventoryHistory = createAsyncThunk(
+  'categoryInventory/fetchCategoryInventoryHistory',
+  async ({ categoryId, limit }: {
+    categoryId: string;
+    limit?: number;
+  }, { rejectWithValue }) => {
+    try {
+      return await categoryInventoryService.getCategoryInventoryHistory(categoryId, limit);
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch inventory history');
     }
   }
 );
@@ -117,6 +150,27 @@ const categoryInventorySlice = createSlice({
         state.loading = false;
         state.error = action.payload as string || 'Failed to update inventory';
       })
+      // updateCategoryThreshold
+      .addCase(updateCategoryThreshold.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateCategoryThreshold.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        const index = state.categories.findIndex(cat => cat.id === action.payload.id);
+        if (index !== -1) {
+          state.categories[index] = action.payload;
+        } else {
+          // If category not found in current list, add it
+          state.categories.push(action.payload);
+        }
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(updateCategoryThreshold.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to update threshold';
+      })
       // fetchLowStockCategories
       .addCase(fetchLowStockCategories.pending, (state) => {
         state.loading = true;
@@ -131,6 +185,21 @@ const categoryInventorySlice = createSlice({
         state.loading = false;
         state.error = action.payload as string || 'Failed to fetch low stock categories';
         state.lowStockCategories = [];
+      })
+      // fetchCategoryInventoryHistory
+      .addCase(fetchCategoryInventoryHistory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCategoryInventoryHistory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.operations = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchCategoryInventoryHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to fetch inventory history';
+        state.operations = [];
       });
   },
 });

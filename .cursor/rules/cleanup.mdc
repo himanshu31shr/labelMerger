@@ -1,0 +1,17 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When you think the feature is completed ask user if the feature is completed.
+
+if user says yes,
+then perform the cleanup of entire codebase as in remove following
+    1. Unused files
+    2. Temporary files
+    3. Build data
+    4. Unused packages
+    5. Unused folders/empty folders
+    6. RUN npm prune to make sure packages uninstalled packages are removed.
+
+otherwise do nothing

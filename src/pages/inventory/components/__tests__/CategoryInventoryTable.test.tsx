@@ -69,6 +69,7 @@ const createMockStore = (initialState = {}) => {
       categoryInventory: {
         categories: mockCategories,
         lowStockCategories: [],
+        operations: [],
         loading: false,
         error: null,
         migrationStatus: 'completed' as const,
@@ -215,14 +216,7 @@ describe('CategoryInventoryTable', () => {
       });
     });
 
-    it('should have view history button for each category', () => {
-      // Arrange & Act
-      renderWithProvider(<CategoryInventoryTable />);
 
-      // Assert
-      const historyButtons = screen.getAllByText('History');
-      expect(historyButtons).toHaveLength(3); // One for each category
-    });
   });
 
   describe('sorting and filtering', () => {

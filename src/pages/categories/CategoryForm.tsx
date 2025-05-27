@@ -107,7 +107,6 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               control={control}
               render={({ field }) => (
                 <Autocomplete
-                  {...field}
                   options={existingTags}
                   freeSolo
                   renderInput={(params) => (
@@ -121,7 +120,9 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                     />
                   )}
                   onChange={(event, newValue) => {
-                    field.onChange(newValue);
+                    // Ensure we always pass a string or null to Firestore
+                    const sanitizedValue = typeof newValue === 'string' ? newValue : (newValue || '');
+                    field.onChange(sanitizedValue);
                   }}
                   value={field.value || ''}
                 />

@@ -62,6 +62,8 @@ const OrderAnalytics = React.lazy(() =>
   }))
 );
 
+
+
 interface ProtectedRoutesProps {
   toggleTheme: () => void;
   mode: "light" | "dark";

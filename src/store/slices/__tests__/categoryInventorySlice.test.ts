@@ -2,10 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import categoryInventoryReducer, {
   fetchCategoriesWithInventory,
   updateCategoryInventory,
+  updateCategoryThreshold,
   fetchLowStockCategories,
+  fetchCategoryInventoryHistory,
   CategoryInventoryState,
 } from '../categoryInventorySlice';
-import { CategoryWithInventory, LowStockAlert } from '../../../types/categoryInventory.types';
+import { CategoryWithInventory, LowStockAlert, InventoryOperation } from '../../../types/categoryInventory.types';
 import { Timestamp } from 'firebase/firestore';
 
 // Mock Timestamp
@@ -20,7 +22,9 @@ jest.mock('../../../services/categoryInventory.service', () => ({
   categoryInventoryService: {
     getAllCategoriesWithInventory: jest.fn(),
     updateCategoryInventory: jest.fn(),
+    updateCategoryThreshold: jest.fn(),
     getLowStockCategories: jest.fn(),
+    getCategoryInventoryHistory: jest.fn(),
   },
 }));
 
@@ -48,8 +52,20 @@ const mockLowStockAlert: LowStockAlert = {
   productCount: 3,
 };
 
+const mockInventoryOperation: InventoryOperation = {
+  id: 'op1',
+  categoryId: 'cat1',
+  type: 'add',
+  quantity: 10,
+  previousQuantity: 100,
+  newQuantity: 110,
+  reason: 'Restocking',
+  performedBy: 'admin@example.com',
+  timestamp: Timestamp.now(),
+};
+
 describe('categoryInventorySlice', () => {
-  let store: ReturnType<typeof configureStore>;
+  let store: ReturnType<typeof configureStore<{ categoryInventory: CategoryInventoryState }>>;
 
   beforeEach(() => {
     store = configureStore({
@@ -189,6 +205,70 @@ describe('categoryInventorySlice', () => {
     });
   });
 
+  describe('updateCategoryThreshold', () => {
+    it('should set loading to true when pending', () => {
+      // Arrange
+      const action = { type: updateCategoryThreshold.pending.type };
+
+      // Act
+      const state = categoryInventoryReducer(undefined, action);
+
+      // Assert
+      expect(state.loading).toBe(true);
+      expect(state.error).toBe(null);
+    });
+
+    it('should update specific category threshold when fulfilled', () => {
+      // Arrange
+      const initialState: CategoryInventoryState = {
+        categories: [mockCategoryWithInventory],
+        lowStockCategories: [],
+        operations: [],
+        loading: false,
+        error: null,
+        migrationStatus: 'pending',
+        lastUpdated: null,
+      };
+
+      const updatedCategory = {
+        ...mockCategoryWithInventory,
+        inventory: {
+          ...mockCategoryWithInventory.inventory,
+          lowStockThreshold: 25,
+        },
+      };
+
+      const action = {
+        type: updateCategoryThreshold.fulfilled.type,
+        payload: updatedCategory,
+      };
+
+      // Act
+      const state = categoryInventoryReducer(initialState, action);
+
+      // Assert
+      expect(state.loading).toBe(false);
+      expect(state.categories[0].inventory.lowStockThreshold).toBe(25);
+      expect(state.error).toBe(null);
+    });
+
+    it('should set error when rejected', () => {
+      // Arrange
+      const errorMessage = 'Failed to update threshold';
+      const action = {
+        type: updateCategoryThreshold.rejected.type,
+        error: { message: errorMessage },
+      };
+
+      // Act
+      const state = categoryInventoryReducer(undefined, action);
+
+      // Assert
+      expect(state.loading).toBe(false);
+      expect(state.error).toBe(errorMessage);
+    });
+  });
+
   describe('fetchLowStockCategories', () => {
     it('should set loading to true when pending', () => {
       // Arrange
@@ -234,6 +314,54 @@ describe('categoryInventorySlice', () => {
       expect(state.loading).toBe(false);
       expect(state.error).toBe(errorMessage);
       expect(state.lowStockCategories).toEqual([]);
+    });
+  });
+
+  describe('fetchCategoryInventoryHistory', () => {
+    it('should set loading to true when pending', () => {
+      // Arrange
+      const action = { type: fetchCategoryInventoryHistory.pending.type };
+
+      // Act
+      const state = categoryInventoryReducer(undefined, action);
+
+      // Assert
+      expect(state.loading).toBe(true);
+      expect(state.error).toBe(null);
+    });
+
+    it('should update inventory history when fulfilled', () => {
+      // Arrange
+      const inventoryHistory = [mockInventoryOperation];
+      const action = {
+        type: fetchCategoryInventoryHistory.fulfilled.type,
+        payload: inventoryHistory,
+      };
+
+      // Act
+      const state = categoryInventoryReducer(undefined, action);
+
+      // Assert
+      expect(state.loading).toBe(false);
+      expect(state.operations).toEqual(inventoryHistory);
+      expect(state.error).toBe(null);
+    });
+
+    it('should set error when rejected', () => {
+      // Arrange
+      const errorMessage = 'Failed to fetch inventory history';
+      const action = {
+        type: fetchCategoryInventoryHistory.rejected.type,
+        error: { message: errorMessage },
+      };
+
+      // Act
+      const state = categoryInventoryReducer(undefined, action);
+
+      // Assert
+      expect(state.loading).toBe(false);
+      expect(state.error).toBe(errorMessage);
+      expect(state.operations).toEqual([]);
     });
   });
 

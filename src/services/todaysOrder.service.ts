@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { ProductSummary } from "../pages/home/services/base.transformer";
 import { FirebaseService } from "./firebase.service";
 import { Product, ProductService } from "./product.service";
+import { CategoryInventoryService } from "./categoryInventory.service";
 
 export type ActiveOrder = ProductSummary;
 
@@ -14,11 +15,13 @@ export interface ActiveOrderSchema {
 export class TodaysOrder extends FirebaseService {
   private readonly COLLECTION_NAME = "active-orders";
   private productService: ProductService;
+  private categoryInventoryService: CategoryInventoryService;
   private products: Product[] = [];
 
   constructor() {
     super();
     this.productService = new ProductService();
+    this.categoryInventoryService = new CategoryInventoryService();
   }
 
   async mapProductsToActiveOrder() {
@@ -113,6 +116,7 @@ export class TodaysOrder extends FirebaseService {
 
   /**
    * Reduce inventory for all products in the order
+   * Also updates category inventory for each product
    * @param orders List of orders to process
    */
   async reduceInventoryForOrders(orders: ActiveOrder[]): Promise<void> {
@@ -124,7 +128,30 @@ export class TodaysOrder extends FirebaseService {
           continue;
         }
         
-        await this.productService.reduceInventoryForOrder(order.SKU, Number(order.quantity) || 1);
+        const quantity = Number(order.quantity) || 1;
+        
+        // Reduce product inventory
+        const updatedProduct = await this.productService.reduceInventoryForOrder(order.SKU, quantity);
+        
+        // Also reduce category inventory if product has a category
+        if (updatedProduct.categoryId) {
+          try {
+            await this.categoryInventoryService.updateCategoryInventory(
+              updatedProduct.categoryId,
+              -quantity, // Negative quantity to reduce inventory
+              `Order fulfilled - SKU: ${order.SKU}`,
+              'system-order-processing'
+            );
+            
+            console.log(`✅ Reduced category inventory for ${updatedProduct.categoryId} by ${quantity} (SKU: ${order.SKU})`);
+          } catch (categoryError) {
+            console.error(`❌ Failed to update category inventory for ${updatedProduct.categoryId}:`, categoryError);
+            // Don't throw here - product inventory was already updated successfully
+          }
+        } else {
+          console.warn(`⚠️ Product ${order.SKU} has no categoryId - skipping category inventory update`);
+        }
+        
       } catch (error) {
         console.error(`Error reducing inventory for SKU ${order.SKU || 'unknown'}:`, error);
         // Continue with other orders even if one fails

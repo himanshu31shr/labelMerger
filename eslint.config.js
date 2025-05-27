@@ -17,6 +17,13 @@ export default [
       }
     }
   },
+  // Specific config for Node.js files
+  {
+    files: ["**/*.cjs", "jest.config.cjs", "babel.config.cjs"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,

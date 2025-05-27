@@ -1,4 +1,3 @@
-/** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup/setupTests.ts'],
@@ -26,7 +25,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': 'babel-jest'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(firebase|@firebase)/)'
+    '/node_modules/(?!(@firebase|firebase|other-es-module-package)/)'
   ],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],

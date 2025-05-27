@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Dialog,
   DialogTitle,
@@ -41,7 +41,8 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { InventoryOperation } from '../../../types/categoryInventory.types';
-import { RootState } from '../../../store';
+import { RootState, AppDispatch } from '../../../store';
+import { fetchCategoryInventoryHistory, clearError } from '../../../store/slices/categoryInventorySlice';
 import { Timestamp } from 'firebase/firestore';
 
 interface CategoryInventoryHistoryProps {
@@ -59,7 +60,20 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
   open,
   onClose,
 }) => {
-  const { operations, loading, error } = useSelector((state: RootState) => state.categoryInventory);
+  const dispatch = useDispatch<AppDispatch>();
+  const { operations = [], loading = false, error = null } = useSelector((state: RootState) => {
+    // Handle the case where categoryInventory might not exist
+    if ('categoryInventory' in state) {
+      return state.categoryInventory;
+    }
+    return { operations: [], loading: false, error: null };
+  });
+
+  // Track if we've fetched data for this modal session
+  const hasFetchedRef = useRef(false);
+  const currentCategoryRef = useRef<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Local state
   const [expandedRows, setExpandedRows] = useState<ExpandedRows>({});
@@ -69,10 +83,72 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
   const [toDate, setToDate] = useState<string>('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [isTimedOut, setIsTimedOut] = useState(false);
+
+  // Fetch history data when modal opens (only once per session)
+  useEffect(() => {
+    if (open && categoryId && (!hasFetchedRef.current || currentCategoryRef.current !== categoryId)) {
+      // Clear any previous errors
+      dispatch(clearError());
+      setIsTimedOut(false);
+      
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
+      
+      // Set a timeout to prevent indefinite loading
+      timeoutRef.current = setTimeout(() => {
+        setIsTimedOut(true);
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+      }, 10000); // 10 second timeout
+      
+      dispatch(fetchCategoryInventoryHistory({ categoryId, limit: 100 }))
+        .finally(() => {
+          // Clear timeout if request completes
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+        });
+      
+      hasFetchedRef.current = true;
+      currentCategoryRef.current = categoryId;
+    }
+    
+    // Reset when modal closes
+    if (!open) {
+      hasFetchedRef.current = false;
+      currentCategoryRef.current = null;
+      setIsTimedOut(false);
+      
+      // Clear timeout if modal closes
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
+      // Abort any ongoing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [open, categoryId, dispatch]);
 
   // Filter operations for this category
   const categoryOperations = useMemo(() => {
-    return operations.filter(op => op.categoryId === categoryId);
+    return operations.filter((op: InventoryOperation) => op.categoryId === categoryId);
   }, [operations, categoryId]);
 
   // Apply filters
@@ -127,8 +203,37 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
   };
 
   const handleRefresh = () => {
-    // In a real app, this would dispatch an action to fetch operations
-    console.log('Refreshing operations...');
+    if (categoryId) {
+      // Clear previous errors and timeout state
+      dispatch(clearError());
+      setIsTimedOut(false);
+      
+      // Reset fetch tracking to force a new fetch
+      hasFetchedRef.current = false;
+      currentCategoryRef.current = null;
+      
+      // Create new abort controller
+      abortControllerRef.current = new AbortController();
+      
+      // Set timeout
+      timeoutRef.current = setTimeout(() => {
+        setIsTimedOut(true);
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+      }, 10000);
+      
+      dispatch(fetchCategoryInventoryHistory({ categoryId, limit: 100 }))
+        .finally(() => {
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+        });
+      
+      hasFetchedRef.current = true;
+      currentCategoryRef.current = categoryId;
+    }
   };
 
   const handleExport = () => {
@@ -219,12 +324,12 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
           <Typography variant="h5">Inventory History</Typography>
           <Box>
             <Tooltip title="Refresh history">
-              <IconButton onClick={handleRefresh} aria-label="Refresh history">
+              <IconButton onClick={handleRefresh} aria-label="Refresh history" disabled={loading}>
                 <RefreshIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Export to CSV">
-              <IconButton onClick={handleExport}>
+              <IconButton onClick={handleExport} disabled={filteredOperations.length === 0}>
                 <DownloadIcon />
               </IconButton>
             </Tooltip>
@@ -244,6 +349,7 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
                   value={typeFilter}
                   label="Filter by type"
                   onChange={(e) => setTypeFilter(e.target.value)}
+                  disabled={loading}
                 >
                   <MenuItem value="all">All Types</MenuItem>
                   <MenuItem value="add">Add</MenuItem>
@@ -261,6 +367,7 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
                 placeholder="Search operations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={loading}
               />
             </Grid>
 
@@ -273,6 +380,7 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                disabled={loading}
               />
             </Grid>
 
@@ -285,21 +393,50 @@ const CategoryInventoryHistory: React.FC<CategoryInventoryHistoryProps> = ({
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                disabled={loading}
               />
             </Grid>
           </Grid>
         </Box>
 
         {/* Content */}
-        {loading ? (
-          <Box display="flex" justifyContent="center" py={4}>
+        {loading && !isTimedOut ? (
+          <Box display="flex" flexDirection="column" alignItems="center" py={4}>
             <CircularProgress />
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+              Loading inventory history...
+            </Typography>
+          </Box>
+        ) : isTimedOut ? (
+          <Box textAlign="center" py={4}>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="h6">Request Timed Out</Typography>
+              <Typography>
+                The request is taking longer than expected. This might be due to network issues or server problems.
+              </Typography>
+            </Alert>
+            <Button
+              variant="outlined"
+              onClick={handleRefresh}
+              startIcon={<RefreshIcon />}
+            >
+              Try Again
+            </Button>
           </Box>
         ) : error ? (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            <Typography variant="h6">Error loading history</Typography>
-            <Typography>{error}</Typography>
-          </Alert>
+          <Box textAlign="center" py={4}>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <Typography variant="h6">Error loading history</Typography>
+              <Typography>{error}</Typography>
+            </Alert>
+            <Button
+              variant="outlined"
+              onClick={handleRefresh}
+              startIcon={<RefreshIcon />}
+            >
+              Retry
+            </Button>
+          </Box>
         ) : filteredOperations.length === 0 ? (
           <Box textAlign="center" py={4}>
             <Typography variant="h6" color="textSecondary">

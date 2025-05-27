@@ -22,19 +22,23 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import WarningIcon from '@mui/icons-material/Warning';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchInventory, fetchLowStockItems, updateProductInventory } from '../../store/slices/inventorySlice';
+import { 
+  fetchCategoriesWithInventory, 
+  fetchLowStockCategories, 
+  updateCategoryInventory 
+} from '../../store/slices/categoryInventorySlice';
 import { selectIsAuthenticated } from '../../store/slices/authSlice';
-import InventoryTable from './components/InventoryTable';
-import LowStockAlert from './components/LowStockAlert';
+import CategoryInventoryTable from './components/CategoryInventoryTable';
+import CategoryLowStockAlert from './components/CategoryLowStockAlert';
 
 export const InventoryPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { items, lowStockItems, loading } = useAppSelector((state) => state.inventory);
+  const { categories, lowStockCategories, loading } = useAppSelector((state) => state.categoryInventory);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [platformFilter, setPlatformFilter] = useState<string>('all');
-  const [filteredItems, setFilteredItems] = useState(items);
+  const [tagFilter, setTagFilter] = useState<string>('all');
+  const [filteredCategories, setFilteredCategories] = useState(categories);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
@@ -42,51 +46,52 @@ export const InventoryPage: React.FC = () => {
   useEffect(() => {
     // Only fetch data if authenticated
     if (isAuthenticated) {
-      dispatch(fetchInventory());
-      dispatch(fetchLowStockItems());
+      dispatch(fetchCategoriesWithInventory());
+      dispatch(fetchLowStockCategories());
     }
   }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
-    // Filter items based on search term and platform
-    let filtered = [...items];
+    // Filter categories based on search term and tag
+    let filtered = [...categories];
     
     if (searchTerm) {
       filtered = filtered.filter(
-        (item) => 
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.sku.toLowerCase().includes(searchTerm.toLowerCase())
+        (category) => 
+          category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (category.tag && category.tag.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
-    if (platformFilter !== 'all') {
-      filtered = filtered.filter((item) => item.platform === platformFilter);
+    if (tagFilter !== 'all') {
+      filtered = filtered.filter((category) => category.tag === tagFilter);
     }
     
-    setFilteredItems(filtered);
-  }, [items, searchTerm, platformFilter]);
+    setFilteredCategories(filtered);
+  }, [categories, searchTerm, tagFilter]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  const handlePlatformChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPlatformFilter(event.target.value);
+  const handleTagChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTagFilter(event.target.value);
   };
 
   const handleRefresh = () => {
-    dispatch(fetchInventory());
-    dispatch(fetchLowStockItems());
+    dispatch(fetchCategoriesWithInventory());
+    dispatch(fetchLowStockCategories());
   };
 
-  const handleUpdateInventory = async (sku: string, quantity: number) => {
+  const handleUpdateInventory = async (categoryId: string, quantity: number) => {
     try {
-      await dispatch(updateProductInventory({ sku, quantity })).unwrap();
-      setSnackbarMessage('Inventory updated successfully');
+      await dispatch(updateCategoryInventory({ categoryId, quantity })).unwrap();
+      setSnackbarMessage('Category inventory updated successfully');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch {
-      setSnackbarMessage('Failed to update inventory');
+      setSnackbarMessage('Failed to update category inventory');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -96,18 +101,21 @@ export const InventoryPage: React.FC = () => {
     setSnackbarOpen(false);
   };
 
+  // Get unique tags for filter dropdown
+  const uniqueTags = Array.from(new Set(categories.map(cat => cat.tag).filter(Boolean)));
+
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <InventoryIcon sx={{ fontSize: 32, mr: 2, color: 'primary.main' }} />
           <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
-            Inventory Management
+            Category Inventory Management
           </Typography>
-          {lowStockItems.length > 0 && (
+          {lowStockCategories.length > 0 && (
             <Chip 
               icon={<WarningIcon />} 
-              label={`${lowStockItems.length} Low Stock Items`} 
+              label={`${lowStockCategories.length} Low Stock Categories`} 
               color="warning" 
               sx={{ ml: 2, fontWeight: 'bold' }}
             />
@@ -126,22 +134,25 @@ export const InventoryPage: React.FC = () => {
 
         <Divider sx={{ mb: 3 }} />
 
-        {lowStockItems.length > 0 && (
-          <LowStockAlert items={lowStockItems} onUpdateInventory={handleUpdateInventory} />
+        {lowStockCategories.length > 0 && (
+          <CategoryLowStockAlert 
+            categories={lowStockCategories} 
+            onUpdateInventory={handleUpdateInventory} 
+          />
         )}
 
         <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid', borderColor: 'primary.light' }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
-              Filter Products
+              Filter Categories
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12} md={8}>
                 <TextField
                   fullWidth
                   variant="outlined"
-                  label="Search products"
-                  placeholder="Search by name or SKU"
+                  label="Search categories"
+                  placeholder="Search by name, description, or tag"
                   value={searchTerm}
                   onChange={handleSearchChange}
                   InputProps={{
@@ -158,13 +169,16 @@ export const InventoryPage: React.FC = () => {
                   select
                   fullWidth
                   variant="outlined"
-                  label="Platform"
-                  value={platformFilter}
-                  onChange={handlePlatformChange}
+                  label="Tag"
+                  value={tagFilter}
+                  onChange={handleTagChange}
                 >
-                  <MenuItem value="all">All Platforms</MenuItem>
-                  <MenuItem value="amazon">Amazon</MenuItem>
-                  <MenuItem value="flipkart">Flipkart</MenuItem>
+                  <MenuItem value="all">All Tags</MenuItem>
+                  {uniqueTags.map((tag) => (
+                    <MenuItem key={tag} value={tag}>
+                      {tag}
+                    </MenuItem>
+                  ))}
                 </TextField>
               </Grid>
             </Grid>
@@ -173,20 +187,18 @@ export const InventoryPage: React.FC = () => {
 
         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
-            Inventory Table
+            Category Inventory Table
           </Typography>
           <Chip 
-            label={`${filteredItems.length} of ${items.length} Products`} 
+            label={`${filteredCategories.length} of ${categories.length} Categories`} 
             color="primary" 
             size="medium" 
           />
         </Box>
 
-        <InventoryTable 
-          items={filteredItems} 
-          loading={loading} 
-          onUpdateInventory={handleUpdateInventory} 
-        />
+        <div id="category-inventory-table">
+          <CategoryInventoryTable />
+        </div>
       </Paper>
 
       <Snackbar 

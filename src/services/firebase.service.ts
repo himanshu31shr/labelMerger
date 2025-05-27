@@ -68,6 +68,39 @@ export class FirebaseService {
     throw error;
   }
 
+  private validateFirestoreData(data: DocumentData): void {
+    const validateValue = (value: unknown, path: string): void => {
+      if (value === undefined) {
+        throw new Error(`Undefined value not allowed in Firestore at path: ${path}`);
+      }
+      
+      if (typeof value === 'function') {
+        throw new Error(`Function values not allowed in Firestore at path: ${path}`);
+      }
+      
+      if (value && typeof value === 'object' && !Object.prototype.hasOwnProperty.call(value, 'constructor')) {
+        throw new Error(`Objects without constructor not allowed in Firestore at path: ${path}`);
+      }
+      
+      if (value && typeof value === 'object' && value.constructor === Object) {
+        const objValue = value as Record<string, unknown>;
+        Object.keys(objValue).forEach(key => {
+          validateValue(objValue[key], `${path}.${key}`);
+        });
+      }
+      
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+          validateValue(item, `${path}[${index}]`);
+        });
+      }
+    };
+
+    Object.keys(data).forEach(key => {
+      validateValue(data[key], key);
+    });
+  }
+
   protected async getDocuments<T extends DocumentData>(
     collectionName: string,
     queryConstraints: QueryConstraint[] = []
@@ -123,6 +156,8 @@ export class FirebaseService {
     data: T
   ): Promise<{ id: string }> {
     try {
+      // Validate data before sending to Firestore
+      this.validateFirestoreData(data);
       const docRef = await addDoc(collection(this.db, collectionName), data);
       return { id: docRef.id };
     } catch (error) {

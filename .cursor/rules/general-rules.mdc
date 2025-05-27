@@ -11,3 +11,4 @@ alwaysApply: true
 7. Always document the changes in the README.md file.
 8. Always follow conding conventions
 9. Always follow the best practices
+10. Commit when you think a phase is completed and everything is stable.

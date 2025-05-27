@@ -39,6 +39,7 @@ const createMockStore = (initialState = {}) => {
       categoryInventory: {
         categories: [mockCategory],
         lowStockCategories: [],
+        operations: [],
         loading: false,
         error: null,
         migrationStatus: 'completed' as const,

@@ -21,14 +21,18 @@ import {
   MenuItem,
   TableSortLabel,
 } from '@mui/material';
-import { Refresh as RefreshIcon, Edit as EditIcon, History as HistoryIcon } from '@mui/icons-material';
+import { Refresh as RefreshIcon, Edit as EditIcon } from '@mui/icons-material';
 import {
   selectCategoriesWithInventory,
   selectCategoryInventoryLoading,
   selectCategoryInventoryError,
   fetchCategoriesWithInventory,
+  updateCategoryInventory,
+  updateCategoryThreshold,
 } from '../../../store/slices/categoryInventorySlice';
 import { CategoryWithInventory } from '../../../types/categoryInventory.types';
+import CategoryInventoryEditModal from './CategoryInventoryEditModal';
+
 
 type SortField = 'name' | 'totalQuantity' | 'lowStockThreshold' | 'productCount';
 type SortDirection = 'asc' | 'desc';
@@ -44,7 +48,6 @@ const CategoryInventoryTable: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editModalOpen, setEditModalOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedCategory, setSelectedCategory] = useState<CategoryWithInventory | null>(null);
 
   const getStockStatus = (category: CategoryWithInventory): 'in-stock' | 'low-stock' | 'out-of-stock' => {
@@ -133,9 +136,42 @@ const CategoryInventoryTable: React.FC = () => {
     setEditModalOpen(true);
   };
 
-  const handleViewHistory = (category: CategoryWithInventory) => {
-    // TODO: Implement history view
-    console.log('View history for category:', category.id);
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedCategory(null);
+  };
+
+  const handleSaveInventory = async (data: {
+    categoryId: string;
+    quantityAdjustment: number;
+    newLowStockThreshold: number;
+    reason: string;
+    performedBy: string;
+  }) => {
+    try {
+      // First, update the inventory quantity if there's a change
+      if (data.quantityAdjustment !== 0) {
+        await dispatch(updateCategoryInventory({
+          categoryId: data.categoryId,
+          quantity: data.quantityAdjustment,
+          reason: data.reason,
+          performedBy: data.performedBy,
+        }));
+      }
+      
+      // Then update the threshold if it changed
+      if (data.newLowStockThreshold > 0) {
+        await dispatch(updateCategoryThreshold({
+          categoryId: data.categoryId,
+          threshold: data.newLowStockThreshold,
+        }));
+      }
+      
+      handleCloseEditModal();
+      dispatch(fetchCategoriesWithInventory());
+    } catch (error) {
+      console.error('Failed to save inventory:', error);
+    }
   };
 
   if (loading) {
@@ -289,14 +325,6 @@ const CategoryInventoryTable: React.FC = () => {
                       >
                         Edit
                       </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<HistoryIcon />}
-                        onClick={() => handleViewHistory(category)}
-                      >
-                        History
-                      </Button>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -306,12 +334,14 @@ const CategoryInventoryTable: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* Edit Modal - Placeholder */}
-      {editModalOpen && (
-        <div>
-          <Typography variant="h6">Edit Category Inventory</Typography>
-          {/* TODO: Implement actual modal */}
-        </div>
+      {/* Edit Modal */}
+      {editModalOpen && selectedCategory && (
+        <CategoryInventoryEditModal
+          open={editModalOpen}
+          category={selectedCategory}
+          onClose={handleCloseEditModal}
+          onSave={handleSaveInventory}
+        />
       )}
     </Box>
   );
