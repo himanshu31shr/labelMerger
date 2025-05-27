@@ -9,8 +9,12 @@ export type CacheDurationKey = keyof typeof CACHE_DURATIONS;
 export const shouldFetchData = <T>(
   lastFetched: number | null,
   items: T[],
-  cacheDuration: number
+  cacheDuration: number,
+  isAuthenticated: boolean = true
 ): boolean => {
+  // Don't fetch if not authenticated
+  if (!isAuthenticated) return false;
+  
   if (!lastFetched || items.length === 0) return true;
   return Date.now() - lastFetched > cacheDuration;
 };

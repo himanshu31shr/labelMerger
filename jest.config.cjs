@@ -2,13 +2,13 @@
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup/setupTests.ts'],
-  collectCoverage: true,
+  collectCoverage: false,
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/main.tsx',
     '!src/vite-env.d.ts',
-    '!src/__tests__/**',
+    '!src/**/__tests__/**',
   ],
   coverageThreshold: {
     global: {

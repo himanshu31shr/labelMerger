@@ -6,8 +6,6 @@ import {
   Paper,
   Divider,
   Chip,
-  Card,
-  CardContent,
 } from "@mui/material";
 import React, { useEffect } from "react";
 import InventoryIcon from "@mui/icons-material/Inventory";
@@ -19,6 +17,7 @@ import {
   setFilters,
   bulkUpdateProducts,
 } from "../../store/slices/productsSlice";
+import { selectIsAuthenticated } from "../../store/slices/authSlice";
 import { Product } from "../../services/product.service";
 import { ProductEditModal } from "./components/ProductEditModal";
 import { ProductImportSection } from "./components/ProductImportSection";
@@ -31,13 +30,17 @@ export const ProductsPage: React.FC = () => {
     filteredItems: filteredProducts,
     loading,
   } = useAppSelector((state) => state.products);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(
     null
   );
 
   useEffect(() => {
-    dispatch(fetchProducts({}));
-  }, [dispatch]);
+    // Only fetch products if authenticated
+    if (isAuthenticated) {
+      dispatch(fetchProducts({}));
+    }
+  }, [dispatch, isAuthenticated]);
 
   const handleProductImport = async (file: File) => {
     try {

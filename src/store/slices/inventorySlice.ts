@@ -25,10 +25,11 @@ const productService = new ProductService();
 export const fetchInventory = createAsyncThunk(
   'inventory/fetchInventory',
   async (_, { getState }) => {
-    const state = getState() as { inventory: InventoryState };
+    const state = getState() as { inventory: InventoryState; auth: { isAuthenticated: boolean } };
     const { lastFetchTime, items } = state.inventory;
+    const { isAuthenticated } = state.auth;
     
-    if (!shouldFetchData(lastFetchTime, items, CACHE_DURATIONS.products)) {
+    if (!shouldFetchData(lastFetchTime, items, CACHE_DURATIONS.products, isAuthenticated)) {
       return items;
     }
     

@@ -1,4 +1,4 @@
-import { authReducer, setUser, clearError, login, logout, resetPassword } from '../authSlice';
+import { authReducer, setUser, setAuthState, clearError, login, logout, resetPassword, initializeAuthState } from '../authSlice';
 import { User } from 'firebase/auth'; // Import User type
 
 // Mock the auth service
@@ -15,6 +15,8 @@ describe('authSlice', () => {
     user: null,
     loading: false,
     error: null,
+    isAuthenticated: false,
+    authStateLoaded: false,
   };
 
   // Cast a minimal object to the User type
@@ -34,6 +36,20 @@ describe('authSlice', () => {
       const state = authReducer(initialState, action);
       
       expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+    });
+
+    it('should handle setAuthState', () => {
+      const action = setAuthState({ 
+        user: mockUser, 
+        isAuthenticated: true, 
+        authStateLoaded: true 
+      });
+      const state = authReducer(initialState, action);
+      
+      expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.authStateLoaded).toBe(true);
     });
 
     it('should handle clearError', () => {
@@ -68,6 +84,19 @@ describe('authSlice', () => {
         
         expect(state.loading).toBe(false);
         expect(state.user).toEqual(mockUser);
+        expect(state.isAuthenticated).toBe(true);
+      });
+
+      it('should handle initializeAuthState.fulfilled', () => {
+        const action = { 
+          type: initializeAuthState.fulfilled.type, 
+          payload: mockUser 
+        };
+        const state = authReducer(initialState, action);
+        
+        expect(state.user).toEqual(mockUser);
+        expect(state.isAuthenticated).toBe(true);
+        expect(state.authStateLoaded).toBe(true);
       });
 
       it('should handle login.rejected with error message', () => {
@@ -98,12 +127,14 @@ describe('authSlice', () => {
         const stateWithUser = {
           ...initialState,
           user: mockUser,
+          isAuthenticated: true,
         };
         
         const action = { type: logout.fulfilled.type };
         const state = authReducer(stateWithUser, action);
         
         expect(state.user).toBeNull();
+        expect(state.isAuthenticated).toBe(false);
       });
     });
 
@@ -159,6 +190,8 @@ describe('authSlice', () => {
       expect(state).toHaveProperty('user');
       expect(state).toHaveProperty('loading');
       expect(state).toHaveProperty('error');
+      expect(state).toHaveProperty('isAuthenticated');
+      expect(state).toHaveProperty('authStateLoaded');
     });
 
     it('should have correct initial values', () => {
@@ -167,6 +200,8 @@ describe('authSlice', () => {
       expect(state.user).toBeNull();
       expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
+      expect(state.isAuthenticated).toBe(false);
+      expect(state.authStateLoaded).toBe(false);
     });
   });
 }); 

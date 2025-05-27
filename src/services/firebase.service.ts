@@ -73,6 +73,7 @@ export class FirebaseService {
     queryConstraints: QueryConstraint[] = []
   ): Promise<(T & { id: string })[]> {
     try {
+      console.log(`🔥 Firebase: Attempting to fetch from collection "${collectionName}"`, new Error().stack);
       const collectionRef = collection(this.db, collectionName);
       const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
@@ -82,6 +83,7 @@ export class FirebaseService {
         id: doc.id,
       }));
     } catch (error) {
+      console.error(`🔥 Firebase: Error fetching from collection "${collectionName}":`, error);
       this.handleError(error as FirestoreError, "getDocuments");
     }
   }

@@ -30,3 +30,9 @@ coverage
 .env.test.local
 .env.production.local
 **/.claude/settings.local.json
+
+# Firebase emulator data
+firebase-data/
+firestore-debug.log
+ui-debug.log
+firebase-debug.log

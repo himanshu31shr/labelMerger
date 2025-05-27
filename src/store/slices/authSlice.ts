@@ -6,15 +6,36 @@ export interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
+  authStateLoaded: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
+  isAuthenticated: false,
+  authStateLoaded: false,
 };
 
 const authService = new AuthService();
+
+// New thunk to initialize auth state listener
+export const initializeAuthState = createAsyncThunk(
+  'auth/initializeAuthState',
+  async (_, { dispatch }) => {
+    console.log('🔥 Initializing auth state...');
+    return new Promise<User | null>((resolve) => {
+      const unsubscribe = authService.onAuthStateChanged((user) => {
+        console.log('🔥 Auth state changed:', user ? 'authenticated' : 'not authenticated');
+        dispatch(setAuthState({ user, isAuthenticated: !!user, authStateLoaded: true }));
+        resolve(user);
+      });
+      // Store unsubscribe function for cleanup if needed
+      return unsubscribe;
+    });
+  }
+);
 
 export const login = createAsyncThunk(
   'auth/login',
@@ -35,7 +56,7 @@ export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async (email: string) => {
     await authService.resetPassword(email);
-    return 'Password reset email sent. Check your inbox.';
+    return 'Password reset email sent';
   }
 );
 
@@ -45,6 +66,12 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action) => {
       state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
+    },
+    setAuthState: (state, action) => {
+      state.user = action.payload.user;
+      state.isAuthenticated = action.payload.isAuthenticated;
+      state.authStateLoaded = action.payload.authStateLoaded;
     },
     clearError: (state) => {
       state.error = null;
@@ -52,6 +79,11 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(initializeAuthState.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthenticated = !!action.payload;
+        state.authStateLoaded = true;
+      })
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -59,13 +91,16 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+        state.isAuthenticated = true;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to login';
+        state.isAuthenticated = false;
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
+        state.isAuthenticated = false;
       })
       .addCase(resetPassword.pending, (state) => {
         state.loading = true;
@@ -82,5 +117,11 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, clearError } = authSlice.actions;
-export const authReducer = authSlice.reducer; 
+export const { setUser, setAuthState, clearError } = authSlice.actions;
+export const authReducer = authSlice.reducer;
+
+// Selectors
+export const selectAuth = (state: { auth: AuthState }) => state.auth;
+export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
+export const selectAuthStateLoaded = (state: { auth: AuthState }) => state.auth.authStateLoaded;
+export const selectUser = (state: { auth: AuthState }) => state.auth.user; 

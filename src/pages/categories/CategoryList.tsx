@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, ReactElement } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store/types';
+import { selectIsAuthenticated } from '../../store/slices/authSlice';
 import { 
   fetchCategories, 
   createCategory, 
@@ -59,6 +60,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
     loading = false,
     error = null
   } = useAppSelector((state: RootState) => state.categories || {});
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -82,6 +84,9 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
 
   useEffect(() => {
     const loadCategories = async () => {
+      // Only fetch if authenticated
+      if (!isAuthenticated) return;
+      
       try {
         await dispatch(fetchCategories()).unwrap();
       } catch {
@@ -94,7 +99,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
     };
     
     loadCategories();
-  }, [dispatch]);
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     return () => {

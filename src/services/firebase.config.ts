@@ -64,14 +64,15 @@ if (process.env.NODE_ENV === 'test') {
   
   // Connect to the emulator if the environment variables are set
   if (import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT) {
-    console.log('Connecting to Firestore emulator...');
+    console.log(`🔥 Connecting to Firestore emulator at ${import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST}:${import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT}`);
     connectFirestoreEmulator(
       db,
       import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST,
       parseInt(import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT, 10)
     );
+    console.log('✅ Firebase emulator connection established');
   } else {
-      console.log('Using production Firestore.');
+      console.log('🌐 Using production Firestore.');
   }
   
   // Enable offline persistence

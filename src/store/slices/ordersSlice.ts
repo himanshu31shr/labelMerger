@@ -24,10 +24,11 @@ const orderService = new TodaysOrder();
 export const fetchOrders = createAsyncThunk(
   'orders/fetchOrders',
   async (_, { getState }) => {
-    const state = getState() as { orders: OrdersState };
+    const state = getState() as { orders: OrdersState; auth: { isAuthenticated: boolean } };
     const { lastFetched, items } = state.orders;
+    const { isAuthenticated } = state.auth;
     
-    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.orders)) {
+    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.orders, isAuthenticated)) {
       return items;
     }
     
@@ -39,10 +40,11 @@ export const fetchOrders = createAsyncThunk(
 export const fetchAllOrders = createAsyncThunk(
   'orders/fetchAllOrders',
   async (_, { getState }) => {
-    const state = getState() as { orders: OrdersState };
+    const state = getState() as { orders: OrdersState; auth: { isAuthenticated: boolean } };
     const { lastFetched, items } = state.orders;
+    const { isAuthenticated } = state.auth;
     
-    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.orders)) {
+    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.orders, isAuthenticated)) {
       return items;
     }
     

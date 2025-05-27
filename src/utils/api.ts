@@ -7,8 +7,12 @@ export const CACHE_DURATIONS = {
 export const shouldFetchData = (
   lastFetched: number | null,
   items: unknown[],
-  cacheDuration: number
+  cacheDuration: number,
+  isAuthenticated: boolean = true
 ): boolean => {
+  // Don't fetch if not authenticated
+  if (!isAuthenticated) return false;
+  
   if (!lastFetched) return true;
   if (items.length === 0) return true;
   return Date.now() - lastFetched > cacheDuration;

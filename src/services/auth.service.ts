@@ -56,15 +56,35 @@ export class AuthService {
       
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       
-      // Update last login
-      await setDoc(doc(this.db, 'users', userCredential.user.uid), {
-        lastLoginAt: new Date()
-      }, { merge: true });
+      // Update last login with retry mechanism
+      await this.updateLastLogin(userCredential.user.uid);
 
       return userCredential.user;
     } catch (error) {
       console.error('Error in signIn:', error);
       throw error;
+    }
+  }
+
+  private async updateLastLogin(userId: string, maxRetries: number = 3): Promise<void> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await setDoc(doc(this.db, 'users', userId), {
+          lastLoginAt: new Date()
+        }, { merge: true });
+        return; // Success
+      } catch (error: unknown) {
+        console.warn(`Attempt ${attempt} to update lastLoginAt failed:`, error);
+        
+        if (attempt === maxRetries) {
+          console.error('Failed to update lastLoginAt after all retries, continuing with login');
+          // Don't throw error - login should still succeed even if lastLoginAt update fails
+          return;
+        }
+        
+        // Wait a bit before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 100));
+      }
     }
   }
 

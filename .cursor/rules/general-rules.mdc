@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 1. Always read docs and memory before proceeding.
 3. Always document before proceeding to implement any feature.

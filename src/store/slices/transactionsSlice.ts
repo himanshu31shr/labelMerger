@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Transaction } from '../../types/transaction.type';
 import { TransactionService } from '../../services/transaction.service';
-import { CACHE_DURATIONS, shouldFetchData, createOptimisticUpdate } from '../config';
+import { CACHE_DURATIONS, shouldFetchData } from '../config';
 
 interface TransactionsState {
   items: Transaction[];
@@ -24,10 +24,11 @@ const transactionService = new TransactionService();
 export const fetchTransactions = createAsyncThunk(
   'transactions/fetchTransactions',
   async (_, { getState }) => {
-    const state = getState() as { transactions: TransactionsState };
+    const state = getState() as { transactions: TransactionsState; auth: { isAuthenticated: boolean } };
     const { lastFetched, items } = state.transactions;
+    const { isAuthenticated } = state.auth;
     
-    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.transactions)) {
+    if (!shouldFetchData(lastFetched, items, CACHE_DURATIONS.transactions, isAuthenticated)) {
       return items;
     }
     

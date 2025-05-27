@@ -23,12 +23,14 @@ import WarningIcon from '@mui/icons-material/Warning';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchInventory, fetchLowStockItems, updateProductInventory } from '../../store/slices/inventorySlice';
+import { selectIsAuthenticated } from '../../store/slices/authSlice';
 import InventoryTable from './components/InventoryTable';
 import LowStockAlert from './components/LowStockAlert';
 
 export const InventoryPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { items, lowStockItems, loading, error } = useAppSelector((state) => state.inventory);
+  const { items, lowStockItems, loading } = useAppSelector((state) => state.inventory);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
@@ -38,9 +40,12 @@ export const InventoryPage: React.FC = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
-    dispatch(fetchInventory());
-    dispatch(fetchLowStockItems());
-  }, [dispatch]);
+    // Only fetch data if authenticated
+    if (isAuthenticated) {
+      dispatch(fetchInventory());
+      dispatch(fetchLowStockItems());
+    }
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     // Filter items based on search term and platform
@@ -80,7 +85,7 @@ export const InventoryPage: React.FC = () => {
       setSnackbarMessage('Inventory updated successfully');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-    } catch (error) {
+    } catch {
       setSnackbarMessage('Failed to update inventory');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

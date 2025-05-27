@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import {
     Box,
     CircularProgress,
@@ -5,7 +6,6 @@ import {
     Paper,
     Typography
 } from '@mui/material';
-import { useEffect } from 'react';
 import {
     CartesianGrid,
     Legend,
@@ -23,22 +23,27 @@ import { fetchLowStockItems } from '../../store/slices/inventorySlice';
 import { fetchOrderHistory } from '../../store/slices/orderHistorySlice';
 import { fetchOrders } from '../../store/slices/ordersSlice';
 import { fetchProducts } from '../../store/slices/productsSlice';
+import { selectIsAuthenticated } from '../../store/slices/authSlice';
 import LowInventoryWidget from './components/LowInventoryWidget';
 import { HiddenProductsWidget, HighPricedProductsWidget } from './components/ProductAlertWidgets';
 
 export const DashboardPage = () => {
     const dispatch = useAppDispatch();
     const { items: products, loading: productsLoading } = useAppSelector(state => state.products);
-    const { items: orders, loading: ordersLoading } = useAppSelector(state => state.orders);
-    const { dailyOrders, loading: historyLoading } = useAppSelector(state => state.orderHistory);
+    const { items: orders } = useAppSelector(state => state.orders);
+    const { dailyOrders } = useAppSelector(state => state.orderHistory);
     const { lowStockItems, loading: inventoryLoading } = useAppSelector(state => state.inventory);
+    const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
     useEffect(() => {
-        dispatch(fetchProducts({}));
-        dispatch(fetchOrders());
-        dispatch(fetchOrderHistory());
-        dispatch(fetchLowStockItems());
-    }, [dispatch]);
+        // Only fetch data if authenticated
+        if (isAuthenticated) {
+            dispatch(fetchProducts({}));
+            dispatch(fetchOrders());
+            dispatch(fetchOrderHistory());
+            dispatch(fetchLowStockItems());
+        }
+    }, [dispatch, isAuthenticated]);
 
     const totalOrders = orders.length;
     const activeOrders = orders.filter(order => order.product?.visibility === 'visible').length;

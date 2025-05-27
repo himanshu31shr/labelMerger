@@ -131,8 +131,11 @@ A comprehensive e-commerce management platform built with React, TypeScript, and
 
 5. **Start development server**
    ```bash
-   # Standard development
+   # Standard development with Firebase emulator
    npm run dev
+   
+   # Development with Vite only (uses production Firebase)
+   npm run dev:vite-only
    
    # Development with custom host
    npm run dev:local
@@ -141,11 +144,55 @@ A comprehensive e-commerce management platform built with React, TypeScript, and
    yarn dev
    ```
 
+   **Note**: The default `npm run dev` command now automatically starts the Firebase Firestore emulator alongside the Vite development server for a complete local development environment.
+
 6. **Build for production**
    ```bash
    npm run build
    npm run preview
    ```
+
+## Firebase Development Setup
+
+The project includes Firebase emulator support for local development, allowing you to test Firestore operations without affecting your production database.
+
+### Firebase Emulator Commands
+
+```bash
+# Start development with emulator (recommended)
+npm run dev
+
+# Start only the Firestore emulator
+npm run emulator:start
+
+# Start emulator with Firebase UI for debugging
+npm run emulator:ui
+
+# Export emulator data for backup
+npm run emulator:export
+
+# Import previously exported data
+npm run emulator:import
+
+# Use only Vite (connects to production Firebase)
+npm run dev:vite-only
+```
+
+### Development Environment Features
+
+- **Automatic Emulator Startup**: The `npm run dev` command automatically starts both Firebase emulator and Vite
+- **Color-coded Logs**: Firebase emulator logs appear in blue, Vite logs in green
+- **Local Firestore**: Uses localhost:8080 for Firestore operations
+- **Automatic Configuration**: Environment variables are set automatically for emulator mode
+- **Production Fallback**: Use `npm run dev:vite-only` to test against production Firebase
+
+### Firestore Emulator Benefits
+
+- 🚀 **Fast Development**: No network latency for database operations
+- 🔒 **Safe Testing**: No risk of affecting production data
+- 📊 **Firebase UI**: Access emulator dashboard at http://localhost:4000 (when using `emulator:ui`)
+- 💾 **Data Persistence**: Export/import data between development sessions
+- 🔄 **Rule Testing**: Test Firestore security rules locally
 
 ## Configuration
 

@@ -16,8 +16,8 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['products', 'orders', 'transactions', 'orderHistory', 'inventory', 'orderAnalytics', 'allOrdersForAnalytics'], // Only persist these reducers
-  blacklist: ['auth', 'pdfMerger'], // Don't persist these reducers
+  whitelist: [], // Temporarily disable all persistence
+  blacklist: ['auth', 'pdfMerger', 'products', 'orders', 'transactions', 'orderHistory', 'inventory', 'orderAnalytics', 'allOrdersForAnalytics'], // Don't persist these reducers
 };
 
 const rootReducer = combineReducers({

@@ -1,12 +1,13 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, Paper } from '@mui/material';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store';
+import { initializeAuthState } from './store/slices/authSlice';
 import getDesignTokens from './theme';
 import App from './App';
 
@@ -20,6 +21,11 @@ const AppWrapper = () => {
     setMode(newMode);
     localStorage.setItem('theme', newMode);
   };
+
+  // Initialize auth state when app starts
+  useEffect(() => {
+    store.dispatch(initializeAuthState());
+  }, []);
 
   return (
     <Provider store={store}>

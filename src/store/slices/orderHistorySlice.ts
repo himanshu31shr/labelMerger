@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { TodaysOrder, ActiveOrderSchema } from '../../services/todaysOrder.service';
 import { CACHE_DURATIONS, shouldFetchData } from '../../utils/api';
-import { ProductSummary } from '../../pages/home/services/base.transformer';
 
 interface OrderHistoryState {
   dailyOrders: ActiveOrderSchema[];
@@ -22,10 +21,11 @@ const orderService = new TodaysOrder();
 export const fetchOrderHistory = createAsyncThunk(
   'orderHistory/fetchOrderHistory',
   async (_, { getState }) => {
-    const state = getState() as { orderHistory: OrderHistoryState };
+    const state = getState() as { orderHistory: OrderHistoryState; auth: { isAuthenticated: boolean } };
     const { lastFetched, dailyOrders } = state.orderHistory;
+    const { isAuthenticated } = state.auth;
     
-    if (!shouldFetchData(lastFetched, dailyOrders, CACHE_DURATIONS.orders)) {
+    if (!shouldFetchData(lastFetched, dailyOrders, CACHE_DURATIONS.orders, isAuthenticated)) {
       return dailyOrders;
     }
     

@@ -1,24 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
-import { AuthService } from '../services/auth.service';
+import { useAppSelector } from '../store/hooks';
+import { selectIsAuthenticated, selectAuthStateLoaded } from '../store/slices/authSlice';
 
 export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const authStateLoaded = useAppSelector(selectAuthStateLoaded);
   const location = useLocation();
 
-  // Move instantiation inside the component
-  const authService = new AuthService();
-
-  useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged((user) => {
-      setIsAuthenticated(!!user);
-    });
-
-    return () => unsubscribe();
-  }, []); // No dependencies needed since authService is now a singleton
-
-  if (isAuthenticated === null) {
+  // Show loading while auth state is being determined
+  if (!authStateLoaded) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -26,6 +18,7 @@ export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ childr
     );
   }
 
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/flipkart-amazon-tools/login" state={{ from: location }} replace />;
   }
