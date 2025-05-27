@@ -11,6 +11,7 @@ import inventoryReducer from './slices/inventorySlice';
 import categoriesReducer from './slices/categoriesSlice';
 import orderAnalyticsReducer from './slices/orderAnalyticsSlice';
 import allOrdersForAnalyticsReducer from './slices/allOrdersForAnalyticsSlice';
+import categoryInventoryReducer from './slices/categoryInventorySlice';
 
 const persistConfig = {
   key: 'root',
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   categories: categoriesReducer,
   orderAnalytics: orderAnalyticsReducer,
   allOrdersForAnalytics: allOrdersForAnalyticsReducer,
+  categoryInventory: categoryInventoryReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
