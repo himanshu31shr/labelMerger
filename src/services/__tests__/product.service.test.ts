@@ -56,27 +56,30 @@ describe('ProductService', () => {
     },
   ];
 
-  const mockProduct: Product = {
-    sku: 'TEST-SKU-1',
-    name: 'Test Product',
-    description: 'Test description',
-    costPrice: 50,
-    platform: 'amazon',
-    visibility: 'visible',
-    sellingPrice: 100,
-    inventory: {
-      quantity: 10,
-      lowStockThreshold: 5,
-      lastUpdated: { seconds: 1234567890, nanoseconds: 0 } as Timestamp,
-    },
-    metadata: {
-      createdAt: { seconds: 1234567890, nanoseconds: 0 } as Timestamp,
-      updatedAt: { seconds: 1234567890, nanoseconds: 0 } as Timestamp,
-      listingStatus: 'active',
-      moq: '1',
-      amazonSerialNumber: 'B123456789',
-    },
-  };
+  // Helper to get a fresh mockProduct
+  function getMockProduct(): Product {
+    return {
+      sku: 'TEST-SKU-1',
+      name: 'Test Product',
+      description: 'Test description',
+      costPrice: 50,
+      platform: 'amazon',
+      visibility: 'visible',
+      sellingPrice: 100,
+      inventory: {
+        quantity: 10,
+        lowStockThreshold: 5,
+        lastUpdated: { seconds: 1234567890, nanoseconds: 0 } as Timestamp,
+      },
+      metadata: {
+        createdAt: { seconds: 1234567890, nanoseconds: 0 } as Timestamp,
+        updatedAt: { seconds: 1234567890, nanoseconds: 0 } as Timestamp,
+        listingStatus: 'active',
+        moq: '1',
+        amazonSerialNumber: 'B123456789',
+      },
+    };
+  }
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -203,7 +206,7 @@ describe('ProductService', () => {
 
   describe('saveProducts', () => {
     it('should save products using batch operation', async () => {
-      const products = [mockProduct];
+      const products = [getMockProduct()];
       const batchSpy = jest.spyOn(service as any, 'batchOperation');
 
       await service.saveProducts(products);
@@ -235,7 +238,7 @@ describe('ProductService', () => {
 
   describe('getProducts', () => {
     it('should get all products without filters', async () => {
-      const mockProducts = [mockProduct];
+      const mockProducts = [getMockProduct()];
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
 
       const result = await service.getProducts();
@@ -246,7 +249,7 @@ describe('ProductService', () => {
 
     it('should apply platform filter', async () => {
       const filters: ProductFilter = { platform: 'amazon' };
-      const mockProducts = [mockProduct];
+      const mockProducts = [getMockProduct()];
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
 
       const result = await service.getProducts(filters);
@@ -257,7 +260,7 @@ describe('ProductService', () => {
 
     it('should apply search filter', async () => {
       const filters: ProductFilter = { search: 'test' };
-      const mockProducts = [mockProduct];
+      const mockProducts = [getMockProduct()];
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
 
       const result = await service.getProducts(filters);
@@ -268,11 +271,11 @@ describe('ProductService', () => {
 
   describe('getProductDetails', () => {
     it('should get product by SKU', async () => {
-      jest.spyOn(service as any, 'getDocument').mockResolvedValue(mockProduct);
+      jest.spyOn(service as any, 'getDocument').mockResolvedValue(getMockProduct());
 
       const result = await service.getProductDetails('TEST-SKU-1');
 
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(getMockProduct());
       expect(service['getDocument']).toHaveBeenCalledWith('products', 'TEST-SKU-1');
     });
 
@@ -287,26 +290,23 @@ describe('ProductService', () => {
 
   describe('updateInventory', () => {
     it('should update inventory quantity', async () => {
-      jest.spyOn(service as any, 'getDocument').mockResolvedValue(mockProduct);
-      
+      jest.spyOn(service as any, 'getDocument').mockResolvedValue(getMockProduct());
       const updateSpy = jest.spyOn(service as any, 'updateDocument').mockResolvedValue(undefined);
-      
       const updatedProduct = {
-        ...mockProduct,
+        ...getMockProduct(),
         inventory: {
-          ...mockProduct.inventory,
+          ...getMockProduct().inventory,
           quantity: 15,
         }
       };
       jest.spyOn(service, 'getProductDetails')
         .mockImplementation(async (sku: string) => {
-          // Return updated product only for TEST-SKU-1 after update
           const isTargetSku = sku === 'TEST-SKU-1';
           const hasBeenUpdated = updateSpy.mock.calls.length > 0;
           if (isTargetSku && hasBeenUpdated) {
             return updatedProduct;
           }
-          return mockProduct;
+          return getMockProduct();
         });
 
       const result = await service.updateInventory('TEST-SKU-1', 5);
@@ -336,13 +336,12 @@ describe('ProductService', () => {
   describe('reduceInventoryForOrder', () => {
     it('should reduce inventory for order', async () => {
       const updatedProduct = {
-        ...mockProduct,
+        ...getMockProduct(),
         inventory: {
-          ...mockProduct.inventory,
+          ...getMockProduct().inventory,
           quantity: 7,
         }
       };
-      
       jest.spyOn(service, 'updateInventory').mockResolvedValue(updatedProduct);
 
       const result = await service.reduceInventoryForOrder('TEST-SKU-1', 3);
@@ -353,13 +352,12 @@ describe('ProductService', () => {
 
     it('should throw error if insufficient inventory', async () => {
       jest.spyOn(service, 'hasSufficientInventory').mockResolvedValue(false);
-      
       jest.spyOn(service, 'updateInventory').mockImplementation(async (sku, quantity) => {
         const hasSufficient = await service.hasSufficientInventory(sku, Math.abs(quantity));
         if (!hasSufficient) {
           throw new Error(`Insufficient inventory for SKU ${sku}. Available: 10, Required: 15`);
         }
-        return mockProduct;
+        return getMockProduct();
       });
 
       await expect(service.reduceInventoryForOrder('TEST-SKU-1', 15)).rejects.toThrow(
@@ -370,7 +368,7 @@ describe('ProductService', () => {
 
   describe('hasSufficientInventory', () => {
     it('should return true for sufficient inventory', async () => {
-      jest.spyOn(service as any, 'getDocument').mockResolvedValue(mockProduct);
+      jest.spyOn(service as any, 'getDocument').mockResolvedValue(getMockProduct());
 
       const result = await service.hasSufficientInventory('TEST-SKU-1', 5);
 
@@ -378,7 +376,7 @@ describe('ProductService', () => {
     });
 
     it('should return false for insufficient inventory', async () => {
-      jest.spyOn(service as any, 'getDocument').mockResolvedValue(mockProduct);
+      jest.spyOn(service as any, 'getDocument').mockResolvedValue(getMockProduct());
 
       const result = await service.hasSufficientInventory('TEST-SKU-1', 15);
 
@@ -397,8 +395,8 @@ describe('ProductService', () => {
   describe('getLowInventoryProducts', () => {
     it('should get products with low inventory', async () => {
       const lowStockProduct = {
-        ...mockProduct,
-        inventory: { ...mockProduct.inventory, quantity: 3 }, // Below threshold of 5
+        ...getMockProduct(),
+        inventory: { ...getMockProduct().inventory, quantity: 3 },
       };
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue([lowStockProduct]);
 
@@ -420,11 +418,11 @@ describe('ProductService', () => {
 
   describe('mapTransactionToProduct', () => {
     it('should map transaction to product', async () => {
-      jest.spyOn(service as any, 'getDocuments').mockResolvedValue([mockProduct]);
+      jest.spyOn(service as any, 'getDocuments').mockResolvedValue([getMockProduct()]);
 
       const result = await service.mapTransactionToProduct('TEST-SKU-1');
 
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(getMockProduct());
     });
 
     it('should return null if product not found for transaction mapping', async () => {

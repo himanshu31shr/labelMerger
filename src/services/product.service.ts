@@ -1,4 +1,4 @@
-import { Timestamp, orderBy, where } from "firebase/firestore";
+import { Timestamp, where } from "firebase/firestore";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { DEFAULT_PRODUCT_PRICES } from "../constants/defaultPrices";
@@ -255,9 +255,12 @@ export class ProductService extends FirebaseService {
       constraints.push(where("visibility", "==", filters.visibility));
     }
 
-    constraints.push(orderBy("sku", "desc"));
-
-    return this.getDocuments<Product>(this.COLLECTION_NAME, constraints);
+    // Get all products and merge the document ID as SKU
+    const products = await this.getDocuments<Product>(this.COLLECTION_NAME, constraints);
+    return products.map(product => ({
+      ...product,
+      sku: product.id ?? product.sku
+    }));
   }
 
   async mapTransactionToProduct(sku: string): Promise<Product | null> {

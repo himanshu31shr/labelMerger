@@ -1,24 +1,35 @@
 #!/usr/bin/env node
-import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { 
-  getFirestore, 
-  connectFirestoreEmulator, 
-  collection, 
-  doc, 
-  setDoc, 
-  addDoc,
-  Timestamp 
-} from 'firebase/firestore';
+/* eslint-disable no-undef */
+import { format } from "date-fns";
+import dotenv from "dotenv";
+import { initializeApp } from "firebase/app";
+import {
+  connectAuthEmulator,
+  createUserWithEmailAndPassword,
+  getAuth,
+} from "firebase/auth";
+import {
+  connectFirestoreEmulator,
+  doc,
+  getFirestore,
+  setDoc,
+  Timestamp,
+} from "firebase/firestore";
+dotenv.config({
+  path: ".env.local",
+});
 
 // Firebase configuration for emulator
 const firebaseConfig = {
-  apiKey: 'demo-api-key',
-  authDomain: 'demo-project.firebaseapp.com',
-  projectId: 'demo-project',
-  storageBucket: 'demo-project.appspot.com',
-  messagingSenderId: '123456789',
-  appId: '1:123456789:web:abcdef123456',
+  apiKey: process.env.VITE_FIREBASE_API_KEY || "demo-api-key",
+  authDomain:
+    process.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
+  storageBucket:
+    process.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
+  messagingSenderId:
+    process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: process.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef123456",
 };
 
 // Initialize Firebase
@@ -28,318 +39,384 @@ const db = getFirestore(app);
 
 // Connect to emulators
 try {
-  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-  connectFirestoreEmulator(db, 'localhost', 8080);
-  console.log('🔥 Connected to Firebase emulators');
+  const authEmulatorUrl = `http://${process.env.VITE_FIREBASE_AUTH_EMULATOR_HOST}:${process.env.VITE_FIREBASE_AUTH_EMULATOR_PORT}`;
+  connectAuthEmulator(auth, authEmulatorUrl, { disableWarnings: true });
+  connectFirestoreEmulator(
+    db,
+    process.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST,
+    process.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT
+  );
+  console.log("🔥 Connected to Firebase emulators");
 } catch (error) {
-  console.warn('⚠️  Emulators already connected or connection failed:', error.message);
+  console.warn(
+    "⚠️  Emulators already connected or connection failed:",
+    error.message
+  );
 }
 
 // Demo user credentials
 const DEMO_USER = {
-  email: 'demo@sacredsutra.com',
-  password: 'demo123456',
-  displayName: 'Demo User',
-  role: 'admin'
-};// Seed data
+  email: "demo@sacredsutra.com",
+  password: "demo123456",
+  displayName: "Demo User",
+  role: "admin",
+}; // Seed data
 const CATEGORIES_SEED_DATA = [
   {
-    id: 'electronics',
-    name: 'Electronics',
-    description: 'Electronic devices and gadgets',
-    tags: ['tech', 'gadgets', 'devices'],
-    totalQuantity: 150,
-    lowStockThreshold: 20,
-    productCount: 5,
-    lastUpdated: new Date(),
-    isActive: true
+    id: "electronics",
+    name: "Electronics",
+    description: "Electronic devices and gadgets",
+    tag: "tech",
+    inventory: {
+      totalQuantity: 80, // 50 + 30 from products
+      lowStockThreshold: 20,
+      lastUpdated: new Date(),
+      productCount: 2,
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
-    id: 'books',
-    name: 'Books',
-    description: 'Books and literature',
-    tags: ['reading', 'education', 'literature'],
-    totalQuantity: 200,
-    lowStockThreshold: 30,
-    productCount: 8,
-    lastUpdated: new Date(),
-    isActive: true
+    id: "books",
+    name: "Books",
+    description: "Books and literature",
+    tag: "education",
+    inventory: {
+      totalQuantity: 80, // from NOV-001
+      lowStockThreshold: 15,
+      lastUpdated: new Date(),
+      productCount: 1,
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
-    id: 'clothing',
-    name: 'Clothing',
-    description: 'Apparel and fashion items',
-    tags: ['fashion', 'apparel', 'style'],
-    totalQuantity: 100,
-    lowStockThreshold: 25,
-    productCount: 6,
-    lastUpdated: new Date(),
-    isActive: true
-  }
+    id: "clothing",
+    name: "Clothing",
+    description: "Apparel and fashion items",
+    tag: "fashion",
+    inventory: {
+      totalQuantity: 45, // from TSHIRT-001
+      lowStockThreshold: 10,
+      lastUpdated: new Date(),
+      productCount: 1,
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const PRODUCTS_SEED_DATA = [
   {
-    id: 'smartphone-001',
-    name: 'Smartphone Pro Max',
-    categoryId: 'electronics',
-    description: 'Latest smartphone with advanced features',
-    tags: ['mobile', 'communication', 'tech'],
-    flipkartPrice: 45000,
-    amazonPrice: 44500,
+    sku: "SPM-001",
+    name: "Smartphone Pro Max",
+    description: "Latest smartphone with advanced features",
     costPrice: 35000,
-    suggestedSellingPrice: 42000,
-    isActive: true,
+    platform: "amazon",
+    visibility: "visible",
+    sellingPrice: 42000,
+    categoryId: "electronics",
+    inventory: {
+      quantity: 50,
+      lowStockThreshold: 10,
+      lastUpdated: new Date(),
+    },
+    metadata: {
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      listingStatus: "active",
+      moq: "1",
+      amazonSerialNumber: "B123456789",
+      existsOnSellerPage: true,
+    },
     existsOnSellerPage: true,
-    sku: 'SPM-001',
-    inventory: 50,
-    createdAt: new Date(),
-    updatedAt: new Date()
   },
   {
-    id: 'novel-001',
-    name: 'The Great Adventure',
-    categoryId: 'books',
-    description: 'An exciting adventure novel',
-    tags: ['fiction', 'adventure', 'bestseller'],
-    flipkartPrice: 450,
-    amazonPrice: 420,
+    sku: "NOV-001",
+    name: "The Great Adventure",
+    description: "An exciting adventure novel",
     costPrice: 250,
-    suggestedSellingPrice: 380,
-    isActive: true,
+    platform: "flipkart",
+    visibility: "visible",
+    sellingPrice: 380,
+    categoryId: "books",
+    inventory: {
+      quantity: 80,
+      lowStockThreshold: 15,
+      lastUpdated: new Date(),
+    },
+    metadata: {
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      listingStatus: "active",
+      moq: "1",
+      flipkartSerialNumber: "FK123456789",
+      existsOnSellerPage: true,
+    },
     existsOnSellerPage: true,
-    sku: 'NOV-001',
-    inventory: 80,
-    createdAt: new Date(),
-    updatedAt: new Date()
   },
   {
-    id: 'laptop-001',
-    name: 'Gaming Laptop Ultra',
-    categoryId: 'electronics',
-    description: 'High-performance gaming laptop',
-    tags: ['laptop', 'gaming', 'computer'],
-    flipkartPrice: 85000,
-    amazonPrice: 83000,
+    sku: "LAP-001",
+    name: "Gaming Laptop Ultra",
+    description: "High-performance gaming laptop",
     costPrice: 65000,
-    suggestedSellingPrice: 80000,
-    isActive: true,
+    platform: "amazon",
+    visibility: "visible",
+    sellingPrice: 80000,
+    categoryId: "electronics",
+    inventory: {
+      quantity: 30,
+      lowStockThreshold: 5,
+      lastUpdated: new Date(),
+    },
+    metadata: {
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      listingStatus: "active",
+      moq: "1",
+      amazonSerialNumber: "B987654321",
+      existsOnSellerPage: true,
+    },
     existsOnSellerPage: true,
-    sku: 'LAP-001',
-    inventory: 30,
-    createdAt: new Date(),
-    updatedAt: new Date()
   },
   {
-    id: 'tshirt-001',
-    name: 'Premium Cotton T-Shirt',
-    categoryId: 'clothing',
-    description: 'Comfortable premium cotton t-shirt',
-    tags: ['casual', 'cotton', 'comfortable'],
-    flipkartPrice: 800,
-    amazonPrice: 750,
+    sku: "TSHIRT-001",
+    name: "Premium Cotton T-Shirt",
+    description: "Comfortable premium cotton t-shirt",
     costPrice: 400,
-    suggestedSellingPrice: 650,
-    isActive: true,
+    platform: "flipkart",
+    visibility: "visible",
+    sellingPrice: 650,
+    categoryId: "clothing",
+    inventory: {
+      quantity: 45,
+      lowStockThreshold: 10,
+      lastUpdated: new Date(),
+    },
+    metadata: {
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      listingStatus: "active",
+      moq: "1",
+      flipkartSerialNumber: "FK987654321",
+      existsOnSellerPage: true,
+    },
     existsOnSellerPage: true,
-    sku: 'TSHIRT-001',
-    inventory: 45,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];// Seeding functions
+  },
+]; // Seeding functions
 async function createDemoUser() {
   try {
-    console.log('👤 Creating demo user...');
+    console.log("👤 Creating demo user...");
     const userCredential = await createUserWithEmailAndPassword(
-      auth, 
-      DEMO_USER.email, 
+      auth,
+      DEMO_USER.email,
       DEMO_USER.password
     );
-    
+
     // Add user document to Firestore
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
+    await setDoc(doc(db, "users", userCredential.user.uid), {
       uid: userCredential.user.uid,
       email: DEMO_USER.email,
       displayName: DEMO_USER.displayName,
       role: DEMO_USER.role,
       createdAt: Timestamp.now(),
       lastLoginAt: Timestamp.now(),
-      isActive: true
+      isActive: true,
     });
-    
-    console.log('✅ Demo user created successfully');
+
+    console.log("✅ Demo user created successfully");
     return userCredential.user;
   } catch (error) {
-    if (error.code === 'auth/email-already-in-use') {
-      console.log('✅ Demo user already exists');
+    if (error.code === "auth/email-already-in-use") {
+      console.log("✅ Demo user already exists");
       return null;
     }
-    console.error('❌ Error creating demo user:', error);
+    console.error("❌ Error creating demo user:", error);
     throw error;
   }
 }
 
 async function seedCategories() {
   try {
-    console.log('📦 Seeding categories...');
-    
+    console.log("📦 Seeding categories...");
+
     for (const category of CATEGORIES_SEED_DATA) {
-      await setDoc(doc(db, 'categories', category.id), {
+      const categoryData = {
         ...category,
-        lastUpdated: Timestamp.fromDate(category.lastUpdated)
-      });
+        inventory: {
+          ...category.inventory,
+          lastUpdated: Timestamp.fromDate(category.inventory.lastUpdated),
+        },
+        createdAt: Timestamp.fromDate(category.createdAt),
+        updatedAt: Timestamp.fromDate(category.updatedAt),
+      };
+
+      await setDoc(doc(db, "categories", category.id), categoryData);
     }
-    
+
     console.log(`✅ Seeded ${CATEGORIES_SEED_DATA.length} categories`);
   } catch (error) {
-    console.error('❌ Error seeding categories:', error);
+    console.error("❌ Error seeding categories:", error);
     throw error;
   }
 }
 
 async function seedProducts() {
   try {
-    console.log('🛍️ Seeding products...');
-    
+    console.log("🛍️ Seeding products...");
+
     for (const product of PRODUCTS_SEED_DATA) {
-      await setDoc(doc(db, 'products', product.id), {
+      const productData = {
         ...product,
-        createdAt: Timestamp.fromDate(product.createdAt),
-        updatedAt: Timestamp.fromDate(product.updatedAt)
-      });
+        inventory: {
+          ...product.inventory,
+          lastUpdated: Timestamp.fromDate(product.inventory.lastUpdated),
+        },
+        metadata: {
+          ...product.metadata,
+          createdAt: Timestamp.fromDate(product.metadata.createdAt),
+          updatedAt: Timestamp.fromDate(product.metadata.updatedAt),
+        },
+      };
+
+      await setDoc(doc(db, "products", product.sku), productData);
     }
-    
+
     console.log(`✅ Seeded ${PRODUCTS_SEED_DATA.length} products`);
   } catch (error) {
-    console.error('❌ Error seeding products:', error);
+    console.error("❌ Error seeding products:", error);
     throw error;
   }
-}// Orders seed data
+} // Orders seed data
 const ORDERS_SEED_DATA = [
   {
-    id: 'order-001',
-    orderNumber: 'ORD-2025-001',
-    customerName: 'John Doe',
-    items: [{ sku: 'SPM-001', name: 'Smartphone Pro Max', quantity: 1, price: 42000 }],
+    id: "order-001",
+    orderNumber: "ORD-2025-001",
+    customerName: "John Doe",
+    items: [
+      { sku: "SPM-001", name: "Smartphone Pro Max", quantity: 1, price: 42000 },
+    ],
     totalAmount: 42000,
-    status: 'completed',
-    platform: 'flipkart',
+    status: "completed",
+    platform: "flipkart",
     orderDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
   },
   {
-    id: 'order-002',
-    orderNumber: 'ORD-2025-002',
-    customerName: 'Jane Smith',
-    items: [{ sku: 'NOV-001', name: 'The Great Adventure', quantity: 2, price: 380 }],
+    id: "order-002",
+    orderNumber: "ORD-2025-002",
+    customerName: "Jane Smith",
+    items: [
+      { sku: "NOV-001", name: "The Great Adventure", quantity: 2, price: 380 },
+    ],
     totalAmount: 760,
-    status: 'completed',
-    platform: 'amazon',
+    status: "completed",
+    platform: "amazon",
     orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
-  }
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+  },
 ];
 
 // Active orders seed data
-const ACTIVE_ORDERS_SEED_DATA = [
-  {
-    id: 'active-001',
-    orderNumber: 'ORD-2025-003',
-    customerName: 'Sarah Wilson',
-    sku: 'TSHIRT-001',
-    name: 'Premium Cotton T-Shirt',
-    quantity: 2,
-    platform: 'amazon',
-    status: 'pending',
-    orderDate: new Date(),
-    createdAt: new Date()
-  }
-];
+const ACTIVE_ORDERS_SEED_DATA = [{
+  id: format(new Date(), "yyyy-MM-dd"),
+  date: format(new Date(), "yyyy-MM-dd"),
+  orders: [
+    {
+      SKU: "TSHIRT-001",
+      type: "flipkart",
+      quantity: 2,
+      product: null, // Will be populated by the service
+    },
+  ],
+}];
 
 async function seedOrders() {
   try {
-    console.log('📋 Seeding orders...');
+    console.log("📋 Seeding orders...");
     for (const order of ORDERS_SEED_DATA) {
-      await setDoc(doc(db, 'orders', order.id), {
+      await setDoc(doc(db, "orders", order.id), {
         ...order,
         orderDate: Timestamp.fromDate(order.orderDate),
-        createdAt: Timestamp.fromDate(order.createdAt)
+        createdAt: Timestamp.fromDate(order.createdAt),
       });
     }
     console.log(`✅ Seeded ${ORDERS_SEED_DATA.length} orders`);
   } catch (error) {
-    console.error('❌ Error seeding orders:', error);
+    console.error("❌ Error seeding orders:", error);
   }
 }
 
 async function seedActiveOrders() {
   try {
-    console.log('⚡ Seeding active orders...');
+    console.log("⚡ Seeding active orders...");
     for (const order of ACTIVE_ORDERS_SEED_DATA) {
-      await setDoc(doc(db, 'activeOrders', order.id), {
+      await setDoc(doc(db, "activeOrders", order.id), {
         ...order,
         orderDate: Timestamp.fromDate(order.orderDate),
-        createdAt: Timestamp.fromDate(order.createdAt)
+        createdAt: Timestamp.fromDate(order.createdAt),
       });
     }
     console.log(`✅ Seeded ${ACTIVE_ORDERS_SEED_DATA.length} active orders`);
   } catch (error) {
-    console.error('❌ Error seeding active orders:', error);
+    console.error("❌ Error seeding active orders:", error);
   }
 }
 
 // Main seeding function
 async function seedEmulatorData() {
   try {
-    console.log('🌱 Starting Firebase emulator seeding...');
-    
+    console.log("🌱 Starting Firebase emulator seeding...");
+
     // Create demo user first
     const user = await createDemoUser();
-    
+
     // If user was created, sign in to get authentication context
     if (user || DEMO_USER.email) {
       try {
-        console.log('🔐 Signing in for seeding operations...');
-        await auth.signInWithEmailAndPassword(DEMO_USER.email, DEMO_USER.password);
-        console.log('✅ Authenticated for seeding');
-      } catch (signInError) {
-        console.log('ℹ️  Using existing authentication context');
+        console.log("🔐 Signing in for seeding operations...");
+        await auth.signInWithEmailAndPassword(
+          DEMO_USER.email,
+          DEMO_USER.password
+        );
+        console.log("✅ Authenticated for seeding");
+      } catch {
+        console.log("ℹ️  Using existing authentication context");
       }
     }
-    
+
     // Seed categories
     await seedCategories();
-    
+
     // Seed products
     await seedProducts();
-    
+
     // Seed orders
     await seedOrders();
-    
+
     // Seed active orders
     await seedActiveOrders();
-    
-    console.log('🎉 Firebase emulator seeding completed successfully!');
+
+    console.log("🎉 Firebase emulator seeding completed successfully!");
     console.log(`📧 Demo User: ${DEMO_USER.email}`);
     console.log(`🔑 Password: ${DEMO_USER.password}`);
     console.log(`📦 Categories: ${CATEGORIES_SEED_DATA.length}`);
     console.log(`🛍️ Products: ${PRODUCTS_SEED_DATA.length}`);
     console.log(`📋 Orders: ${ORDERS_SEED_DATA.length}`);
     console.log(`⚡ Active Orders: ${ACTIVE_ORDERS_SEED_DATA.length}`);
-    console.log('🔥 Emulator UI: http://localhost:4000');
-    
+    console.log("🔥 Emulator UI: http://localhost:4000");
+
     process.exit(0);
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    console.error("❌ Seeding failed:", error);
     process.exit(1);
   }
 }
 
 // Run seeding when script is executed directly
 // Check if this script is being run directly (not imported)
-if (process.argv[1].includes('seed-emulator.js')) {
+if (process.argv[1].includes("seed-emulator.js")) {
   seedEmulatorData();
 }
 
-export { seedEmulatorData, DEMO_USER };
+export { DEMO_USER, seedEmulatorData };
