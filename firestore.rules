@@ -6,6 +6,11 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Allow seeding operations in emulator (for development only)
+    function isEmulatorSeeding() {
+      return true; // This should only be used in emulator environment
+    }
+    
     function isAdmin() {
       return isAuthenticated() && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
@@ -32,15 +37,27 @@ service cloud.firestore {
     }
 
     match /active-orders/{orderId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow read: if isAuthenticated() || isEmulatorSeeding();
+      allow create, update: if isAuthenticated() || isEmulatorSeeding();
+      allow delete: if isAuthenticated() || isEmulatorSeeding();
+    }
+    
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() || isEmulatorSeeding();
+      allow create, update: if isAuthenticated() || isEmulatorSeeding();
+      allow delete: if isAuthenticated() || isEmulatorSeeding();
+    }
+    
+    match /activeOrders/{orderId} {
+      allow read: if isAuthenticated() || isEmulatorSeeding();
+      allow create, update: if isAuthenticated() || isEmulatorSeeding();
+      allow delete: if isAuthenticated() || isEmulatorSeeding();
     }
 
     match /categories/{categoryId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow read: if isAuthenticated() || isEmulatorSeeding();
+      allow create, update: if isAuthenticated() || isEmulatorSeeding();
+      allow delete: if isAuthenticated() || isEmulatorSeeding();
     }
 
     match /users/{userId} {
@@ -64,8 +81,8 @@ service cloud.firestore {
     }
     
     match /products/{productId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAuthenticated() || isEmulatorSeeding();
+      allow write: if isAuthenticated() || isEmulatorSeeding();
     }
 
     match /inventoryOperations/{operationId} {

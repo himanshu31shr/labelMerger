@@ -154,19 +154,41 @@ A comprehensive e-commerce management platform built with React, TypeScript, and
 
 ## Firebase Development Setup
 
-The project includes Firebase emulator support for local development, allowing you to test Firestore operations without affecting your production database.
+The project includes Firebase emulator support for local development with automatic data seeding, allowing you to test both Firestore and Authentication operations without affecting your production database.
+
+### Quick Start with Emulators
+
+1. **Copy environment configuration**:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+2. **Start development with emulators and seeding**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Login with demo user**:
+   - Email: `demo@sacredsutra.com`
+   - Password: `demo123456`
 
 ### Firebase Emulator Commands
 
 ```bash
-# Start development with emulator (recommended)
+# Start development with emulators + seeding (recommended)
 npm run dev
 
-# Start only the Firestore emulator
+# Start only the Firebase emulators (Auth + Firestore)
 npm run emulator:start
 
-# Start emulator with Firebase UI for debugging
+# Start emulators with Firebase UI for debugging
 npm run emulator:ui
+
+# Manually seed emulator with demo data
+npm run seed:emulator
+
+# Reset and reseed emulator data
+npm run emulator:reset
 
 # Export emulator data for backup
 npm run emulator:export
@@ -177,6 +199,13 @@ npm run emulator:import
 # Use only Vite (connects to production Firebase)
 npm run dev:vite-only
 ```
+
+### Emulator Features
+
+- **Authentication Emulator** (Port 9099): Test user authentication locally
+- **Firestore Emulator** (Port 8080): Local database operations
+- **Emulator UI** (Port 4000): Visual interface for debugging
+- **Automatic Seeding**: Demo user, categories, and products created on startup
 
 ### Development Environment Features
 

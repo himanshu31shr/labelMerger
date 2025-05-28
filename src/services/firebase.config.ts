@@ -1,5 +1,5 @@
 import { FirebaseApp, initializeApp } from 'firebase/app';
-import { Auth, getAuth } from 'firebase/auth';
+import { Auth, getAuth, connectAuthEmulator } from 'firebase/auth';
 import { 
   Firestore, 
   enableIndexedDbPersistence, 
@@ -62,7 +62,7 @@ if (process.env.NODE_ENV === 'test') {
     experimentalForceLongPolling: true // Better for certain network conditions
   });
   
-  // Connect to the emulator if the environment variables are set
+  // Connect to the emulators if the environment variables are set
   if (import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT) {
     console.log(`🔥 Connecting to Firestore emulator at ${import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST}:${import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT}`);
     connectFirestoreEmulator(
@@ -70,9 +70,19 @@ if (process.env.NODE_ENV === 'test') {
       import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST,
       parseInt(import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT, 10)
     );
-    console.log('✅ Firebase emulator connection established');
+    console.log('✅ Firestore emulator connection established');
   } else {
       console.log('🌐 Using production Firestore.');
+  }
+
+  // Connect to Auth emulator if environment variables are set
+  if (import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT) {
+    const authUrl = `http://${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST}:${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT}`;
+    console.log(`🔐 Connecting to Auth emulator at ${authUrl}`);
+    connectAuthEmulator(auth, authUrl, { disableWarnings: true });
+    console.log('✅ Auth emulator connection established');
+  } else {
+    console.log('🌐 Using production Auth.');
   }
   
   // Enable offline persistence
