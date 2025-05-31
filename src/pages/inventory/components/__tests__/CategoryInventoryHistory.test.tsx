@@ -7,13 +7,6 @@ import categoryInventoryReducer, { CategoryInventoryState } from '../../../../st
 import CategoryInventoryHistory from '../CategoryInventoryHistory';
 import { InventoryOperation } from '../../../../types/categoryInventory.types';
 
-// Mock Firebase Timestamp
-const mockTimestamp = (date: Date) => ({
-  toDate: () => date,
-  seconds: Math.floor(date.getTime() / 1000),
-  nanoseconds: (date.getTime() % 1000) * 1e6,
-});
-
 // Mock window.URL for export functionality
 Object.defineProperty(window, 'URL', {
   value: {
@@ -33,7 +26,7 @@ const mockOperations: InventoryOperation[] = [
     previousQuantity: 100,
     newQuantity: 150,
     performedBy: 'John Doe',
-    timestamp: mockTimestamp(new Date('2024-01-15T10:00:00Z')),
+    timestamp: new Date('2024-01-15T10:00:00Z'),
     metadata: {
       batchId: 'batch-001',
       source: 'manual',
@@ -48,7 +41,7 @@ const mockOperations: InventoryOperation[] = [
     previousQuantity: 150,
     newQuantity: 125,
     performedBy: 'Alice Wonderland',
-    timestamp: mockTimestamp(new Date('2024-01-14T14:30:00Z')),
+    timestamp: new Date('2024-01-14T14:30:00Z'),
     metadata: {
       orderId: 'order-123',
       customerId: 'cust-789',
@@ -63,7 +56,7 @@ const mockOperations: InventoryOperation[] = [
     previousQuantity: 125,
     newQuantity: 115,
     performedBy: 'Jane Smith',
-    timestamp: mockTimestamp(new Date('2024-01-13T09:15:00Z')),
+    timestamp: new Date('2024-01-13T09:15:00Z'),
     metadata: {
       source: 'transfer',
       transferId: 'transfer-456',
