@@ -21,6 +21,7 @@ export interface Column<T> {
   filter?: boolean;
   align?: "right" | "left" | "center";
   format?: (value: unknown, row: T | undefined) => React.ReactNode;
+  filterValue?: (row: T) => string; // Custom function to get the value for filtering
   priorityOnMobile?: boolean; // New property to indicate if column should be displayed prominently on mobile
 }
 
@@ -130,6 +131,17 @@ export function DataTable<T>({
     const result = data.filter((row) => {
       return Object.entries(filters).every(([key, filterValue]) => {
         if (!filterValue) return true;
+        
+        // Find the column definition for this key
+        const column = columns.find(col => col.id === key);
+        
+        // Use custom filterValue function if available
+        if (column?.filterValue) {
+          const customValue = column.filterValue(row);
+          return customValue.toLowerCase().includes(filterValue.toLowerCase());
+        }
+        
+        // Fall back to default behavior
         const value = getNestedValue(row, key);
         return String(value).toLowerCase().includes(filterValue.toLowerCase());
       });
@@ -143,21 +155,12 @@ export function DataTable<T>({
         ? compareValues(bValue, aValue)
         : compareValues(aValue, bValue);
     });
-  }, [data, order, orderBy, filters]);
+  }, [data, order, orderBy, filters, columns]);
 
   const paginatedData = React.useMemo(() => {
     const startIndex = page * rowsPerPage;
     return filteredAndSortedData.slice(startIndex, startIndex + rowsPerPage);
   }, [filteredAndSortedData, page, rowsPerPage]);
-
-  // Check for initial search value from filters
-  const getInitialSearchText = (): string => {
-    if (!isMobile) return '';
-
-    const filterValues = Object.values(filters);
-    const activeFilter = filterValues.find(v => v && typeof v === 'string' && v.length > 0);
-    return activeFilter || '';
-  };
 
   // Render mobile view
   if (isMobile) {

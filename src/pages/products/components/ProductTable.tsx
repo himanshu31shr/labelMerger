@@ -4,6 +4,8 @@ import {
   Chip,
   IconButton,
   Checkbox,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
@@ -33,6 +35,8 @@ export const ProductTable: React.FC<Props> = ({
   const dispatch = useAppDispatch();
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [currentFilters, setCurrentFilters] = useState<ProductFilter>({});
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -54,10 +58,28 @@ export const ProductTable: React.FC<Props> = ({
     });
   };
 
-  const handleBulkCategoryUpdate = (skus: string[], categoryId: string) => {
+  const handleBulkCategoryUpdate = async (skus: string[], categoryId: string) => {
     if (onBulkCategoryUpdate) {
-      onBulkCategoryUpdate(skus, categoryId);
+      try {
+        await onBulkCategoryUpdate(skus, categoryId);
+        
+        // Clear selected products after successful assignment
+        setSelectedProducts([]);
+        
+        // Show success notification
+        const categoryName = getCategoryName(categoryId);
+        setSnackbarMessage(`Successfully assigned ${skus.length} product(s) to category "${categoryName}"`);
+        setSnackbarOpen(true);
+      } catch {
+        // Show error notification
+        setSnackbarMessage('Failed to assign category to products');
+        setSnackbarOpen(true);
+      }
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   const getCategoryName = (categoryId?: string) => {
@@ -82,12 +104,12 @@ export const ProductTable: React.FC<Props> = ({
     },
     { id: "sku", label: "SKU", filter: true },
     { id: "name", label: "Name", filter: true },
-    { id: "description", label: "Description", filter: true },
     {
       id: "categoryId",
       label: "Category",
       filter: true,
-      format: (value) => <Chip label={getCategoryName(value as string)} size="small" />
+      format: (value) => <Chip label={getCategoryName(value as string)} size="small" />,
+      filterValue: (row) => getCategoryName(row.categoryId)
     },
     {
       id: "platform",
@@ -165,6 +187,21 @@ export const ProductTable: React.FC<Props> = ({
         rowsPerPageOptions={[10, 25, 50]}
         defaultRowsPerPage={10}
       />
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

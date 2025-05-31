@@ -637,6 +637,23 @@ npm run test:coverage
 ## License
 This project is licensed under the MIT License.
 
+## Recent Updates
+
+### Product Category Assignment Enhancement (Latest)
+- ✅ **Enhanced User Experience**: Automatic product unselection after category assignment
+- ✅ **Success Notifications**: Clear feedback when categories are assigned successfully
+- ✅ **Error Handling**: User-friendly error messages for failed assignments
+- ✅ **Streamlined Workflow**: Category dropdown automatically clears after assignment
+- ✅ **Professional UI**: Material-UI Snackbar notifications with auto-hide functionality
+
+**Technical Details:**
+- Enhanced `ProductTable` component with notification system
+- Updated `ProductTableToolbar` with automatic state clearing
+- Added proper error handling and user feedback
+- Maintained backward compatibility with existing functionality
+
+For detailed information, see [Product Category Assignment Enhancement Documentation](docs/PRODUCT_CATEGORY_ASSIGNMENT_ENHANCEMENT.md).
+
 ## Future Enhancements
 - [ ] Multi-language support
 - [ ] Advanced reporting and analytics

@@ -78,15 +78,38 @@ export class FirebaseService {
         throw new Error(`Function values not allowed in Firestore at path: ${path}`);
       }
       
-      if (value && typeof value === 'object' && !Object.prototype.hasOwnProperty.call(value, 'constructor')) {
-        throw new Error(`Objects without constructor not allowed in Firestore at path: ${path}`);
-      }
-      
-      if (value && typeof value === 'object' && value.constructor === Object) {
-        const objValue = value as Record<string, unknown>;
-        Object.keys(objValue).forEach(key => {
-          validateValue(objValue[key], `${path}.${key}`);
-        });
+      // Allow Firebase Timestamp objects and other valid Firestore types
+      if (value && typeof value === 'object') {
+        // Check if it's a Firebase Timestamp
+        if (value.constructor && value.constructor.name === 'Timestamp') {
+          return; // Valid Firebase Timestamp
+        }
+        
+        // Check if it's a Date object (which should be converted to Timestamp)
+        if (value instanceof Date) {
+          console.warn(`Date object found at path: ${path}. Consider using Timestamp.fromDate() instead.`);
+          return; // Allow Date objects (Firestore will convert them)
+        }
+        
+        // Check for plain objects without constructor (these are problematic)
+        if (!value.constructor || value.constructor === Object) {
+          // This is a plain object, validate its properties recursively
+          const objValue = value as Record<string, unknown>;
+          Object.keys(objValue).forEach(key => {
+            validateValue(objValue[key], `${path}.${key}`);
+          });
+          return;
+        }
+        
+        // For other objects with constructors, check if they're valid Firestore types
+        const constructorName = value.constructor.name;
+        const validFirestoreTypes = ['GeoPoint', 'DocumentReference', 'Blob'];
+        if (validFirestoreTypes.includes(constructorName)) {
+          return; // Valid Firestore type
+        }
+        
+        // If it's not a recognized Firestore type, it might be problematic
+        console.warn(`Unknown object type at path: ${path}. Constructor: ${constructorName}`);
       }
       
       if (Array.isArray(value)) {

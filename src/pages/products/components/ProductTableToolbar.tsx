@@ -67,7 +67,7 @@ export const ProductTableToolbar: React.FC<Props> = ({
 
         // Now, assign the newly created category to selected products
         if (selectedProducts.length > 0) {
-          onBulkCategoryUpdate(selectedProducts, newCategoryId);
+          await onBulkCategoryUpdate(selectedProducts, newCategoryId);
         }
 
         // Refetch categories to update the list in the Autocomplete
@@ -87,12 +87,16 @@ export const ProductTableToolbar: React.FC<Props> = ({
     }
   };
 
-  const handleAssignCategory = () => {
+  const handleAssignCategory = async () => {
     if (selectedProducts.length > 0 && selectedCategoryForAssign) {
-      onBulkCategoryUpdate(selectedProducts, selectedCategoryForAssign);
-      // We will keep selected products and category selected for now as per previous troubleshooting
-      // setSelectedProducts([]);
-      // setSelectedCategoryForAssign(null);
+      try {
+        await onBulkCategoryUpdate(selectedProducts, selectedCategoryForAssign);
+        
+        // Clear states after successful assignment
+        setSelectedCategoryForAssign(null);
+      } catch (error) {
+        console.error("Error assigning category:", error);
+      }
     }
   };
 
