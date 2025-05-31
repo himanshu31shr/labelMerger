@@ -26,6 +26,7 @@ import { fetchProducts } from '../../store/slices/productsSlice';
 import { selectIsAuthenticated } from '../../store/slices/authSlice';
 import CategoryLowInventoryWidget from './components/CategoryLowInventoryWidget';
 import { HiddenProductsWidget, HighPricedProductsWidget } from './components/ProductAlertWidgets';
+import UncategorizedProductsWidget from './components/UncategorizedProductsWidget';
 
 export const DashboardPage = () => {
     const dispatch = useAppDispatch();
@@ -192,7 +193,7 @@ export const DashboardPage = () => {
             {/* Additional Alert Widgets */}
             <Grid container spacing={3} sx={{ mt: 1 }}>
                 {/* Hidden Products Widget */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                     <HiddenProductsWidget
                         products={products}
                         loading={productsLoading}
@@ -200,8 +201,16 @@ export const DashboardPage = () => {
                 </Grid>
 
                 {/* High-Priced Products Widget */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                     <HighPricedProductsWidget
+                        products={products}
+                        loading={productsLoading}
+                    />
+                </Grid>
+
+                {/* Uncategorized Products Widget */}
+                <Grid item xs={12} md={4}>
+                    <UncategorizedProductsWidget
                         products={products}
                         loading={productsLoading}
                     />

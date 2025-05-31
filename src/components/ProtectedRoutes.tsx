@@ -62,7 +62,11 @@ const OrderAnalytics = React.lazy(() =>
   }))
 );
 
-
+const UncategorizedProductsPage = React.lazy(() =>
+  import("../pages/uncategorized-products/uncategorized-products.page").then((module) => ({
+    default: module.default,
+  }))
+);
 
 interface ProtectedRoutesProps {
   toggleTheme: () => void;
@@ -85,6 +89,7 @@ export const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
         <Route path="/inventory/" element={<InventoryPage />} />
         <Route path="/categories/" element={<CategoriesPage />} />
         <Route path="/order-analytics/" element={<OrderAnalytics />} />
+        <Route path="/uncategorized-products/" element={<UncategorizedProductsPage />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>

@@ -7,6 +7,7 @@ import InventoryManagementIcon from "@mui/icons-material/Warehouse";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CategoryIcon from "@mui/icons-material/Category";
+import WarningIcon from "@mui/icons-material/Warning";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import {
@@ -124,7 +125,7 @@ export const DefaultContainer = ({
   React.useEffect(() => {
     const path = location.pathname;
     setOrdersOpen(path.includes('/home/') || path.includes('/activeOrders/'));
-    setProductsOpen(path.includes('/products/') || path.includes('/hidden-products/'));
+    setProductsOpen(path.includes('/products/') || path.includes('/hidden-products/') || path.includes('/uncategorized-products/'));
     setManagementOpen(path.includes('/categories/') || path.includes('/inventory/'));
   }, [location.pathname]);
 
@@ -272,6 +273,22 @@ export const DefaultContainer = ({
                     <VisibilityOffIcon />
                   </StyledListItemIcon>
                   <StyledListItemText primary={"Hidden Products"} />
+                </StyledListItemButton>
+              </ListItem>
+            </Link>
+            <Link
+              component={RouterLink}
+              to={"/flipkart-amazon-tools/uncategorized-products/"}
+              data-testid="uncategorized-products"
+              style={{ textDecoration: 'none', color: 'inherit' }}
+              onClick={handleNavigation}
+            >
+              <ListItem key={"Uncategorized Products"} disablePadding>
+                <StyledListItemButton selected={isActiveRoute("/flipkart-amazon-tools/uncategorized-products/")}>
+                  <StyledListItemIcon>
+                    <WarningIcon />
+                  </StyledListItemIcon>
+                  <StyledListItemText primary={"Uncategorized Products"} />
                 </StyledListItemButton>
               </ListItem>
             </Link>

@@ -639,7 +639,25 @@ This project is licensed under the MIT License.
 
 ## Recent Updates
 
-### Product Category Assignment Enhancement (Latest)
+### Uncategorized Products Management (Latest)
+- ✅ **New Page**: Dedicated page for products without categories at `/uncategorized-products/`
+- ✅ **Dashboard Alert**: Warning widget showing count and top 5 uncategorized products
+- ✅ **Smart Filtering**: Automatically identifies products with missing or empty categoryId
+- ✅ **Bulk Assignment**: Select multiple products and assign categories in bulk
+- ✅ **Navigation Integration**: Added to Products section in sidebar with warning icon
+- ✅ **Success States**: Congratulatory message when all products are categorized
+- ✅ **User Experience**: Clear visual indicators and actionable alerts
+
+**Technical Details:**
+- Created `UncategorizedProductsPage` with comprehensive filtering
+- Built `UncategorizedProductTable` reusing existing ProductTableToolbar
+- Added `UncategorizedProductsWidget` for dashboard notifications
+- Updated navigation and routing with proper lazy loading
+- Enhanced dashboard layout from 2 to 3 columns for better space utilization
+
+For detailed information, see [Uncategorized Products Feature Documentation](docs/UNCATEGORIZED_PRODUCTS_FEATURE.md).
+
+### Product Category Assignment Enhancement
 - ✅ **Enhanced User Experience**: Automatic product unselection after category assignment
 - ✅ **Success Notifications**: Clear feedback when categories are assigned successfully
 - ✅ **Error Handling**: User-friendly error messages for failed assignments
