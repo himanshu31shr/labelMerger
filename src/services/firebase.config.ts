@@ -64,25 +64,17 @@ if (process.env.NODE_ENV === 'test') {
   
   // Connect to the emulators if the environment variables are set
   if (import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT) {
-    console.log(`🔥 Connecting to Firestore emulator at ${import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST}:${import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT}`);
     connectFirestoreEmulator(
       db,
       import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST,
       parseInt(import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT, 10)
     );
-    console.log('✅ Firestore emulator connection established');
-  } else {
-      console.log('🌐 Using production Firestore.');
   }
 
   // Connect to Auth emulator if environment variables are set
   if (import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT) {
     const authUrl = `http://${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST}:${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT}`;
-    console.log(`🔐 Connecting to Auth emulator at ${authUrl}`);
     connectAuthEmulator(auth, authUrl, { disableWarnings: true });
-    console.log('✅ Auth emulator connection established');
-  } else {
-    console.log('🌐 Using production Auth.');
   }
   
   // Enable offline persistence
@@ -91,17 +83,14 @@ if (process.env.NODE_ENV === 'test') {
       await enableIndexedDbPersistence(db, { 
         forceOwnership: false // Allow multiple tabs to share the same persistence
       });
-      console.log('Firestore persistence enabled');
     } catch (err: unknown) {
       // Add type guard for unknown error type
       if (typeof err === 'object' && err !== null && 'code' in err) {
         const firebaseError = err as FirestoreError;
         if (firebaseError.code === 'failed-precondition') {
           // Multiple tabs open, persistence can only be enabled in one tab at a time
-          console.warn('Firestore persistence failed: Multiple tabs open');
         } else if (firebaseError.code === 'unimplemented') {
           // The current browser does not support all of the features required
-          console.warn('Firestore persistence is not available in this browser');
         }
       }
     }

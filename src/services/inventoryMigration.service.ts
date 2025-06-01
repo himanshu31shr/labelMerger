@@ -15,108 +15,98 @@ import {
   CategoryInventory,
   MigrationStatus
 } from '../types/categoryInventory.types';
-import { Product } from './product.service';
-import { Category } from './category.service';
+import { Product, ProductService } from './product.service';
+import { Category, CategoryService } from './category.service';
 import { categoryInventoryService } from './categoryInventory.service';
+
+interface MigrationAnalysis {
+  totalCategories: number;
+  categoriesWithProducts: number;
+  uncategorizedProducts: number;
+  migrationRules: MigrationRule[];
+  uncategorizedCategoryId: string;
+}
 
 export class InventoryMigrationService {
   private readonly productsCollection = 'products';
   private readonly categoriesCollection = 'categories';
   private readonly migrationStatusCollection = 'migrationStatus';
   private readonly UNCATEGORIZED_CATEGORY_ID = 'uncategorized';
+  private readonly categoryService: CategoryService;
+  private readonly productService: ProductService;
+
+  constructor() {
+    this.categoryService = new CategoryService();
+    this.productService = new ProductService();
+  }
 
   /**
    * Analyze current product inventory and create migration rules
    */
-  async analyzeMigration(): Promise<MigrationRule[]> {
+  async analyzeMigration(): Promise<MigrationAnalysis> {
     try {
-      console.log('🔍 Analyzing current inventory for migration...');
-      
-      // Get all products with inventory
-      const productsSnapshot = await getDocs(collection(db, this.productsCollection));
-      const products = productsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as unknown as Product[];
+      const categories = await this.categoryService.getCategories();
+      const products = await this.productService.getProducts();
 
-      // Get all categories
-      const categoriesSnapshot = await getDocs(collection(db, this.categoriesCollection));
-      const categories = categoriesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Category[];
-
-      // Create category map for quick lookup
-      const categoryMap = new Map(categories.map(cat => [cat.id, cat]));
-
-      // Ensure uncategorized category exists
-      if (!categoryMap.has(this.UNCATEGORIZED_CATEGORY_ID)) {
-        console.log('📁 Creating "Uncategorized" category...');
-        await this.createUncategorizedCategory();
-        categoryMap.set(this.UNCATEGORIZED_CATEGORY_ID, {
-          id: this.UNCATEGORIZED_CATEGORY_ID,
-          name: 'Uncategorized',
-          description: 'Products without assigned categories',
-          tag: 'uncategorized',
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now()
-        });
+      // Create "Uncategorized" category if it doesn't exist
+      let uncategorizedCategory = categories.find((cat: Category) => cat.name.toLowerCase() === 'uncategorized');
+      if (!uncategorizedCategory) {
+        const categoryId = await this.categoryService.createCategory({ name: 'Uncategorized', description: 'Products without assigned categories' });
+        uncategorizedCategory = { id: categoryId, name: 'Uncategorized', description: 'Products without assigned categories' };
       }
 
-      // Group products by category
-      const categoryGroups = new Map<string, Product[]>();
-      
-      products.forEach(product => {
-        const categoryId = product.categoryId || this.UNCATEGORIZED_CATEGORY_ID;
-        
-        if (!categoryGroups.has(categoryId)) {
-          categoryGroups.set(categoryId, []);
-        }
-        categoryGroups.get(categoryId)!.push(product);
-      });
-
-      // Create migration rules
+      // Analyze products and create migration rules
       const migrationRules: MigrationRule[] = [];
-      
-      for (const [categoryId, categoryProducts] of categoryGroups) {
-        const category = categoryMap.get(categoryId);
-        if (!category) {
-          console.warn(`⚠️ Category ${categoryId} not found, moving products to uncategorized`);
+      const categoryProductCounts = new Map<string, { products: Product[], totalQuantity: number }>();
+
+      for (const product of products) {
+        if (!product.categoryId) {
+          // Product has no category, will be moved to uncategorized
           continue;
         }
 
-        const productsWithInventory = categoryProducts.filter(p => p.inventory);
-        const aggregatedQuantity = productsWithInventory.reduce(
-          (sum, product) => sum + (product.inventory?.quantity || 0), 
-          0
-        );
+        const category = categories.find((cat: Category) => cat.id === product.categoryId);
+        if (!category) {
+          // Category doesn't exist, move product to uncategorized
+          continue;
+        }
 
-        // Calculate low stock threshold (minimum from products or default)
-        const thresholds = productsWithInventory
-          .map(p => p.inventory?.lowStockThreshold || 5)
-          .filter(t => t > 0);
-        const lowStockThreshold = thresholds.length > 0 ? Math.min(...thresholds) : 5;
-
-        migrationRules.push({
-          categoryId,
-          categoryName: category.name,
-          products: productsWithInventory.map(p => ({
-            sku: p.sku,
-            name: p.name,
-            quantity: p.inventory?.quantity || 0,
-            lowStockThreshold: p.inventory?.lowStockThreshold || 5
-          })),
-          aggregatedQuantity,
-          lowStockThreshold,
-          productCount: categoryProducts.length
-        });
+        // Aggregate products per category
+        const existing = categoryProductCounts.get(product.categoryId) || { products: [], totalQuantity: 0 };
+        existing.products.push(product);
+        existing.totalQuantity += product.inventory?.quantity || 0;
+        categoryProductCounts.set(product.categoryId, existing);
       }
 
-      console.log(`📊 Migration analysis complete: ${migrationRules.length} categories to migrate`);
-      return migrationRules;
-    } catch (error) {
-      console.error('❌ Error analyzing migration:', error);
-      throw new Error('Failed to analyze migration');
+      // Create migration rules for categories with products
+      for (const [categoryId, data] of categoryProductCounts) {
+        const category = categories.find((cat: Category) => cat.id === categoryId);
+        if (category) {
+          migrationRules.push({
+            categoryId,
+            categoryName: category.name,
+            products: data.products.map(p => ({
+              sku: p.sku,
+              name: p.name,
+              quantity: p.inventory?.quantity || 0,
+              lowStockThreshold: p.inventory?.lowStockThreshold || 5
+            })),
+            aggregatedQuantity: data.totalQuantity,
+            lowStockThreshold: Math.min(...data.products.map(p => p.inventory?.lowStockThreshold || 5)),
+            productCount: data.products.length
+          });
+        }
+      }
+
+      return {
+        totalCategories: categories.length,
+        categoriesWithProducts: migrationRules.length,
+        uncategorizedProducts: products.filter((p: Product) => !p.categoryId || !categories.find((cat: Category) => cat.id === p.categoryId)).length,
+        migrationRules,
+        uncategorizedCategoryId: uncategorizedCategory.id || this.UNCATEGORIZED_CATEGORY_ID,
+      };
+    } catch (error: unknown) {
+      throw new Error(`Migration analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -131,8 +121,6 @@ export class InventoryMigrationService {
     const warnings: string[] = [];
 
     try {
-      console.log('🚀 Starting inventory migration...');
-      
       // Update migration status
       await this.updateMigrationStatus({
         status: 'in-progress',
@@ -144,44 +132,40 @@ export class InventoryMigrationService {
       });
 
       // Get migration rules
-      const migrationRules = await this.analyzeMigration();
+      const migrationAnalysis = await this.analyzeMigration();
       
       await this.updateMigrationStatus({
         status: 'in-progress',
         progress: 10,
         currentPhase: 'Migrating inventory data',
-        totalCategories: migrationRules.length,
+        totalCategories: migrationAnalysis.migrationRules.length,
         categoriesProcessed: 0
       });
 
       // Process migration in batches
       const batchSize = 10;
-      for (let i = 0; i < migrationRules.length; i += batchSize) {
-        const batch = migrationRules.slice(i, i + batchSize);
+      for (let i = 0; i < migrationAnalysis.migrationRules.length; i += batchSize) {
+        const batch = migrationAnalysis.migrationRules.slice(i, i + batchSize);
         
         try {
           await this.migrateBatch(batch);
           categoriesMigrated += batch.length;
           totalProductsProcessed += batch.reduce((sum, rule) => sum + rule.productCount, 0);
           
-          const progress = Math.min(90, 10 + (categoriesMigrated / migrationRules.length) * 80);
+          const progress = Math.min(90, 10 + (categoriesMigrated / migrationAnalysis.migrationRules.length) * 80);
           await this.updateMigrationStatus({
             status: 'in-progress',
             progress,
-            currentPhase: `Migrated ${categoriesMigrated}/${migrationRules.length} categories`,
+            currentPhase: `Migrated ${categoriesMigrated}/${migrationAnalysis.migrationRules.length} categories`,
             categoriesProcessed: categoriesMigrated
           });
-          
-          console.log(`✅ Migrated batch ${Math.floor(i / batchSize) + 1}: ${categoriesMigrated}/${migrationRules.length} categories`);
         } catch (error) {
           const errorMsg = `Failed to migrate batch starting at index ${i}: ${error}`;
           errors.push(errorMsg);
-          console.error('❌', errorMsg);
         }
       }
 
       // Validate migration
-      console.log('🔍 Validating migration...');
       await this.updateMigrationStatus({
         status: 'in-progress',
         progress: 95,
@@ -221,7 +205,6 @@ export class InventoryMigrationService {
         duration
       };
 
-      console.log('🎉 Migration completed:', result);
       return result;
     } catch (error) {
       const endTime = new Date();
@@ -234,7 +217,6 @@ export class InventoryMigrationService {
         lastError: error instanceof Error ? error.message : 'Unknown error'
       });
 
-      console.error('❌ Migration failed:', error);
       throw new Error('Migration failed');
     }
   }
@@ -268,16 +250,14 @@ export class InventoryMigrationService {
    */
   async validateMigration(): Promise<ValidationResult> {
     try {
-      console.log('🔍 Validating migration...');
-      
-      const migrationRules = await this.analyzeMigration();
+      const migrationAnalysis = await this.analyzeMigration();
       const categories = await categoryInventoryService.getAllCategoriesWithInventory();
       
       const categoryMap = new Map(categories.map(cat => [cat.id, cat]));
       const discrepancies: ValidationResult['categoryDiscrepancies'] = [];
       let totalDiscrepancies = 0;
 
-      migrationRules.forEach(rule => {
+      migrationAnalysis.migrationRules.forEach(rule => {
         const category = categoryMap.get(rule.categoryId);
         if (!category) {
           discrepancies.push({
@@ -332,10 +312,8 @@ export class InventoryMigrationService {
         duplicateProducts
       };
 
-      console.log('📊 Validation result:', result);
       return result;
-    } catch (error) {
-      console.error('❌ Error validating migration:', error);
+    } catch {
       throw new Error('Failed to validate migration');
     }
   }
@@ -345,8 +323,6 @@ export class InventoryMigrationService {
    */
   async rollbackMigration(): Promise<void> {
     try {
-      console.log('🔄 Rolling back migration...');
-      
       await this.updateMigrationStatus({
         status: 'in-progress',
         progress: 0,
@@ -372,10 +348,7 @@ export class InventoryMigrationService {
         currentPhase: 'Migration rolled back',
         completedAt: Timestamp.now()
       });
-
-      console.log('✅ Migration rollback completed');
-    } catch (error) {
-      console.error('❌ Error rolling back migration:', error);
+    } catch {
       throw new Error('Failed to rollback migration');
     }
   }
@@ -429,8 +402,7 @@ export class InventoryMigrationService {
       }
 
       return statusDoc.data() as MigrationStatus;
-    } catch (error) {
-      console.error('Error getting migration status:', error);
+    } catch {
       return null;
     }
   }

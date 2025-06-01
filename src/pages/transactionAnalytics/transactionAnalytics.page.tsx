@@ -1,35 +1,34 @@
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import DateRangeIcon from "@mui/icons-material/DateRange";
+import PriceChangeIcon from "@mui/icons-material/PriceChange";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
+  Chip,
   CircularProgress,
   Container,
+  Divider,
   Grid,
+  Paper,
   Tab,
   Tabs,
   Typography,
-  Paper,
-  Divider,
-  Chip,
-  Card,
-  CardContent,
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
-import AnalyticsIcon from "@mui/icons-material/Analytics";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import PriceChangeIcon from "@mui/icons-material/PriceChange";
-import DateRangeIcon from "@mui/icons-material/DateRange";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchTransactions, saveTransactions } from "../../store/slices/transactionsSlice";
-import { fetchProducts } from "../../store/slices/productsSlice";
-import { Transaction } from "../../types/transaction.type";
+import { useNavigate } from "react-router-dom";
 import { TransactionAnalysisService } from "../../services/transactionAnalysis.service";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { fetchProducts } from "../../store/slices/productsSlice";
+import { fetchTransactions, saveTransactions } from "../../store/slices/transactionsSlice";
 import { TransactionSummary } from "../../types/transaction.type";
 import OrderList from "./components/order-list.component";
 import ProductList from "./components/product-list.component";
 import SummaryTiles from "./components/summary-tiles.component";
 import ReportExtractionFactory from "./services/ReportExtractionFactory";
-import { useNavigate } from "react-router-dom";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -69,8 +68,8 @@ export const TransactionAnalytics: React.FC = () => {
           dispatch(fetchTransactions()),
           dispatch(fetchProducts({}))
         ]);
-      } catch (error) {
-        console.error("Error loading data:", error);
+      } catch {
+        // Error handling - could show toast notification
       }
     };
 
@@ -146,8 +145,8 @@ export const TransactionAnalytics: React.FC = () => {
 
       // Reset file input
       event.target.value = "";
-    } catch (error) {
-      console.error("Error processing file:", error);
+    } catch {
+      // Error handling - could show toast notification
     }
   };
 

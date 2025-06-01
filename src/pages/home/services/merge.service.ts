@@ -4,10 +4,17 @@ import { FlipkartPageTransformer } from "./TrasformFlipkartPages";
 import { ProductSummary } from "./base.transformer";
 import type { PDFDocument } from "pdf-lib";
 import { format } from "date-fns";
+import { Product } from "../../../services/product.service";
+import { Category } from "../../../services/category.service";
 
 export class PDFMergerService {
   private outpdf: PDFDocument | undefined;
   private summaryText: ProductSummary[] = [];
+
+  constructor(private products: Product[], private categories: Category[]) {
+    this.products = products;
+    this.categories = categories;
+  }
 
   async initialize(): Promise<PDFDocument> {
     const { PDFDocument } = await import("pdf-lib");
@@ -43,7 +50,7 @@ export class PDFMergerService {
     if (!amzon || !this.outpdf) {
       return;
     }
-    const amz = new AmazonPDFTransformer(amzon);
+    const amz = new AmazonPDFTransformer(amzon, this.products, this.categories);
     const pages = await amz.transform();
     for (let i = 0; i < pages.getPageIndices().length; i++) {
       const [page] = await this.outpdf.copyPages(pages, [i]);
@@ -56,7 +63,7 @@ export class PDFMergerService {
     if (!flp || !this.outpdf) {
       return;
     }
-    const flipkartService = new FlipkartPageTransformer(flp);
+    const flipkartService = new FlipkartPageTransformer(flp, this.products, this.categories);
     const pages = await flipkartService.transformPages();
     for (let i = 0; i < pages.getPageIndices().length; i++) {
       const [page] = await this.outpdf.copyPages(pages, [i]);

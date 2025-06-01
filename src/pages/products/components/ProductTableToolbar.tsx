@@ -78,10 +78,9 @@ export const ProductTableToolbar: React.FC<Props> = ({
         setSelectedCategoryForAssign(null); // Clear selected category as assignment is done
       } else {
         // Handle potential errors or unfruitful action if needed
-        console.error("Category creation failed or did not return ID.");
       }
-    } catch (error) {
-      console.error("Error adding or assigning category:", error);
+    } catch {
+      // Error handling - could show toast notification
     } finally {
       setAddingCategory(false);
     }
@@ -94,8 +93,8 @@ export const ProductTableToolbar: React.FC<Props> = ({
         
         // Clear states after successful assignment
         setSelectedCategoryForAssign(null);
-      } catch (error) {
-        console.error("Error assigning category:", error);
+      } catch {
+        // Error handling - could show toast notification
       }
     }
   };

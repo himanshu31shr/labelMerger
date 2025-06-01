@@ -17,6 +17,7 @@ describe('authSlice', () => {
     error: null,
     isAuthenticated: false,
     authStateLoaded: false,
+    isLoading: false,
   };
 
   // Cast a minimal object to the User type
@@ -192,6 +193,7 @@ describe('authSlice', () => {
       expect(state).toHaveProperty('error');
       expect(state).toHaveProperty('isAuthenticated');
       expect(state).toHaveProperty('authStateLoaded');
+      expect(state).toHaveProperty('isLoading');
     });
 
     it('should have correct initial values', () => {
@@ -202,6 +204,7 @@ describe('authSlice', () => {
       expect(state.error).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.authStateLoaded).toBe(false);
+      expect(state.isLoading).toBe(false);
     });
   });
 }); 

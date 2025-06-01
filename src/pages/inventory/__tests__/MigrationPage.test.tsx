@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MigrationPage from '../MigrationPage';
 import { inventoryMigrationService } from '../../../services/inventoryMigration.service';
-import { MigrationStatus, MigrationRule, ValidationResult } from '../../../types/categoryInventory.types';
+import { MigrationStatus, ValidationResult } from '../../../types/categoryInventory.types';
 import { Timestamp } from 'firebase/firestore';
 
 // Mock the migration service
@@ -142,18 +142,24 @@ describe('MigrationPage', () => {
   describe('migration actions', () => {
     it('should handle analyze migration', async () => {
       // Arrange
-      const mockRules: MigrationRule[] = [
-        {
-          categoryId: 'cat1',
-          categoryName: 'Electronics',
-          products: [],
-          aggregatedQuantity: 100,
-          lowStockThreshold: 10,
-          productCount: 5,
-        },
-      ];
+      const mockAnalysis = {
+        totalCategories: 1,
+        categoriesWithProducts: 1,
+        uncategorizedProducts: 0,
+        migrationRules: [
+          {
+            categoryId: 'cat1',
+            categoryName: 'Electronics',
+            products: [],
+            aggregatedQuantity: 100,
+            lowStockThreshold: 10,
+            productCount: 5,
+          },
+        ],
+        uncategorizedCategoryId: 'uncategorized',
+      };
       mockMigrationService.getMigrationStatus.mockResolvedValue(null);
-      mockMigrationService.analyzeMigration.mockResolvedValue(mockRules);
+      mockMigrationService.analyzeMigration.mockResolvedValue(mockAnalysis);
 
       // Act
       render(<MigrationPage />);

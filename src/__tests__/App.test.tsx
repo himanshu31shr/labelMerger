@@ -32,6 +32,7 @@ const createMockStore = (authState: Record<string, unknown> = {}) => {
         error: null,
         isAuthenticated: false,
         authStateLoaded: true,
+        isLoading: false,
         ...authState,
       },
     },
@@ -72,6 +73,7 @@ describe('App', () => {
       error: null,
       isAuthenticated: true,
       authStateLoaded: true,
+      isLoading: false,
     };
     
     renderApp(authenticatedState);
@@ -85,6 +87,7 @@ describe('App', () => {
       error: null,
       isAuthenticated: false,
       authStateLoaded: false,
+      isLoading: false,
     };
     
     renderApp(loadingState);
@@ -98,6 +101,7 @@ describe('App', () => {
       error: 'Authentication error',
       isAuthenticated: false,
       authStateLoaded: true,
+      isLoading: false,
     };
     
     renderApp(errorState);

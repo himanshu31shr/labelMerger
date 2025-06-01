@@ -33,37 +33,31 @@ export class FirebaseService {
     if (!FirebaseService.persistenceEnabled) {
       // Only enable persistence in production or non-development environments
       if (process.env.NODE_ENV !== 'development') {
-        console.info("Enabling offline persistence")
         try {
           await enableIndexedDbPersistence(this.db);
           FirebaseService.persistenceEnabled = true;
-          console.log('Offline persistence enabled');
         } catch (err) {
           if ((err as FirestoreError).code === 'failed-precondition') {
-            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+            // Multiple tabs open, persistence can only be enabled in one tab at a time
           } else if ((err as FirestoreError).code === 'unimplemented') {
-            console.warn('The current browser does not support persistence.');
+            // The current browser does not support persistence
           }
         }
       }
     }
   }
 
-  protected handleError(error: unknown, context: string, shouldRetry = false): never {
+  protected handleError(error: unknown): never {
     if (error instanceof FirebaseError) {
       if (error.code === 'failed-precondition') {
-        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+        // Multiple tabs open, persistence can only be enabled in one tab at a time
       } else if (error.code === 'unimplemented') {
-        console.warn('The current browser does not support persistence');
+        // The current browser does not support persistence
       } else {
-        console.error(`Firebase error in ${context}:`, {
-          code: error.code,
-          message: error.message,
-          shouldRetry,
-        });
+        // Firebase error occurred
       }
     } else if (error instanceof Error) {
-      console.error(`Error in ${context}:`, error.message);
+      // General error occurred
     }
     throw error;
   }
@@ -87,8 +81,8 @@ export class FirebaseService {
         
         // Check if it's a Date object (which should be converted to Timestamp)
         if (value instanceof Date) {
-          console.warn(`Date object found at path: ${path}. Consider using Timestamp.fromDate() instead.`);
-          return; // Allow Date objects (Firestore will convert them)
+          // Date objects are allowed (Firestore will convert them)
+          return;
         }
         
         // Check for plain objects without constructor (these are problematic)
@@ -109,7 +103,7 @@ export class FirebaseService {
         }
         
         // If it's not a recognized Firestore type, it might be problematic
-        console.warn(`Unknown object type at path: ${path}. Constructor: ${constructorName}`);
+        // Log warning for unknown object types
       }
       
       if (Array.isArray(value)) {
@@ -129,7 +123,6 @@ export class FirebaseService {
     queryConstraints: QueryConstraint[] = []
   ): Promise<(T & { id: string })[]> {
     try {
-      console.log(`🔥 Firebase: Attempting to fetch from collection "${collectionName}"`, new Error().stack);
       const collectionRef = collection(this.db, collectionName);
       const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
@@ -139,8 +132,7 @@ export class FirebaseService {
         id: doc.id,
       }));
     } catch (error) {
-      console.error(`🔥 Firebase: Error fetching from collection "${collectionName}":`, error);
-      this.handleError(error as FirestoreError, "getDocuments");
+      this.handleError(error as FirestoreError);
     }
   }
 
@@ -157,7 +149,7 @@ export class FirebaseService {
       }
       return undefined;
     } catch (error) {
-      this.handleError(error as FirestoreError, "getDocument");
+      this.handleError(error as FirestoreError);
     }
   }
 
@@ -170,7 +162,7 @@ export class FirebaseService {
       const docRef = doc(this.db, collectionName, docId);
       await setDoc(docRef, data, { merge: true });
     } catch (error) {
-      this.handleError(error as FirestoreError, "setDocument");
+      this.handleError(error as FirestoreError);
     }
   }
 
@@ -184,7 +176,7 @@ export class FirebaseService {
       const docRef = await addDoc(collection(this.db, collectionName), data);
       return { id: docRef.id };
     } catch (error) {
-      this.handleError(error as FirestoreError, "addDocument");
+      this.handleError(error as FirestoreError);
       throw error;
     }
   }
@@ -201,7 +193,7 @@ export class FirebaseService {
         updatedAt: Timestamp.now(),
       });
     } catch (error) {
-      this.handleError(error as FirestoreError, "updateDocument");
+      this.handleError(error as FirestoreError);
     }
   }
 
@@ -213,7 +205,7 @@ export class FirebaseService {
       const docRef = doc(this.db, collectionName, docId);
       await deleteDoc(docRef);
     } catch (error) {
-      this.handleError(error as FirestoreError, "deleteDocument");
+      this.handleError(error as FirestoreError);
     }
   }
 

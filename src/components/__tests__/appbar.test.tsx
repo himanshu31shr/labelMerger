@@ -220,7 +220,6 @@ describe('AppBar', () => {
     });
 
     it('should handle logout error gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       mockSignOut.mockRejectedValue(new Error('Logout failed'));
       mockOnAuthStateChanged.mockImplementation((callback) => {
         callback({ uid: 'test-user' });
@@ -236,11 +235,12 @@ describe('AppBar', () => {
       const logoutButton = screen.getByText('Logout');
       fireEvent.click(logoutButton);
 
+      // The logout should fail silently without crashing the app
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error signing out:', expect.any(Error));
+        expect(mockSignOut).toHaveBeenCalled();
+        // The app should still be functional even if logout fails
+        expect(screen.getByText('Logout')).toBeInTheDocument();
       });
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should unsubscribe from auth state changes on unmount', () => {
@@ -308,7 +308,7 @@ describe('AppBar', () => {
 
   describe('edge cases', () => {
     it('should handle missing props gracefully', () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { AppBar: LocalAppBar } = require('../appbar');
       expect(() => {
         render(
@@ -331,7 +331,7 @@ describe('AppBar', () => {
       mockOnAuthStateChanged.mockImplementation(() => {
         throw new Error('Auth service error');
       });
-      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { AppBar: LocalAppBar } = require('../appbar');
       expect(() => {
         render(

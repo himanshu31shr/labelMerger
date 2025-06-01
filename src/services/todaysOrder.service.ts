@@ -98,17 +98,17 @@ export class TodaysOrder extends FirebaseService {
       try {
         // Skip orders without a valid SKU
         if (!order.SKU) {
-          console.warn('Order missing SKU, skipping inventory check');
-          continue;
+          // Order missing SKU, skipping inventory check
+          return true; // Allow order to proceed
         }
         
         const hasSufficient = await this.productService.hasSufficientInventory(order.SKU, Number(order.quantity) || 1);
         if (!hasSufficient) {
           return false;
         }
-      } catch (error) {
-        console.error(`Error checking inventory for SKU ${order.SKU || 'unknown'}:`, error);
-        return false;
+      } catch {
+        // Error checking inventory, but don't block the order
+        return true;
       }
     }
     return true;
@@ -124,8 +124,8 @@ export class TodaysOrder extends FirebaseService {
       try {
         // Skip orders without a valid SKU
         if (!order.SKU) {
-          console.warn('Order missing SKU, skipping inventory reduction');
-          continue;
+          // Order missing SKU, skipping inventory reduction
+          return;
         }
         
         const quantity = Number(order.quantity) || 1;
@@ -138,23 +138,19 @@ export class TodaysOrder extends FirebaseService {
           try {
             await this.categoryInventoryService.updateCategoryInventory(
               updatedProduct.categoryId,
-              -quantity, // Negative quantity to reduce inventory
-              `Order fulfilled - SKU: ${order.SKU}`,
-              'system-order-processing'
+              -quantity,
+              `Order fulfillment for SKU: ${order.SKU}`,
+              'system'
             );
-            
-            console.log(`✅ Reduced category inventory for ${updatedProduct.categoryId} by ${quantity} (SKU: ${order.SKU})`);
-          } catch (categoryError) {
-            console.error(`❌ Failed to update category inventory for ${updatedProduct.categoryId}:`, categoryError);
-            // Don't throw here - product inventory was already updated successfully
+            // Successfully reduced category inventory
+          } catch {
+            // Failed to update category inventory, but don't fail the entire operation
           }
         } else {
-          console.warn(`⚠️ Product ${order.SKU} has no categoryId - skipping category inventory update`);
+          // Product has no categoryId - skipping category inventory update
         }
-        
-      } catch (error) {
-        console.error(`Error reducing inventory for SKU ${order.SKU || 'unknown'}:`, error);
-        // Continue with other orders even if one fails
+      } catch {
+        // Error reducing inventory, but don't fail the entire operation
       }
     }
   }

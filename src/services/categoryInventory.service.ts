@@ -52,9 +52,8 @@ export class CategoryInventoryService {
         createdAt: data.createdAt,
         updatedAt: data.updatedAt
       } as CategoryWithInventory;
-    } catch (error) {
-      console.error('Error fetching category inventory:', error);
-      throw new Error('Failed to fetch category inventory');
+    } catch (error: unknown) {
+      throw new Error(`Failed to fetch category inventory: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -82,9 +81,8 @@ export class CategoryInventoryService {
           updatedAt: data.updatedAt
         } as CategoryWithInventory;
       });
-    } catch (error) {
-      console.error('Error fetching categories with inventory:', error);
-      throw new Error('Failed to fetch categories with inventory');
+    } catch (error: unknown) {
+      throw new Error(`Failed to fetch categories with inventory: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -146,9 +144,8 @@ export class CategoryInventoryService {
           transaction.set(operationRef, operation);
         }
       });
-    } catch (error) {
-      console.error('Error updating category inventory:', error);
-      throw new Error('Failed to update category inventory');
+    } catch (error: unknown) {
+      throw new Error(`Failed to update category inventory: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -182,9 +179,8 @@ export class CategoryInventoryService {
         inventory: updatedInventory,
         updatedAt: Timestamp.now()
       });
-    } catch (error) {
-      console.error('Error updating category threshold:', error);
-      throw new Error('Failed to update category threshold');
+    } catch (error: unknown) {
+      throw new Error(`Failed to update category threshold: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -226,9 +222,8 @@ export class CategoryInventoryService {
           const severityOrder = { 'out-of-stock': 0, 'critical': 1, 'low': 2 };
           return severityOrder[a.severity] - severityOrder[b.severity];
         });
-    } catch (error) {
-      console.error('Error fetching low stock categories:', error);
-      throw new Error('Failed to fetch low stock categories');
+    } catch (error: unknown) {
+      throw new Error(`Failed to fetch low stock categories: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -304,9 +299,8 @@ export class CategoryInventoryService {
 
         transaction.set(operationRef, operation);
       });
-    } catch (error) {
-      console.error('Error transferring inventory:', error);
-      throw new Error('Failed to transfer inventory');
+    } catch (error: unknown) {
+      throw new Error(`Failed to transfer inventory: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -355,9 +349,8 @@ export class CategoryInventoryService {
         categories: categoryReports,
         generatedAt: Timestamp.now()
       };
-    } catch (error) {
-      console.error('Error generating inventory report:', error);
-      throw new Error('Failed to generate inventory report');
+    } catch (error: unknown) {
+      throw new Error(`Failed to generate inventory report: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -379,9 +372,8 @@ export class CategoryInventoryService {
         id: doc.id,
         ...doc.data()
       })) as InventoryOperation[];
-    } catch (error) {
-      console.error('Error fetching inventory history:', error);
-      throw new Error('Failed to fetch inventory history');
+    } catch (error: unknown) {
+      throw new Error(`Failed to fetch inventory history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -404,9 +396,8 @@ export class CategoryInventoryService {
       });
 
       await batch.commit();
-    } catch (error) {
-      console.error('Error bulk updating category inventory:', error);
-      throw new Error('Failed to bulk update category inventory');
+    } catch (error: unknown) {
+      throw new Error(`Failed to bulk update category inventory: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

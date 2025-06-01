@@ -1,6 +1,8 @@
 import type { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { BaseTransformer, ProductSummary, TextItem } from "./base.transformer";
+import { Product } from "../../../services/product.service";
+import { Category } from "../../../services/category.service";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export class FlipkartPageTransformer extends BaseTransformer {
@@ -8,12 +10,16 @@ export class FlipkartPageTransformer extends BaseTransformer {
   protected declare outputPdf: PDFDocument;
   protected pdf!: pdfjsLib.PDFDocumentProxy;
 
-  constructor(filePath: Uint8Array) {
-    super(filePath);
+  constructor(
+    filePath: Uint8Array,
+    products: Product[],
+    categories: Category[]
+  ) {
+    super(filePath, products, categories);
   }
 
   async initialize(): Promise<void> {
-    const { PDFDocument } = await import('pdf-lib');
+    const { PDFDocument } = await import("pdf-lib");
     this.pdfDoc = await PDFDocument.load(this.filePath);
     this.outputPdf = await PDFDocument.create();
     const loadingTask = pdfjsLib.getDocument({ data: this.filePath });
@@ -21,7 +27,8 @@ export class FlipkartPageTransformer extends BaseTransformer {
   }
 
   async transformPages(): Promise<PDFDocument> {
-    await this.initialize();``
+    await this.initialize();
+
     if (!this.pdfDoc || !this.outputPdf) {
       throw new Error("PDF document is not loaded. Call initialize() first.");
     }
@@ -37,7 +44,7 @@ export class FlipkartPageTransformer extends BaseTransformer {
       const lowerLeftX = 180;
       const lowerLeftY = height / 2 + 38;
       const upperRightX = width;
-      const upperRightY = height - 25;
+      const upperRightY = height - 10;
 
       page.setWidth(width - 180);
       page.setHeight(upperRightY);
@@ -97,6 +104,36 @@ export class FlipkartPageTransformer extends BaseTransformer {
           k++;
         }
       }
+
+      const { rgb, StandardFonts } = await import("pdf-lib");
+      const pageWidth = page.getWidth();
+      const fontSize = 5;
+      let text = `${currentSUmmary.quantity} X [${currentSUmmary?.name}]`;
+
+      const skuProduct = this.products.find(
+        (p) => p.sku === currentSUmmary.SKU
+      );
+
+      const category = this.categories.find(
+        (c) => c.id === skuProduct?.categoryId
+      );
+      if (category) {
+        text = `${currentSUmmary.quantity} X [${
+          category.name
+        }] ${skuProduct?.name.substring(0, 80)}`;
+      }
+
+      // Using standard Helvetica font which supports basic ASCII characters
+      const font = await this.outputPdf.embedFont(StandardFonts.Helvetica);
+      copiedPage.drawText(text, {
+        y: copiedPage.getHeight() - 10,
+        x: 180 + 10,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+        lineHeight: fontSize + 2,
+        font,
+        maxWidth: pageWidth - 180,
+      });
 
       this.summaryText.push(currentSUmmary);
     }

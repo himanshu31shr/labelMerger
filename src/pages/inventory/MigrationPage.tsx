@@ -43,14 +43,18 @@ import {
   ValidationResult 
 } from '../../types/categoryInventory.types';
 
-interface MigrationPageProps {
-  // No props needed for this component
+interface MigrationAnalysis {
+  totalCategories: number;
+  categoriesWithProducts: number;
+  uncategorizedProducts: number;
+  migrationRules: MigrationRule[];
+  uncategorizedCategoryId: string;
 }
 
-const MigrationPage: React.FC<MigrationPageProps> = () => {
+const MigrationPage: React.FC = () => {
   // State management
   const [migrationStatus, setMigrationStatus] = useState<MigrationStatus | null>(null);
-  const [migrationRules, setMigrationRules] = useState<MigrationRule[]>([]);
+  const [migrationAnalysis, setMigrationAnalysis] = useState<MigrationAnalysis | null>(null);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,8 +83,8 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
   const analyzeMigration = async () => {
     try {
       setLoading(true);
-      const rules = await inventoryMigrationService.analyzeMigration();
-      setMigrationRules(rules);
+      const analysis = await inventoryMigrationService.analyzeMigration();
+      setMigrationAnalysis(analysis);
       setShowAnalysisDialog(true);
       setError(null);
     } catch (err) {
@@ -139,7 +143,7 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'info' | 'default' => {
     switch (status) {
       case 'completed': return 'success';
       case 'failed': return 'error';
@@ -212,7 +216,7 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
                     {getStatusIcon(migrationStatus.status)}
                     <Chip
                       label={migrationStatus.status.toUpperCase()}
-                      color={getStatusColor(migrationStatus.status) as any}
+                      color={getStatusColor(migrationStatus.status)}
                       sx={{ ml: 1 }}
                     />
                   </Box>
@@ -330,7 +334,7 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
             </Typography>
             
             <Stepper activeStep={activeStep} orientation="vertical">
-              {migrationSteps.map((step, index) => (
+              {migrationSteps.map((step) => (
                 <Step key={step.label}>
                   <StepLabel>{step.label}</StepLabel>
                   <StepContent>
@@ -355,11 +359,11 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
         <DialogTitle>Migration Analysis Results</DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Found {migrationRules.length} categories to migrate:
+            Found {migrationAnalysis?.migrationRules.length} categories to migrate:
           </Typography>
           
           <List>
-            {migrationRules.map((rule, index) => (
+            {migrationAnalysis?.migrationRules.map((rule, index) => (
               <React.Fragment key={rule.categoryId}>
                 <ListItem>
                   <ListItemIcon>
@@ -378,7 +382,7 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
                     }
                   />
                 </ListItem>
-                {index < migrationRules.length - 1 && <Divider />}
+                {migrationAnalysis && index < migrationAnalysis.migrationRules.length - 1 && <Divider />}
               </React.Fragment>
             ))}
           </List>
@@ -415,7 +419,7 @@ const MigrationPage: React.FC<MigrationPageProps> = () => {
                     Category Discrepancies
                   </Typography>
                   <List>
-                    {validationResult.categoryDiscrepancies.map((disc, index) => (
+                    {validationResult.categoryDiscrepancies.map((disc) => (
                       <ListItem key={disc.categoryId}>
                         <ListItemIcon>
                           <WarningIcon color="warning" />

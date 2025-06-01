@@ -43,9 +43,9 @@ export class AuthService {
       });
 
       return userCredential.user;
-    } catch (error) {
-      console.error('Error in signUp:', error);
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Sign up failed: ${errorMessage}`);
     }
   }
 
@@ -56,13 +56,27 @@ export class AuthService {
       
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       
-      // Update last login with retry mechanism
-      await this.updateLastLogin(userCredential.user.uid);
+      // Update last login timestamp with retry logic
+      if (userCredential.user) {
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            await this.updateLastLogin(userCredential.user.uid);
+            break; // Success, exit retry loop
+          } catch {
+            if (attempt === 3) {
+              // Failed after all retries, but don't fail the login
+              break;
+            }
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+          }
+        }
+      }
 
       return userCredential.user;
-    } catch (error) {
-      console.error('Error in signIn:', error);
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Sign in failed: ${errorMessage}`);
     }
   }
 
@@ -73,11 +87,8 @@ export class AuthService {
           lastLoginAt: new Date()
         }, { merge: true });
         return; // Success
-      } catch (error: unknown) {
-        console.warn(`Attempt ${attempt} to update lastLoginAt failed:`, error);
-        
+      } catch {
         if (attempt === maxRetries) {
-          console.error('Failed to update lastLoginAt after all retries, continuing with login');
           // Don't throw error - login should still succeed even if lastLoginAt update fails
           return;
         }
@@ -91,18 +102,18 @@ export class AuthService {
   async signOut(): Promise<void> {
     try {
       await signOut(this.auth);
-    } catch (error) {
-      console.error('Error in signOut:', error);
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Sign out failed: ${errorMessage}`);
     }
   }
 
   async resetPassword(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(this.auth, email);
-    } catch (error) {
-      console.error('Error in resetPassword:', error);
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Password reset failed: ${errorMessage}`);
     }
   }
 
@@ -114,9 +125,9 @@ export class AuthService {
     try {
       const userDoc = await getDoc(doc(this.db, 'users', userId));
       return userDoc.exists() ? userDoc.data() as UserData : null;
-    } catch (error) {
-      console.error('Error in getUserData:', error);
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to get user data: ${errorMessage}`);
     }
   }
 

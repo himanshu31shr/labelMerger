@@ -64,11 +64,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
   });
 
   const handleFormSubmit = async (data: CategoryFormData) => {
-    try {
-      await onSubmit(data);
-    } catch (error) {
-      console.error('Failed to save category:', error);
-    }
+    await onSubmit(data);
   };
 
   // Reset form when defaultValues or open state changes

@@ -1,9 +1,8 @@
 import type { PDFDocument, PDFPage } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { BaseTransformer, ProductSummary, TextItem } from "./base.transformer";
-
-// Initialize PDF.js worker
-// pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;ß
+import { Product } from "../../../services/product.service";
+import { Category } from "../../../services/category.service";
 
 export class AmazonPDFTransformer extends BaseTransformer {
   protected filePath: Uint8Array;
@@ -11,8 +10,12 @@ export class AmazonPDFTransformer extends BaseTransformer {
   protected declare outputPdf: PDFDocument;
   protected pdf!: pdfjsLib.PDFDocumentProxy;
 
-  constructor(filePath: Uint8Array) {
-    super(filePath);
+  constructor(
+    filePath: Uint8Array,
+    products: Product[],
+    categories: Category[]
+  ) {
+    super(filePath, products, categories);
     this.filePath = filePath;
   }
 
@@ -48,13 +51,16 @@ export class AmazonPDFTransformer extends BaseTransformer {
     }
 
     const productDetails = lines.slice(index, index + 4).join(" ");
-    let [name, info] = productDetails.split("|");
+    // eslint-disable-next-line prefer-const
+    let [name, ...info] = productDetails.split("|");
     if (name.indexOf("₹") !== -1) {
       name = name.substring(0, name.indexOf("₹") - 1);
     }
 
     let sku;
-    if (/[A-Za-z0-9]{2}-[A-Za-z0-9]{4}-[A-Z|a-z|0-9]{4}/gi.test(productDetails)) {
+    if (
+      /[A-Za-z0-9]{2}-[A-Za-z0-9]{4}-[A-Z|a-z|0-9]{4}/gi.test(productDetails)
+    ) {
       const reg = new RegExp(
         /[A-Za-z0-9]{2}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}/,
         "ig"
@@ -69,11 +75,12 @@ export class AmazonPDFTransformer extends BaseTransformer {
 
     let quantity = "1";
 
-    if(info) {
+    if (info.length > 0) {
       const rest = info
+        .join(" ")
         .split(" ")
         .filter((str) => !!str && /[()]/.test(str) === false);
-  
+
       const idx = this.recurseQuantity(rest);
       if (idx > -1) {
         quantity = rest[idx] || "1";
@@ -94,11 +101,22 @@ export class AmazonPDFTransformer extends BaseTransformer {
   ): Promise<void> {
     const { rgb, StandardFonts } = await import("pdf-lib");
     const pageWidth = copiedPage.getWidth();
-    const fontSize = 10;
-    const text = `${product.quantity} X [${product?.name}]`;
+    const fontSize = 12;
+    let text = `${product.quantity} X [${product?.name}]`;
+
+    const skuProduct = this.products.find((p) => p.sku === product.SKU);
+
+    const category = this.categories.find(
+      (c) => c.id === skuProduct?.categoryId
+    );
+    if (category) {
+      text = `${product.quantity} X [${
+        category.name
+      }] ${skuProduct?.name.substring(0, 80)}`;
+    }
 
     this.summaryText.push({
-      name: product.name,
+      name: skuProduct?.name || product.name,
       quantity: product.quantity,
       type: "amazon",
       SKU: product.SKU,
@@ -111,6 +129,7 @@ export class AmazonPDFTransformer extends BaseTransformer {
       x: 10,
       size: fontSize,
       color: rgb(0, 0, 0),
+      lineHeight: fontSize + 2,
       font,
       maxWidth: pageWidth,
     });

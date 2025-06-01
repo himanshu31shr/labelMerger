@@ -84,8 +84,8 @@ export const AppBar = ({
     try {
       await authService.signOut();
       navigate('/flipkart-amazon-tools/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
+    } catch {
+      // Error signing out, but don't prevent the UI from updating
     }
   };
 

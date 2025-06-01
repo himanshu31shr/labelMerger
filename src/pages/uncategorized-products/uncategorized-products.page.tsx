@@ -49,8 +49,8 @@ export const UncategorizedProductsPage: React.FC = () => {
     try {
       await dispatch(updateProduct({ sku, data })).unwrap();
       setEditingProduct(null);
-    } catch (error) {
-      console.error("Error updating product:", error);
+    } catch {
+      // Error handling - could show toast notification
     }
   };
 
@@ -62,8 +62,8 @@ export const UncategorizedProductsPage: React.FC = () => {
       await dispatch(
         bulkUpdateProducts({ skus, data: { categoryId } })
       ).unwrap();
-    } catch (error) {
-      console.error("Error updating product categories:", error);
+    } catch {
+      // Error handling - could show toast notification
     }
   };
 

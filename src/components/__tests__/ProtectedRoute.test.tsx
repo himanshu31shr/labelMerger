@@ -42,6 +42,7 @@ interface MockAuthState {
   error: string | null;
   isAuthenticated: boolean;
   authStateLoaded: boolean;
+  isLoading: boolean;
 }
 
 // Test utilities
@@ -93,7 +94,7 @@ describe.skip('ProtectedRoute', () => {
 
       renderWithProviders(
         <ProtectedRoute>{mockChildren}</ProtectedRoute>,
-        { user: mockUser, loading: false, error: null, isAuthenticated: true, authStateLoaded: true }
+        { user: mockUser, loading: false, error: null, isAuthenticated: true, authStateLoaded: true, isLoading: false }
       );
       
       expect(screen.getByTestId('protected-content')).toBeInTheDocument();
@@ -109,7 +110,7 @@ describe.skip('ProtectedRoute', () => {
 
       renderWithProviders(
         <ProtectedRoute>{mockChildren}</ProtectedRoute>,
-        { user: null, loading: false, error: null, isAuthenticated: false, authStateLoaded: true }
+        { user: null, loading: false, error: null, isAuthenticated: false, authStateLoaded: true, isLoading: false }
       );
 
       // Should not render the protected content
@@ -125,7 +126,7 @@ describe.skip('ProtectedRoute', () => {
 
       renderWithProviders(
         <ProtectedRoute>{mockChildren}</ProtectedRoute>,
-        { user: null, loading: true, error: null, isAuthenticated: false, authStateLoaded: false }
+        { user: null, loading: true, error: null, isAuthenticated: false, authStateLoaded: false, isLoading: false }
       );
 
       expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();

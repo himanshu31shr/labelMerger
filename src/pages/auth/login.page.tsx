@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Paper,
   TextField,
   Button,
   Typography,
   FormControlLabel,
   Checkbox,
-  Link,
   Alert,
   CircularProgress,
   Card,
-  CardContent,
   Divider,
   InputAdornment,
   IconButton
@@ -46,9 +43,8 @@ export const LoginPage: React.FC = () => {
         await dispatch(login({ email, password, rememberMe })).unwrap();
         navigate('/flipkart-amazon-tools/');
       }
-    } catch (err: any) {
-      // Error is handled by the auth slice
-      console.error('Authentication error:', err);
+    } catch {
+      // Error is handled by Redux, no need to set local error
     }
   };
 

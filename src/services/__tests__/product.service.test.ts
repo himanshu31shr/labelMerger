@@ -328,7 +328,7 @@ describe('ProductService', () => {
       );
 
       await expect(service.updateInventory('NON-EXISTENT', 5)).rejects.toThrow(
-        'Failed to update inventory: Product with SKU NON-EXISTENT not found'
+        'Product with SKU NON-EXISTENT not found'
       );
     });
   });

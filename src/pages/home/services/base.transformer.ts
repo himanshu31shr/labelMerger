@@ -1,5 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { Product } from "../../../services/product.service";
+import { Category } from "../../../services/category.service";
 
 export interface TextItem {
   str: string;
@@ -14,6 +15,7 @@ export interface ProductSummary {
   type: 'amazon' | 'flipkart';
   product?: Product;
   createdAt?: string;
+  category?: string;
 }
 
 export class BaseTransformer {
@@ -22,8 +24,10 @@ export class BaseTransformer {
   protected outputPdf!: PDFDocument;
   protected summaryText: ProductSummary[] = [];
 
-  constructor(filePath: Uint8Array) {
+  constructor(filePath: Uint8Array, protected products: Product[], protected categories: Category[]) {
     this.filePath = filePath;
+    this.products = products;
+    this.categories = categories;
   }
 
   async initialize(): Promise<void> {}

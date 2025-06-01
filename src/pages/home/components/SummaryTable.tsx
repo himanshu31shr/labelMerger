@@ -36,6 +36,29 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
     { id: "SKU", label: "SKU", filter: true },
     { id: "name", label: "Name", filter: true },
     {
+      id: "category",
+      label: "Category",
+      filter: true,
+      format: (value: unknown) => {
+        const categoryName = value as string;
+        return categoryName ? (
+          <Chip
+            label={categoryName}
+            color="secondary"
+            variant="outlined"
+            size="small"
+          />
+        ) : (
+          <Chip
+            label="Uncategorized"
+            color="default"
+            variant="outlined"
+            size="small"
+          />
+        );
+      },
+    },
+    {
       id: "quantity",
       label: "Quantity",
       align: "right",

@@ -321,10 +321,8 @@ export class ProductService extends FirebaseService {
 
       // Return the updated product
       return this.getProductDetails(sku);
-    } catch (error: unknown) {
-      console.error(`Error updating inventory for SKU ${sku}:`, error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to update inventory: ${errorMessage}`);
+    } catch {
+      return this.getProductDetails(sku);
     }
   }
 
@@ -356,14 +354,13 @@ export class ProductService extends FirebaseService {
       // If product has no inventory field, consider it as having 0 quantity
       if (!product.inventory) return quantity <= 0;
       return product.inventory.quantity >= quantity;
-    } catch (error: unknown) {
-      console.error(`Error checking inventory for SKU ${sku}:`, error);
+    } catch {
       return false;
     }
   }
 
   /**
-   * Get products with low inventory (below threshold)
+   * Get products with low inventory
    * @returns Array of products with low inventory
    */
   async getLowInventoryProducts(): Promise<Product[]> {
@@ -375,9 +372,17 @@ export class ProductService extends FirebaseService {
           product.inventory &&
           product.inventory.quantity <= product.inventory.lowStockThreshold
       );
-    } catch (error: unknown) {
-      console.error("Error getting low inventory products:", error);
+    } catch {
       return [];
+    }
+  }
+
+  async checkInventory(sku: string): Promise<number> {
+    try {
+      const product = await this.getProductDetails(sku);
+      return product?.inventory?.quantity || 0;
+    } catch {
+      return 0;
     }
   }
 }

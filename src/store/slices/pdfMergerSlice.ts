@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { PDFMergerService } from '../../pages/home/services/merge.service';
 import { ProductSummary } from '../../pages/home/services/base.transformer';
+import { store } from '..';
 
 interface PDFMergerState {
   amazonFile: File | null;
@@ -27,7 +28,10 @@ export const mergePDFs = createAsyncThunk(
       throw new Error('No files provided');
     }
 
-    const mergePdfs = new PDFMergerService();
+    const products = store.getState().products.items;
+    const categories = store.getState().products.categories;
+
+    const mergePdfs = new PDFMergerService(products, categories);
     const pdf = await mergePdfs.mergePdfs({
       amzon: amazonFile ? await readFileFromInput(amazonFile) : null,
       flp: flipkartFile ? await readFileFromInput(flipkartFile) : null,

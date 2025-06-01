@@ -120,6 +120,7 @@ const createTestStore = (preloadedState?: Partial<TestRootState>) => {
       error: null,
       isAuthenticated: false,
       authStateLoaded: true,
+      isLoading: false,
     }
   };
 
@@ -218,6 +219,7 @@ describe('InventoryPage', () => {
           error: null,
           isAuthenticated: true,
           authStateLoaded: true,
+          isLoading: false,
         }
       }
     });

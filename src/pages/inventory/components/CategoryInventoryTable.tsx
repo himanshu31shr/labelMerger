@@ -169,8 +169,8 @@ const CategoryInventoryTable: React.FC = () => {
       
       handleCloseEditModal();
       dispatch(fetchCategoriesWithInventory());
-    } catch (error) {
-      console.error('Failed to save inventory:', error);
+    } catch {
+      // Handle error appropriately - could show a toast notification
     }
   };
 

@@ -48,7 +48,6 @@ export const fetchAllOrdersForAnalytics = createAsyncThunk<
 
       return allOrderItems;
     } catch (error: unknown) {
-      console.error('Failed to fetch all orders for analytics:', error);
       // Safely extract error message or use a default message
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       return rejectWithValue(errorMessage);

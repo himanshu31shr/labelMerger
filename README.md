@@ -639,7 +639,24 @@ This project is licensed under the MIT License.
 
 ## Recent Updates
 
-### Uncategorized Products Management (Latest)
+### Today's Orders Category Column Enhancement (Latest)
+- ✅ **Category Display**: Added category column to Today's Orders table for better product organization
+- ✅ **Visual Indicators**: Color-coded chips showing category names or "Uncategorized" status
+- ✅ **Filtering Support**: Users can filter orders by category name for easy searching
+- ✅ **Data Integration**: Enhanced both Amazon and Flipkart transformers to populate category information
+- ✅ **Responsive Design**: Category column adapts to different screen sizes
+- ✅ **Business Intelligence**: Better visibility into category-based order performance
+
+**Technical Details:**
+- Updated `TrasformAmazonPages.ts` to include category in summaryText
+- Enhanced `TrasformFlipkartPages.ts` with category lookup logic
+- Added category column to `SummaryTable.tsx` with Material-UI chips
+- Implemented proper fallback for uncategorized products
+- Maintained backward compatibility with existing order processing
+
+For detailed information, see [Today's Orders Category Enhancement Documentation](docs/TODAYS_ORDERS_CATEGORY_ENHANCEMENT.md).
+
+### Uncategorized Products Management
 - ✅ **New Page**: Dedicated page for products without categories at `/uncategorized-products/`
 - ✅ **Dashboard Alert**: Warning widget showing count and top 5 uncategorized products
 - ✅ **Smart Filtering**: Automatically identifies products with missing or empty categoryId

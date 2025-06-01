@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { AuthService } from '../../services/auth.service';
 import { User } from 'firebase/auth';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 export interface AuthState {
   user: User | null;
@@ -8,6 +9,7 @@ export interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   authStateLoaded: boolean;
+  isLoading: boolean;
 }
 
 const initialState: AuthState = {
@@ -16,6 +18,7 @@ const initialState: AuthState = {
   error: null,
   isAuthenticated: false,
   authStateLoaded: false,
+  isLoading: false,
 };
 
 const authService = new AuthService();
@@ -24,10 +27,8 @@ const authService = new AuthService();
 export const initializeAuthState = createAsyncThunk(
   'auth/initializeAuthState',
   async (_, { dispatch }) => {
-    console.log('🔥 Initializing auth state...');
     return new Promise<User | null>((resolve) => {
       const unsubscribe = authService.onAuthStateChanged((user) => {
-        console.log('🔥 Auth state changed:', user ? 'authenticated' : 'not authenticated');
         dispatch(setAuthState({ user, isAuthenticated: !!user, authStateLoaded: true }));
         resolve(user);
       });
@@ -68,13 +69,19 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
     },
-    setAuthState: (state, action) => {
-      state.user = action.payload.user;
-      state.isAuthenticated = action.payload.isAuthenticated;
-      state.authStateLoaded = action.payload.authStateLoaded;
+    setAuthState: (state, action: PayloadAction<{ user: User | null; isAuthenticated: boolean; authStateLoaded: boolean }>) => {
+      const { user, isAuthenticated, authStateLoaded } = action.payload;
+      state.user = user;
+      state.isAuthenticated = isAuthenticated;
+      state.isLoading = false;
+      state.authStateLoaded = authStateLoaded;
     },
     clearError: (state) => {
       state.error = null;
+    },
+    initializeAuth: (state) => {
+      state.isLoading = true;
+      state.authStateLoaded = false;
     },
   },
   extraReducers: (builder) => {

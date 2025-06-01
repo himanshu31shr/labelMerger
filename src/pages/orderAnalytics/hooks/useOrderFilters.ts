@@ -103,9 +103,8 @@ export const useOrderFilters = ({ allOrders, categories, products }: UseOrderFil
           });
         }
       }
-    } catch (error) {
-      console.warn('Error processing date:', error);
-      isWithinDateRange = false;
+    } catch {
+      // Invalid date format, skip
     }
     if (!isWithinDateRange) return false;
 

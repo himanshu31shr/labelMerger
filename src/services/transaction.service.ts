@@ -36,7 +36,7 @@ export class TransactionService extends FirebaseService {
     try {
       return await this.getDocuments<Transaction>(this.COLLECTION_NAME);
     } catch (error) {
-      throw this.handleError(error as FirestoreError, "getTransactions");
+      throw this.handleError(error as FirestoreError);
     }
   }
 
@@ -64,7 +64,7 @@ export class TransactionService extends FirebaseService {
 
       return results.flat().map(t => t.hash);
     } catch (error) {
-      throw this.handleError(error as FirestoreError, "getExistingHashes");
+      throw this.handleError(error as FirestoreError);
     }
   }
 
