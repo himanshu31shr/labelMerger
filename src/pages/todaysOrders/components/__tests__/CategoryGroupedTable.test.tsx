@@ -202,7 +202,7 @@ describe('CategoryGroupedTable', () => {
     fireEvent.click(electronicsAccordion!);
     
     await waitFor(() => {
-      expect(screen.getByTestId('amazon-button')).toBeInTheDocument();
+      expect(screen.getAllByTestId('amazon-button')).toHaveLength(3);
       expect(screen.getByTestId('flipkart-button')).toBeInTheDocument();
     });
   });
