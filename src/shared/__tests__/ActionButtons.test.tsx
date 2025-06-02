@@ -38,7 +38,7 @@ describe('ActionButtons', () => {
       const serialNumber = 'B08XYZ123';
       render(<ViewAmazonListingButton amazonSerialNumber={serialNumber} />);
       
-      const link = screen.getByTestId(`view-flipkart-${serialNumber}`);
+      const link = screen.getByTestId(`view-amazon-${serialNumber}`);
       expect(link).toBeInTheDocument();
       expect(link).toHaveAttribute('href', `https://www.amazon.in/sacred/dp/${serialNumber}`);
       expect(link).toHaveAttribute('target', '_blank');

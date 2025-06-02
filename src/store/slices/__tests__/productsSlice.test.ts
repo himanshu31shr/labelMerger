@@ -95,11 +95,28 @@ describe('productsSlice', () => {
     },
   };
 
+  const mockInitialState: ProductsState = {
+    items: [],
+    filteredItems: [],
+    loading: false,
+    error: null,
+    filters: {},
+    lastFetched: null,
+    detailsCache: {},
+    categories: [],
+    categoriesLoading: false,
+    categoriesError: null,
+    categoryProducts: [],
+    categoryProductsLoading: false,
+    categoryProductsError: null,
+  };
+
   beforeEach(() => {
     store = configureStore({
       reducer: {
         products: productsReducer,
       },
+      preloadedState: { products: mockInitialState },
     });
   });
 
@@ -107,18 +124,7 @@ describe('productsSlice', () => {
     it('should have correct initial state', () => {
       const state = store.getState().products;
       
-      expect(state).toEqual({
-        items: [],
-        filteredItems: [],
-        loading: false,
-        error: null,
-        filters: {},
-        lastFetched: null,
-        detailsCache: {},
-        categories: [],
-        categoriesLoading: false,
-        categoriesError: null,
-      });
+      expect(state).toEqual(mockInitialState);
     });
   });
 
@@ -136,6 +142,9 @@ describe('productsSlice', () => {
         categories: [],
         categoriesLoading: false,
         categoriesError: null,
+        categoryProducts: [],
+        categoryProductsLoading: false,
+        categoryProductsError: null,
       };
 
       const storeWithData = configureStore<{ products: RootState['products'] }>({
@@ -164,6 +173,9 @@ describe('productsSlice', () => {
         categories: [],
         categoriesLoading: false,
         categoriesError: null,
+        categoryProducts: [],
+        categoryProductsLoading: false,
+        categoryProductsError: null,
       };
 
       const storeWithData = configureStore({
@@ -194,6 +206,9 @@ describe('productsSlice', () => {
         categories: [],
         categoriesLoading: false,
         categoriesError: null,
+        categoryProducts: [],
+        categoryProductsLoading: false,
+        categoryProductsError: null,
       };
 
       const storeWithData = configureStore({
@@ -314,7 +329,10 @@ describe('productsSlice', () => {
           detailsCache: {},
           categories: [],
           categoriesLoading: false,
-          categoriesError: null
+          categoriesError: null,
+          categoryProducts: [],
+          categoryProductsLoading: false,
+          categoryProductsError: null,
         };
 
         const updatedData = { name: 'Updated Product' };
@@ -343,6 +361,9 @@ describe('productsSlice', () => {
         categories: [],
         categoriesLoading: false,
         categoriesError: null,
+        categoryProducts: [],
+        categoryProductsLoading: false,
+        categoryProductsError: null,
       };
 
       const storeWithData = configureStore({
@@ -365,6 +386,98 @@ describe('productsSlice', () => {
 
       expect(finalState.items).toEqual(updatedProducts);
       expect(finalState.filteredItems).toEqual(updatedProducts);
+    });
+
+    it('should filter products by platform', () => {
+      const stateWithProducts: ProductsState = {
+        ...mockInitialState,
+        items: [mockProduct, mockProduct2],
+        filteredItems: [mockProduct, mockProduct2],
+      };
+      
+      store = configureStore({
+        reducer: { products: productsReducer },
+        preloadedState: { products: stateWithProducts },
+      });
+
+      store.dispatch(setFilters({ platform: 'amazon' }));
+      const state = store.getState().products;
+
+      expect(state.filteredItems).toEqual([mockProduct]);
+    });
+
+    it('should filter products by search query', () => {
+      const stateWithProducts: ProductsState = {
+        ...mockInitialState,
+        items: [mockProduct, mockProduct2],
+        filteredItems: [mockProduct, mockProduct2],
+        filters: { platform: 'amazon' },
+      };
+      
+      store = configureStore({
+        reducer: { products: productsReducer },
+        preloadedState: { products: stateWithProducts },
+      });
+
+      store.dispatch(setFilters({ search: 'Test Product 2' }));
+      const state = store.getState().products;
+
+      expect(state.filteredItems).toEqual([]);
+    });
+
+    it('should clear all filters', () => {
+      const stateWithFilters: ProductsState = {
+        ...mockInitialState,
+        items: [mockProduct, mockProduct2],
+        filteredItems: [mockProduct],
+        filters: { platform: 'amazon', search: 'test' },
+      };
+      
+      store = configureStore({
+        reducer: { products: productsReducer },
+        preloadedState: { products: stateWithFilters },
+      });
+
+      store.dispatch(clearFilters());
+      const state = store.getState().products;
+
+      expect(state.filters).toEqual({});
+      expect(state.filteredItems).toEqual([mockProduct, mockProduct2]);
+    });
+
+    it('should update product when fulfilled', () => {
+      const initialState: ProductsState = {
+        ...mockInitialState,
+        items: [mockProduct],
+        filteredItems: [mockProduct],
+      };
+
+      const updatedData = { name: 'Updated Product' };
+      const action: PayloadAction<{ sku: string; data: Partial<Product> }> = {
+        type: updateProduct.fulfilled.type,
+        payload: { sku: 'TEST-SKU-1', data: updatedData }
+      };
+      const state = productsReducer(initialState, action);
+
+      expect(state.items[0].name).toBe('Updated Product');
+    });
+
+    it('should handle bulk operations', () => {
+      const stateWithProducts: ProductsState = {
+        ...mockInitialState,
+        items: [mockProduct, mockProduct2],
+        filteredItems: [mockProduct, mockProduct2],
+      };
+      
+      store = configureStore({
+        reducer: { products: productsReducer },
+        preloadedState: { products: stateWithProducts },
+      });
+
+      store.dispatch(setOptimisticUpdate([{ ...mockProduct, name: 'Updated' }]));
+      const state = store.getState().products;
+
+      expect(state.items[0].name).toBe('Updated');
     });
   });
 }); 

@@ -13,6 +13,9 @@ export interface ProductsState {
   categories: Category[];
   categoriesLoading: boolean;
   categoriesError: string | null;
+  categoryProducts: Product[];
+  categoryProductsLoading: boolean;
+  categoryProductsError: string | null;
 }
 
 const initialState: ProductsState = {
@@ -26,6 +29,9 @@ const initialState: ProductsState = {
   categories: [],
   categoriesLoading: false,
   categoriesError: null,
+  categoryProducts: [],
+  categoryProductsLoading: false,
+  categoryProductsError: null,
 };
 
 const productService = new ProductService();
@@ -94,6 +100,13 @@ export const addCategory = createAsyncThunk(
   }
 );
 
+export const fetchProductsByCategory = createAsyncThunk(
+  'products/fetchProductsByCategory',
+  async (categoryId: string) => {
+    return await productService.getProducts({ categoryId });
+  }
+);
+
 const productsSlice = createSlice({
   name: 'products',
   initialState,
@@ -126,6 +139,10 @@ const productsSlice = createSlice({
     setOptimisticUpdate: (state, action) => {
       state.items = action.payload;
       state.filteredItems = action.payload;
+    },
+    clearCategoryProducts: (state) => {
+      state.categoryProducts = [];
+      state.categoryProductsError = null;
     },
   },
   extraReducers: (builder) => {
@@ -251,10 +268,25 @@ const productsSlice = createSlice({
       .addCase(addCategory.rejected, (state, action) => {
         state.categoriesLoading = false;
         state.categoriesError = action.error.message || 'Failed to add category';
+      })
+      .addCase(fetchProductsByCategory.pending, (state) => {
+        state.categoryProductsLoading = true;
+        state.categoryProductsError = null;
+      })
+      .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
+        state.categoryProductsLoading = false;
+        state.categoryProducts = action.payload;
+      })
+      .addCase(fetchProductsByCategory.rejected, (state, action) => {
+        state.categoryProductsLoading = false;
+        state.categoryProductsError = action.error.message || 'Failed to fetch products for category';
       });
   },
 });
 
-export const { setFilters, clearFilters, setOptimisticUpdate } = productsSlice.actions;
+export const { setFilters, clearFilters, setOptimisticUpdate, clearCategoryProducts } = productsSlice.actions;
 export const productsReducer = productsSlice.reducer;
-export const selectCategories = (state: { products: ProductsState }) => state.products.categories; 
+export const selectCategories = (state: { products: ProductsState }) => state.products.categories;
+export const selectCategoryProducts = (state: { products: ProductsState }) => state.products.categoryProducts;
+export const selectCategoryProductsLoading = (state: { products: ProductsState }) => state.products.categoryProductsLoading;
+export const selectCategoryProductsError = (state: { products: ProductsState }) => state.products.categoryProductsError; 

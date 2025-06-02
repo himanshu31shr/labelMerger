@@ -255,6 +255,10 @@ export class ProductService extends FirebaseService {
       constraints.push(where("visibility", "==", filters.visibility));
     }
 
+    if (filters?.categoryId) {
+      constraints.push(where("categoryId", "==", filters.categoryId));
+    }
+
     // Get all products and merge the document ID as SKU
     const products = await this.getDocuments<Product>(this.COLLECTION_NAME, constraints);
     return products.map(product => ({

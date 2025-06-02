@@ -222,15 +222,15 @@ describe('DataTable', () => {
         />
       );
 
-      // Change rows per page to 5
+      // Change rows per page to 25
       const rowsPerPageSelect = screen.getByRole('combobox');
       await userEvent.click(rowsPerPageSelect);
-      const option5 = screen.getByRole('option', { name: '5' });
-      await userEvent.click(option5);
+      const option25 = screen.getByRole('option', { name: '25' });
+      await userEvent.click(option25);
 
-      // Should now show only 5 rows
+      // Should show all rows since we have 12 data rows which is less than 25
       const rows = screen.getAllByRole('row');
-      expect(rows).toHaveLength(6); // 5 data rows + 1 header row
+      expect(rows).toHaveLength(13); // 12 data rows + 1 header row
     });
   });
 

@@ -9,7 +9,7 @@ import {
   useTheme,
   Stack,
 } from "@mui/material";
-import React from "react";
+import React, { useMemo } from "react";
 import { TableHeader } from "./TableHeader";
 import { TableRowComponent } from "./TableRowComponent";
 import { MobileDataRow } from "./MobileDataRow";
@@ -34,6 +34,11 @@ export interface DataTableProps<T> {
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
   id?: string;
+  enableSelection?: boolean;
+  selected?: (string | number)[];
+  onSelect?: (id: string | number, checked: boolean) => void;
+  onSelectAll?: (checked: boolean, visibleIds: (string | number)[]) => void;
+  getRowId?: (row: T) => string | number;
 }
 
 type Comparable = string | number | Date | boolean;
@@ -44,10 +49,23 @@ export function DataTable<T>({
   defaultSortColumn,
   defaultSortDirection,
   onRowClick,
-  rowsPerPageOptions = [5, 10, 25],
+  rowsPerPageOptions = [10, 25, 50],
   defaultRowsPerPage = 10,
   id = "data-table",
+  enableSelection = false,
+  selected = [],
+  onSelect,
+  onSelectAll,
+  getRowId,
 }: DataTableProps<T>) {
+  // Default getRowId function - assumes object has 'id' property when selection is enabled
+  const getRowIdFunc = getRowId || ((row: T) => (row as T & { id: string | number }).id);
+
+  // Ensure getRowId is provided when selection is enabled
+  if (enableSelection && !getRowId) {
+    console.warn('getRowId should be provided when enableSelection is true. Falling back to assuming row.id exists.');
+  }
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -162,6 +180,29 @@ export function DataTable<T>({
     return filteredAndSortedData.slice(startIndex, startIndex + rowsPerPage);
   }, [filteredAndSortedData, page, rowsPerPage]);
 
+  // Generate visible row IDs for selection
+  const visibleRowIds = useMemo(() => {
+    if (!enableSelection) return [];
+    return paginatedData.map(getRowIdFunc);
+  }, [paginatedData, enableSelection, getRowIdFunc]);
+
+  const handleSelect = (id: string | number, checked: boolean) => {
+    if (onSelect) {
+      onSelect(id, checked);
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (onSelectAll) {
+      onSelectAll(checked, visibleRowIds);
+    }
+  };
+
+  const isSelected = (row: T) => {
+    if (!enableSelection) return false;
+    return selected.includes(getRowIdFunc(row));
+  };
+
   // Render mobile view
   if (isMobile) {
     return (
@@ -220,15 +261,23 @@ export function DataTable<T>({
             onRequestSort={handleRequestSort}
             filters={filters}
             onFilterChange={handleFilterChange}
+            enableSelection={enableSelection}
+            selected={selected}
+            onSelectAll={handleSelectAll}
+            visibleRowIds={visibleRowIds}
           />
           <TableBody>
             {paginatedData.map((row, index) => (
               <TableRowComponent
-                key={index}
+                key={enableSelection ? getRowIdFunc(row) : index}
                 row={row}
                 columns={columns}
                 index={index}
                 onClick={onRowClick}
+                enableSelection={enableSelection}
+                selected={isSelected(row)}
+                onSelect={handleSelect}
+                rowId={enableSelection ? getRowIdFunc(row) : undefined}
               />
             ))}
           </TableBody>

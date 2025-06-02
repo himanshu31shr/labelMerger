@@ -237,7 +237,12 @@ describe('ProductService', () => {
   });
 
   describe('getProducts', () => {
-    it('should get all products without filters', async () => {
+    beforeEach(() => {
+      // Reset mock before each test
+      jest.spyOn(service as any, 'getDocuments').mockClear();
+    });
+
+    it('should return all products when no filters provided', async () => {
       const mockProducts = [getMockProduct()];
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
 
@@ -247,25 +252,96 @@ describe('ProductService', () => {
       expect(service['getDocuments']).toHaveBeenCalledWith('products', []);
     });
 
-    it('should apply platform filter', async () => {
-      const filters: ProductFilter = { platform: 'amazon' };
+    it('should filter products by platform', async () => {
       const mockProducts = [getMockProduct()];
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
 
-      const result = await service.getProducts(filters);
+      const filters: ProductFilter = { platform: 'amazon' };
+      await service.getProducts(filters);
 
-      expect(result).toEqual(mockProducts);
-      // Verify that where constraint was applied (mocked)
+      expect(service['getDocuments']).toHaveBeenCalledWith('products', [
+        expect.objectContaining({}) // where clause for platform
+      ]);
     });
 
-    it('should apply search filter', async () => {
-      const filters: ProductFilter = { search: 'test' };
+    it('should filter products by visibility', async () => {
       const mockProducts = [getMockProduct()];
       jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
 
+      const filters: ProductFilter = { visibility: 'visible' };
+      await service.getProducts(filters);
+
+      expect(service['getDocuments']).toHaveBeenCalledWith('products', [
+        expect.objectContaining({}) // where clause for visibility
+      ]);
+    });
+
+    it('should filter products by categoryId', async () => {
+      const mockProducts = [
+        { ...getMockProduct(), categoryId: 'electronics' },
+        { ...getMockProduct(), sku: 'TEST-SKU-2', categoryId: 'books' }
+      ];
+      jest.spyOn(service as any, 'getDocuments').mockResolvedValue([mockProducts[0]]);
+
+      const filters: ProductFilter = { categoryId: 'electronics' };
       const result = await service.getProducts(filters);
 
-      expect(result).toEqual(mockProducts);
+      expect(service['getDocuments']).toHaveBeenCalledWith('products', [
+        expect.objectContaining({}) // where clause for categoryId
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0].categoryId).toBe('electronics');
+    });
+
+    it('should filter products by search term', async () => {
+      const mockProducts = [getMockProduct()];
+      jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
+
+      const filters: ProductFilter = { search: 'Test' };
+      await service.getProducts(filters);
+
+      expect(service['getDocuments']).toHaveBeenCalledWith('products', [
+        expect.objectContaining({}), // where clause for search >= 
+        expect.objectContaining({}) // where clause for search <=
+      ]);
+    });
+
+    it('should combine multiple filters', async () => {
+      const mockProducts = [getMockProduct()];
+      jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
+
+      const filters: ProductFilter = { 
+        platform: 'amazon', 
+        categoryId: 'electronics',
+        visibility: 'visible'
+      };
+      await service.getProducts(filters);
+
+      expect(service['getDocuments']).toHaveBeenCalledWith('products', [
+        expect.objectContaining({}), // platform
+        expect.objectContaining({}), // visibility
+        expect.objectContaining({}) // categoryId
+      ]);
+    });
+
+    it('should handle empty category filter', async () => {
+      const mockProducts = [getMockProduct()];
+      jest.spyOn(service as any, 'getDocuments').mockResolvedValue(mockProducts);
+
+      const filters: ProductFilter = { categoryId: '' };
+      await service.getProducts(filters);
+
+      // Should not add categoryId filter for empty string
+      expect(service['getDocuments']).toHaveBeenCalledWith('products', []);
+    });
+
+    it('should preserve original SKU when no document ID', async () => {
+      const mockProduct = getMockProduct();
+      jest.spyOn(service as any, 'getDocuments').mockResolvedValue([mockProduct]);
+
+      const result = await service.getProducts();
+
+      expect(result[0].sku).toBe(mockProduct.sku);
     });
   });
 

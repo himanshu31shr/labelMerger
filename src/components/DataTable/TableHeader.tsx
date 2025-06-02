@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TableHead, TableRow, TableCell, TableSortLabel, Box, TextField } from '@mui/material';
+import { TableHead, TableRow, TableCell, TableSortLabel, Box, TextField, Checkbox } from '@mui/material';
 import { Column } from './DataTable';
 
 interface TableHeaderProps<T> {
@@ -9,14 +9,31 @@ interface TableHeaderProps<T> {
   filters: { [key in keyof T]?: string };
   onRequestSort: (property: keyof T) => void;
   onFilterChange: (column: keyof T, value: string) => void;
+  enableSelection?: boolean;
+  selected?: (string | number)[];
+  onSelectAll?: (checked: boolean, visibleIds: (string | number)[]) => void;
+  visibleRowIds?: (string | number)[];
 }
 
 function TableHeaderComponent<T>(props: TableHeaderProps<T>) {
-  const { columns, orderBy, order, filters, onRequestSort, onFilterChange } = props;
+  const { columns, orderBy, order, filters, onRequestSort, onFilterChange, enableSelection, selected = [], onSelectAll, visibleRowIds = [] } = props;
+
+  const allSelected = visibleRowIds.length > 0 && visibleRowIds.every(id => selected.includes(id));
+  const someSelected = visibleRowIds.some(id => selected.includes(id));
 
   return (
     <TableHead>
       <TableRow>
+        {enableSelection && (
+          <TableCell padding="checkbox">
+            <Checkbox
+              indeterminate={someSelected && !allSelected}
+              checked={allSelected}
+              onChange={e => onSelectAll?.(e.target.checked, visibleRowIds)}
+              inputProps={{ 'aria-label': 'select all' }}
+            />
+          </TableCell>
+        )}
         {columns.map((column) => (
           <TableCell
             key={String(column.id)}

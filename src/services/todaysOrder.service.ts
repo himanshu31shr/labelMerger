@@ -3,6 +3,7 @@ import { ProductSummary } from "../pages/home/services/base.transformer";
 import { FirebaseService } from "./firebase.service";
 import { Product, ProductService } from "./product.service";
 import { CategoryInventoryService } from "./categoryInventory.service";
+import { Category, CategoryService } from "./category.service";
 
 export type ActiveOrder = ProductSummary;
 
@@ -16,16 +17,36 @@ export class TodaysOrder extends FirebaseService {
   private readonly COLLECTION_NAME = "active-orders";
   private productService: ProductService;
   private categoryInventoryService: CategoryInventoryService;
+  private categoryService: CategoryService;
   private products: Product[] = [];
+  private categories: Category[] = [];
 
   constructor() {
     super();
     this.productService = new ProductService();
     this.categoryInventoryService = new CategoryInventoryService();
+    this.categoryService = new CategoryService();
   }
 
   async mapProductsToActiveOrder() {
+    // Load both products and categories
     this.products = await this.productService.getProducts({});
+    this.categories = await this.categoryService.getCategories();
+  }
+
+  private getCategoryName(categoryId?: string): string | undefined {
+    if (!categoryId) return undefined;
+    const category = this.categories.find(cat => cat.id === categoryId);
+    return category?.name;
+  }
+
+  private mapProductToOrder(order: ProductSummary): void {
+    const product = this.products.find((p) => p.sku === order.SKU && p.platform === order.type);
+    if (product) {
+      order.product = product;
+      // Populate category name from product's categoryId
+      order.category = this.getCategoryName(product.categoryId);
+    }
   }
 
   async getTodaysOrders(): Promise<ActiveOrderSchema | undefined> {
@@ -35,11 +56,8 @@ export class TodaysOrder extends FirebaseService {
       format(new Date(), "yyyy-MM-dd")
     );
     if (activeOrder) {
-      activeOrder.orders.map((order) => {
-        const product = this.products.find((p) => p.sku === order.SKU && p.platform === order.type);
-        if (product) {
-          order.product = product;
-        }
+      activeOrder.orders.forEach((order) => {
+        this.mapProductToOrder(order);
       });
     }
 
@@ -63,10 +81,7 @@ export class TodaysOrder extends FirebaseService {
 
         if (dayOrder) {
           dayOrder.orders.forEach((order) => {
-            const product = this.products.find((p) => p.sku === order.SKU);
-            if (product) {
-              order.product = product;
-            }
+            this.mapProductToOrder(order);
           });
           orders.push(dayOrder);
         } else {
