@@ -1,14 +1,7 @@
 import { readFileFromInput, downloadFile, exportTableToPDF } from '../utils';
 
-// Mock html2pdf
-jest.mock('html2pdf.js', () => {
-  const mockWorker = {
-    set: jest.fn().mockReturnThis(),
-    from: jest.fn().mockReturnThis(),
-    save: jest.fn().mockReturnThis(),
-  };
-  return jest.fn(() => mockWorker);
-});
+// Removed html2pdf.js mocks and requires as the package is no longer used
+// jest.mock('html2pdf.js', () => { ... });
 
 describe('home utils', () => {
   describe('readFileFromInput', () => {
@@ -30,12 +23,12 @@ describe('home utils', () => {
       const mockFileReader = {
         readAsArrayBuffer: jest.fn(),
         result: mockFileContent,
-        onload: null as any,
-        onerror: null as any,
+        onload: null as FileReader['onload'],
+        onerror: null as FileReader['onerror'],
       };
 
       // Replace FileReader constructor
-      global.FileReader = jest.fn(() => mockFileReader) as any;
+      global.FileReader = jest.fn(() => mockFileReader) as unknown as typeof FileReader;
 
       // Start the read operation
       const resultPromise = readFileFromInput(mockFile);
@@ -43,7 +36,7 @@ describe('home utils', () => {
       // Simulate successful file read
       setTimeout(() => {
         if (mockFileReader.onload) {
-          mockFileReader.onload();
+          mockFileReader.onload.call(mockFileReader as unknown as FileReader, {} as ProgressEvent<FileReader>);
         }
       }, 0);
 
@@ -70,7 +63,7 @@ describe('home utils', () => {
         click: jest.fn(),
       };
 
-      mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor as any);
+      mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
       mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation();
       mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation();
       
@@ -83,7 +76,7 @@ describe('home utils', () => {
     });
 
     it('should create and trigger download link', () => {
-      const mockEvent = { preventDefault: mockPreventDefault } as any;
+      const mockEvent = { preventDefault: mockPreventDefault } as unknown as React.MouseEvent<HTMLAnchorElement, MouseEvent>;
       const finalPdf = 'data:application/pdf;base64,test-pdf-data';
 
       downloadFile(mockEvent, finalPdf);
@@ -96,7 +89,6 @@ describe('home utils', () => {
   });
 
   describe('exportTableToPDF', () => {
-    let mockHtml2pdf: jest.MockedFunction<any>;
     let mockElement: HTMLElement;
     let mockGetElementById: jest.SpyInstance;
 
@@ -104,15 +96,6 @@ describe('home utils', () => {
       // Clear all mocks before each test
       jest.clearAllMocks();
       
-      // Mock html2pdf
-      const mockWorker = {
-        set: jest.fn().mockReturnThis(),
-        from: jest.fn().mockReturnThis(),
-        save: jest.fn().mockReturnThis(),
-      };
-      mockHtml2pdf = require('html2pdf.js');
-      mockHtml2pdf.mockReturnValue(mockWorker);
-
       // Mock DOM element
       mockElement = {
         style: {},
@@ -120,7 +103,7 @@ describe('home utils', () => {
           { style: {} },
           { style: {} },
         ]),
-      } as any;
+      } as unknown as HTMLElement;
 
       mockGetElementById = jest.spyOn(document, 'getElementById').mockReturnValue(mockElement);
     });
@@ -133,7 +116,6 @@ describe('home utils', () => {
       exportTableToPDF('test-table');
 
       expect(mockGetElementById).toHaveBeenCalledWith('test-table');
-      expect(mockHtml2pdf).toHaveBeenCalled();
     });
 
     it('should return early when element does not exist', () => {
@@ -144,7 +126,6 @@ describe('home utils', () => {
       exportTableToPDF('non-existent-table');
 
       expect(mockGetElementById).toHaveBeenCalledWith('non-existent-table');
-      expect(mockHtml2pdf).not.toHaveBeenCalled();
     });
   });
 }); 

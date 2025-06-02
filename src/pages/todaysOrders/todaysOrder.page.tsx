@@ -18,14 +18,13 @@ import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import CategoryIcon from "@mui/icons-material/Category";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchOrders } from "../../store/slices/ordersSlice";
 import { SummaryTable } from "../home/components/SummaryTable";
 import { CategoryGroupedTable } from "./components/CategoryGroupedTable";
 import { groupOrdersByCategory } from "./utils/groupingUtils";
-import { exportCategoryGroupsToPDF, exportSimpleCategorySummaryToPDF } from "./utils/exportUtils";
+import { exportNativeCategorySummaryToPDF } from "./utils/nativePdfExport";
 
 type ViewMode = 'individual' | 'grouped';
 
@@ -59,12 +58,8 @@ export const TodaysOrderPage: React.FC = () => {
     ? Math.round(((totalRevenue - totalCost) / totalRevenue) * 100)
     : 0;
 
-  const handleExportFullPDF = () => {
-    exportCategoryGroupsToPDF(groupedData);
-  };
-
-  const handleExportSummaryPDF = async () => {
-    await exportSimpleCategorySummaryToPDF(groupedData);
+  const handleExportSummaryPDF = () => {
+    exportNativeCategorySummaryToPDF(groupedData);
   };
 
   return (
@@ -108,15 +103,6 @@ export const TodaysOrderPage: React.FC = () => {
 
           {viewMode === 'grouped' && (
             <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<PictureAsPdfIcon />}
-                onClick={handleExportFullPDF}
-                sx={{ minWidth: 120 }}
-              >
-                Export Full PDF
-              </Button>
               <Button
                 variant="outlined"
                 size="small"

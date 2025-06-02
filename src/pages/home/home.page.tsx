@@ -29,7 +29,6 @@ import { DownloadButtons } from "./components/DownloadButtons";
 import { FileUploadSection } from "./components/FileUploadSection";
 import { PDFViewer } from "./components/PDFViewer";
 import { SummaryTable } from "./components/SummaryTable";
-import { exportTableToPDF } from "./utils";
 import {
   fetchCategories,
   fetchProducts,
@@ -68,8 +67,6 @@ export const HomePage: React.FC = () => {
   const handleFlipkartFileChange = (file: File | undefined) => {
     dispatch(setFlipkartFile(file || null));
   };
-
-  const handleExportTableToPDF = () => exportTableToPDF("summary-table");
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -147,8 +144,6 @@ export const HomePage: React.FC = () => {
           <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
             <DownloadButtons
               pdfUrl={finalPdf || undefined}
-              onExportSummary={handleExportTableToPDF}
-              hasSummary={summary.length > 0}
             />
           </Box>
         )}

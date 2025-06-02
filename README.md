@@ -164,3 +164,10 @@ This project is proprietary software for Sacred Sutra business operations.
 ## Support
 
 For support and questions, please contact the development team.
+
+## PDF Export for Grouped Active Orders
+
+- Only the summary PDF export (category + order count) is available for grouped active orders.
+- All detailed/statistics PDF export logic and UI have been removed.
+- See `src/pages/todaysOrders/utils/nativePdfExport.ts` for implementation.
+- Project builds cleanly and all tests pass after migration.

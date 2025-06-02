@@ -68,7 +68,9 @@ export default defineConfig({
             "firebase/auth",
             "firebase/firestore",
           ],
-          "pdf-vendor": ["pdf-lib", "html2pdf.js"],
+          // add redux vendor
+          "redux-vendor": ["redux", "react-redux"],
+          "pdf-vendor": ["pdf-lib", "jspdf"],
           "utils-vendor": ["papaparse", "xlsx"],
         },
       },

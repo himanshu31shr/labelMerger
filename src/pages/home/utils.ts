@@ -1,4 +1,4 @@
-import html2pdf from 'html2pdf.js';
+// import html2pdf from 'html2pdf.js';
 import { MouseEvent } from "react";
 
 export const readFileFromInput = async (file?: File): Promise<Uint8Array | null> => {
@@ -48,18 +48,18 @@ export const exportTableToPDF = (elementId: string) => {
     cell.style.color = tableStyles.color;
   });
 
-  const worker = html2pdf();
+  // const worker = html2pdf(); // removed, html2pdf.js is no longer used
   
-  worker
-    .set({
-      margin: 0.2,
-      filename: "summary-table.pdf",
-      image: { type: "png", quality: 0.98 },
-      html2canvas: { scale: 1 },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-    })
-    .from(element)
-    .save();
+  // const worker = html2pdf();
+  //   .set({
+  //     margin: 0.2,
+  //     filename: "summary-table.pdf",
+  //     image: { type: "png", quality: 0.98 },
+  //     html2canvas: { scale: 1 },
+  //     jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+  //   })
+  //   .from(element)
+  //   .save();
 
   // Reset styles after a delay
   setTimeout(() => {
