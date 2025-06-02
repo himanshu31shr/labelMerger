@@ -442,4 +442,121 @@ export const exportCategorySummaryToPDF = (groupedData: GroupedOrderData): void 
       document.body.removeChild(tempDiv);
     }
   }
+};
+
+/**
+ * Generate simple HTML for category summary PDF - just categories and counts
+ */
+export const generateSimpleCategorySummaryHTML = (groupedData: GroupedOrderData): string => {
+  const currentDate = format(new Date(), 'PPP');
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Active Orders by Category</title>
+      <style>
+        body { 
+          font-family: Arial, sans-serif; 
+          padding: 20px; 
+          line-height: 1.6;
+        }
+        h1 { 
+          color: #333; 
+          border-bottom: 2px solid #333; 
+          padding-bottom: 10px;
+        }
+        .category-item { 
+          margin: 10px 0; 
+          padding: 10px; 
+          border-left: 4px solid #007acc;
+          background: #f9f9f9;
+        }
+        .category-name { 
+          font-weight: bold; 
+          font-size: 16px;
+        }
+        .order-count { 
+          color: #666; 
+          margin-left: 10px;
+        }
+        .total { 
+          margin-top: 20px; 
+          padding: 15px; 
+          background: #007acc; 
+          color: white; 
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Active Orders by Category</h1>
+      <p>Generated on: ${currentDate}</p>
+      
+      ${groupedData.categorizedGroups.map(group => `
+        <div class="category-item">
+          <span class="category-name">${group.categoryName}</span>
+          <span class="order-count">${group.orders.length} orders</span>
+        </div>
+      `).join('')}
+      
+      ${groupedData.uncategorizedGroup.orders.length > 0 ? `
+        <div class="category-item">
+          <span class="category-name">Uncategorized</span>
+          <span class="order-count">${groupedData.uncategorizedGroup.orders.length} orders</span>
+        </div>
+      ` : ''}
+      
+      <div class="total">
+        Total: ${groupedData.summary.totalOrders} orders across ${groupedData.summary.totalCategories} categories
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+/**
+ * Export simple category summary to PDF
+ */
+export const exportSimpleCategorySummaryToPDF = async (groupedData: GroupedOrderData): Promise<void> => {
+  try {
+    const htmlContent = generateSimpleCategorySummaryHTML(groupedData);
+    
+    const options = {
+      margin: 0.5,
+      filename: `category-summary-${format(new Date(), 'yyyy-MM-dd')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 1,
+        useCORS: true
+      },
+      jsPDF: { 
+        unit: 'in', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    };
+
+    // Create element directly from HTML string
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+    
+    await html2pdf().set(options).from(element).save();
+    
+  } catch (error) {
+    console.error('PDF export failed:', error);
+    // Fallback: create a simple text-based summary
+    const summary = groupedData.categorizedGroups.map(group => 
+      `${group.categoryName}: ${group.orders.length} orders`
+    ).join('\n');
+    
+    const blob = new Blob([`Active Orders Summary\n\n${summary}`], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `category-summary-${format(new Date(), 'yyyy-MM-dd')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 }; 

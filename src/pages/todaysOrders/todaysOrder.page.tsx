@@ -25,7 +25,7 @@ import { fetchOrders } from "../../store/slices/ordersSlice";
 import { SummaryTable } from "../home/components/SummaryTable";
 import { CategoryGroupedTable } from "./components/CategoryGroupedTable";
 import { groupOrdersByCategory } from "./utils/groupingUtils";
-import { exportCategoryGroupsToPDF, exportCategorySummaryToPDF } from "./utils/exportUtils";
+import { exportCategoryGroupsToPDF, exportSimpleCategorySummaryToPDF } from "./utils/exportUtils";
 
 type ViewMode = 'individual' | 'grouped';
 
@@ -63,8 +63,8 @@ export const TodaysOrderPage: React.FC = () => {
     exportCategoryGroupsToPDF(groupedData);
   };
 
-  const handleExportSummaryPDF = () => {
-    exportCategorySummaryToPDF(groupedData);
+  const handleExportSummaryPDF = async () => {
+    await exportSimpleCategorySummaryToPDF(groupedData);
   };
 
   return (

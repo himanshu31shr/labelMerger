@@ -84,16 +84,10 @@ export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ grou
       >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
-          sx={{
-            backgroundColor: group.categoryName === 'Uncategorized' ? '#fff3e0' : '#e3f2fd',
-            '&:hover': {
-              backgroundColor: group.categoryName === 'Uncategorized' ? '#ffe0b2' : '#bbdefb',
-            },
-          }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mr: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <CategoryIcon color={group.categoryName === 'Uncategorized' ? 'warning' : 'primary'} />
+              <CategoryIcon />
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {group.categoryName}
               </Typography>
@@ -136,7 +130,7 @@ export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ grou
           <TableContainer>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableRow>
                   <TableCell><strong>SKU</strong></TableCell>
                   <TableCell><strong>Product Name</strong></TableCell>
                   <TableCell align="center"><strong>Quantity</strong></TableCell>
@@ -151,10 +145,6 @@ export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ grou
                   return (
                     <TableRow 
                       key={`${order.SKU}-${index}`}
-                      sx={{ 
-                        '&:hover': { backgroundColor: '#f9f9f9' },
-                        '&:nth-of-type(even)': { backgroundColor: '#fafafa' }
-                      }}
                     >
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                         {order.SKU || 'N/A'}
