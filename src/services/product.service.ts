@@ -13,11 +13,6 @@ export interface Product {
   visibility: "visible" | "hidden";
   sellingPrice: number;
   categoryId?: string; // Reference to category document ID
-  inventory: {
-    quantity: number;
-    lowStockThreshold: number;
-    lastUpdated?: Timestamp;
-  };
   metadata: {
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
@@ -169,11 +164,6 @@ export class ProductService extends FirebaseService {
       costPrice: prices.get(row["seller-sku"])?.costPrice ?? 0, // To be updated by user
       platform: "amazon" as const,
       sellingPrice: Number(row["price"]) || 0,
-      inventory: {
-        quantity: Number(row["quantity"]) || 0,
-        lowStockThreshold: 5,
-        lastUpdated: Timestamp.now(),
-      },
       metadata: {
         listingStatus: "active",
         moq: "1",
@@ -198,11 +188,6 @@ export class ProductService extends FirebaseService {
       sellingPrice: Number(row["Your Selling Price"]) || 0,
       costPrice: prices.get(row["Seller SKU Id"])?.costPrice ?? 0,
       platform: "flipkart" as const,
-      inventory: {
-        quantity: 0, // Default to 0 as Flipkart data may not have quantity
-        lowStockThreshold: 5,
-        lastUpdated: Timestamp.now(),
-      },
       metadata: {
         listingStatus: row["Listing Status"],
         moq: row["Minimum Order Quantity"] || "1",
@@ -234,8 +219,10 @@ export class ProductService extends FirebaseService {
       ...data,
       metadata: {
         updatedAt: Timestamp.now(),
+        ...data.metadata,
       },
     };
+
     return this.updateDocument(this.COLLECTION_NAME, sku, updateData);
   }
 
