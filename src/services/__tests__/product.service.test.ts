@@ -122,7 +122,6 @@ describe('ProductService', () => {
         name: 'Test Product 1',
         platform: 'amazon',
         sellingPrice: 100,
-        inventory: { quantity: 10 },
       });
     });
 
