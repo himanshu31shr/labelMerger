@@ -42,9 +42,9 @@ export const ProductsPage: React.FC = () => {
     }
   }, [dispatch, isAuthenticated]);
 
-  const handleProductImport = async (file: File) => {
+  const handleProductImport = async (file: File, updateExisting?: boolean) => {
     try {
-      await dispatch(importProducts(file)).unwrap();
+      await dispatch(importProducts({ file, updateExisting })).unwrap();
     } catch {
       // Error handling - could show toast notification
     }

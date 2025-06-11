@@ -7,6 +7,15 @@
 
 ## ✅ Recently Completed (December 2024)
 
+### Product Update Feature - December 23, 2024
+- ✅ **COMPLETED:** Product update functionality for existing products during import
+- ✅ **ProductService:** Enhanced with `saveOrUpdateProducts()` method and selective update strategy
+- ✅ **Redux Integration:** Modified `importProducts` thunk to support updateExisting parameter
+- ✅ **UI Enhancement:** Added checkbox in ProductImportSection with informative tooltip
+- ✅ **Data Safety:** Preserves user customizations (cost price, categories, visibility, inventory)
+- ✅ **Backward Compatibility:** Existing functionality unchanged, new feature is opt-in
+- ✅ **Documentation:** Complete feature guide in docs/product-update-feature.md
+
 ### Category Grouping & PDF Export Feature
 - ✅ **COMPLETED:** Active orders category grouping and PDF export functionality
 - ✅ **Components:** CategoryGroupedTable with collapsible sections and statistics

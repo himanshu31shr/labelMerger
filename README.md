@@ -4,6 +4,13 @@ A comprehensive business management application for e-commerce operations built 
 
 ## Features
 
+### Product Import and Update System
+- **Smart Import**: Import new products from Excel files (Amazon/Flipkart formats)
+- **Update Existing**: Option to update existing products during import with selective field updates
+- **Data Preservation**: Automatically preserves user customizations (cost price, categories, visibility)
+- **Import Safety**: Selective update strategy that only modifies import-relevant fields
+- **Batch Operations**: Efficient bulk processing for large product catalogs
+
 ### Multi-Category Selection and Product Management
 - **Category Management**: Advanced multi-select functionality with inline tag application
 - **Product Organization**: Comprehensive product categorization with automatic inventory tracking
@@ -31,7 +38,15 @@ A comprehensive business management application for e-commerce operations built 
 
 ## Recent Updates
 
-### Active Orders Page Fixes (Latest)
+### Product Update Feature (Latest - December 23, 2024)
+- ✅ **Smart Product Updates**: Added ability to update existing products during import process
+- ✅ **Selective Field Updates**: Only updates import-relevant fields while preserving user customizations
+- ✅ **Enhanced UI**: Added intuitive checkbox control with helpful tooltip in import section
+- ✅ **Data Safety**: Protects user-set cost prices, categories, and visibility settings
+- ✅ **Backward Compatibility**: Existing import functionality unchanged, new feature is opt-in
+- ✅ **Comprehensive Documentation**: Complete feature guide and technical documentation
+
+### Active Orders Page Fixes
 - ✅ **Fixed Category Display**: Categories now properly resolve from categoryId to category names
 - ✅ **Enhanced Action Buttons**: Buttons only appear when marketplace serial numbers are available
 - ✅ **Improved Data Validation**: Better handling of missing or empty product metadata

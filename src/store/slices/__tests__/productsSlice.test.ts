@@ -295,9 +295,13 @@ describe('productsSlice', () => {
       });
 
       it('should update items when fulfilled', () => {
-        const action: PayloadAction<Product[]> = {
+        const action: PayloadAction<{ products: Product[], summary: { created: number; updated: number }, updateExisting: boolean }> = {
           type: importProducts.fulfilled.type,
-          payload: [mockProduct]
+          payload: {
+            products: [mockProduct],
+            summary: { created: 1, updated: 0 },
+            updateExisting: false
+          }
         };
         const state = productsReducer(undefined, action);
 

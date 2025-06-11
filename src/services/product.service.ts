@@ -219,6 +219,111 @@ export class ProductService extends FirebaseService {
     );
   }
 
+  /**
+   * Save products with option to update existing ones
+   * @param products Array of products to save
+   * @param updateExisting Whether to update existing products (default: false)
+   * @returns Object with counts of created and updated products
+   */
+  async saveOrUpdateProducts(
+    products: Product[], 
+    updateExisting: boolean = false
+  ): Promise<{ created: number; updated: number }> {
+    const allExistingProducts = await this.getDocuments<Product>(this.COLLECTION_NAME);
+    
+    // Create a map for faster lookup of existing products
+    const existingProductsMap = new Map<string, Product>();
+    allExistingProducts.forEach(product => {
+      const key = `${product.sku}-${product.platform}`;
+      existingProductsMap.set(key, product);
+    });
+
+    const newProducts: Product[] = [];
+    const productsToUpdate: Array<{ sku: string; updateData: Partial<Product> }> = [];
+
+    products.forEach(product => {
+      const key = `${product.sku}-${product.platform}`;
+      const existingProduct = existingProductsMap.get(key);
+
+      if (existingProduct) {
+        if (updateExisting) {
+          // Create selective update data - only update import-relevant fields
+          const updateData: Partial<Product> = {
+            // Update fields that typically come from import files
+            sellingPrice: product.sellingPrice,
+            metadata: {
+              ...existingProduct.metadata,
+              listingStatus: product.metadata.listingStatus,
+              moq: product.metadata.moq,
+              updatedAt: Timestamp.now(),
+              lastImportedFrom: product.platform === 'amazon' ? 'Amazon Import' : 'Flipkart Import',
+            }
+          };
+
+          // Update platform-specific serial numbers
+          if (product.platform === 'amazon' && product.metadata.amazonSerialNumber) {
+            updateData.metadata!.amazonSerialNumber = product.metadata.amazonSerialNumber;
+          } else if (product.platform === 'flipkart' && product.metadata.flipkartSerialNumber) {
+            updateData.metadata!.flipkartSerialNumber = product.metadata.flipkartSerialNumber;
+          }
+
+          // Only update name if the existing product doesn't have a custom description
+          // (indicating it might still be using the default from import)
+          if (!existingProduct.description || existingProduct.description === existingProduct.name) {
+            updateData.name = product.name;
+          }
+
+          productsToUpdate.push({
+            sku: product.sku,
+            updateData
+          });
+        }
+        // If updateExisting is false, skip existing products (current behavior)
+      } else {
+        // Add new products with timestamps
+        newProducts.push({
+          ...product,
+          metadata: {
+            ...product.metadata,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+            lastImportedFrom: product.platform === 'amazon' ? 'Amazon Import' : 'Flipkart Import',
+          }
+        });
+      }
+    });
+
+    // Perform batch operations
+    const operations: Promise<void>[] = [];
+
+    // Create new products
+    if (newProducts.length > 0) {
+      operations.push(
+        this.batchOperation(
+          newProducts,
+          this.COLLECTION_NAME,
+          "create",
+          (product) => product.sku
+        )
+      );
+    }
+
+    // Update existing products
+    if (productsToUpdate.length > 0) {
+      const updatePromises = productsToUpdate.map(({ sku, updateData }) =>
+        this.updateDocument(this.COLLECTION_NAME, sku, updateData)
+      );
+      operations.push(...updatePromises);
+    }
+
+    await Promise.all(operations);
+
+    return {
+      created: newProducts.length,
+      updated: productsToUpdate.length
+    };
+  }
+
   async updateProduct(sku: string, data: Partial<Product>): Promise<void> {
     return this.updateDocument(this.COLLECTION_NAME, sku, data);
   }

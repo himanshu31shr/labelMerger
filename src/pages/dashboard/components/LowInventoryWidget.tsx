@@ -78,7 +78,7 @@ const LowInventoryWidget: React.FC<LowInventoryWidgetProps> = ({ items, loading 
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
                   <Chip 
                     size="small" 
-                    color={product.inventory?.quantity < 0 ? 'error' : 'warning'} 
+                    color={product.inventory?.quantity && product.inventory.quantity < 0 ? 'error' : 'warning'} 
                     label={`${product.inventory?.quantity || 0} in stock`} 
                     sx={{ height: 20 }}
                   />

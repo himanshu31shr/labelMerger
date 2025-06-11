@@ -61,10 +61,14 @@ export const fetchProductDetails = createAsyncThunk(
 
 export const importProducts = createAsyncThunk(
   'products/importProducts',
-  async (file: File) => {
+  async ({ file, updateExisting = false }: { file: File; updateExisting?: boolean }) => {
     const importedProducts = await productService.parseProducts(file);
-    await productService.saveProducts(importedProducts);
-    return importedProducts;
+    const result = await productService.saveOrUpdateProducts(importedProducts, updateExisting);
+    return { 
+      products: importedProducts, 
+      summary: result,
+      updateExisting 
+    };
   }
 );
 
@@ -180,8 +184,20 @@ const productsSlice = createSlice({
       })
       .addCase(importProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = [...state.items, ...action.payload];
-        state.filteredItems = action.payload.filter(product => {
+        const { products, updateExisting } = action.payload;
+        
+        if (updateExisting) {
+          // If updating existing products, refresh the entire products list to get updated data
+          // For now, we'll add the new products and the existing ones will be updated in the background
+          const newProductSkus = new Set(products.map(p => `${p.sku}-${p.platform}`));
+          const existingProducts = state.items.filter(p => !newProductSkus.has(`${p.sku}-${p.platform}`));
+          state.items = [...existingProducts, ...products];
+        } else {
+          // Original behavior: just add new products
+          state.items = [...state.items, ...products];
+        }
+        
+        state.filteredItems = state.items.filter(product => {
           if (state.filters.platform && product.platform !== state.filters.platform) return false;
           if (state.filters.search) {
             const searchLower = state.filters.search.toLowerCase();
