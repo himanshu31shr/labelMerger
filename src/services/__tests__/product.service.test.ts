@@ -228,9 +228,6 @@ describe('ProductService', () => {
 
       expect(updateSpy).toHaveBeenCalledWith('products', 'TEST-SKU-1', {
         name: 'Updated Product',
-        metadata: {
-          updatedAt: { seconds: 1234567890, nanoseconds: 0 },
-        },
       });
     });
   });

@@ -13,6 +13,11 @@ export interface Product {
   visibility: "visible" | "hidden";
   sellingPrice: number;
   categoryId?: string; // Reference to category document ID
+  inventory?: {
+    quantity: number;
+    lowStockThreshold: number;
+    lastUpdated: Timestamp;
+  };
   metadata: {
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
@@ -215,15 +220,7 @@ export class ProductService extends FirebaseService {
   }
 
   async updateProduct(sku: string, data: Partial<Product>): Promise<void> {
-    const updateData = {
-      ...data,
-      metadata: {
-        updatedAt: Timestamp.now(),
-        ...data.metadata,
-      },
-    };
-
-    return this.updateDocument(this.COLLECTION_NAME, sku, updateData);
+    return this.updateDocument(this.COLLECTION_NAME, sku, data);
   }
 
   async getProducts(filters?: ProductFilter): Promise<Product[]> {
@@ -247,10 +244,13 @@ export class ProductService extends FirebaseService {
     }
 
     // Get all products and merge the document ID as SKU
-    const products = await this.getDocuments<Product>(this.COLLECTION_NAME, constraints);
-    return products.map(product => ({
+    const products = await this.getDocuments<Product>(
+      this.COLLECTION_NAME,
+      constraints
+    );
+    return products.map((product) => ({
       ...product,
-      sku: product.id ?? product.sku
+      sku: product.id ?? product.sku,
     }));
   }
 

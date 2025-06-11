@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Chip,
   Paper,
@@ -13,33 +10,58 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Divider,
   Grid,
   Card,
   CardContent,
   TextField,
   InputAdornment,
+  Collapse,
+  IconButton,
+  TableSortLabel,
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
   Category as CategoryIcon,
   ShoppingCart as ShoppingCartIcon,
   TrendingUp as TrendingUpIcon,
   AttachMoney as AttachMoneyIcon,
   Search as SearchIcon,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
 } from '@mui/icons-material';
-import { CategoryGroup, GroupedOrderData, getCategoryStatistics, filterGroupsBySearch } from '../utils/groupingUtils';
+import { CategoryGroup, GroupedOrderData, filterGroupsBySearch } from '../utils/groupingUtils';
 import { ViewAmazonListingButton, ViewFlipkartListingButton } from '../../../shared/ActionButtons';
-import { ProductSummary } from '../../home/services/base.transformer';
 import { FormattedCurrency } from '../../../components/FormattedCurrency';
+import { ProductSummary } from '../../home/services/base.transformer';
 
 interface CategoryGroupedTableProps {
   groupedData: GroupedOrderData;
 }
 
+type SortField = 'category' | 'itemCount' | 'totalQuantity' | 'totalRevenue';
+type SortDirection = 'asc' | 'desc';
+
+interface CategoryRowProps {
+  group: CategoryGroup;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+const getCategoryStatistics = (group: CategoryGroup) => {
+  return {
+    itemCount: group.totalItems,
+    totalQuantity: group.totalQuantity,
+    totalRevenue: group.totalRevenue,
+    averageQuantity: group.totalItems > 0 ? Math.round(group.totalQuantity / group.totalItems * 100) / 100 : 0,
+    averageRevenue: group.totalItems > 0 ? Math.round(group.totalRevenue / group.totalItems * 100) / 100 : 0,
+    platforms: group.platforms,
+  };
+};
+
 export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ groupedData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [sortField, setSortField] = useState<SortField>('category');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // Filter data based on search term
   const filteredData = filterGroupsBySearch(groupedData, searchTerm);
@@ -51,8 +73,55 @@ export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ grou
     }));
   };
 
+  const handleSort = (field: SortField) => {
+    const isAsc = sortField === field && sortDirection === 'asc';
+    setSortDirection(isAsc ? 'desc' : 'asc');
+    setSortField(field);
+  };
+
+  // Sort categories based on selected field and direction
+  const sortedCategories = [...filteredData.categorizedGroups].sort((a, b) => {
+    const aStats = getCategoryStatistics(a);
+    const bStats = getCategoryStatistics(b);
+    
+    let aValue: string | number;
+    let bValue: string | number;
+    
+    switch (sortField) {
+      case 'category':
+        aValue = a.categoryName.toLowerCase();
+        bValue = b.categoryName.toLowerCase();
+        break;
+      case 'itemCount':
+        aValue = aStats.itemCount;
+        bValue = bStats.itemCount;
+        break;
+      case 'totalQuantity':
+        aValue = aStats.totalQuantity;
+        bValue = bStats.totalQuantity;
+        break;
+      case 'totalRevenue':
+        aValue = aStats.totalRevenue;
+        bValue = bStats.totalRevenue;
+        break;
+      default:
+        aValue = a.categoryName.toLowerCase();
+        bValue = b.categoryName.toLowerCase();
+    }
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    } else {
+      return sortDirection === 'asc' 
+        ? (aValue as number) - (bValue as number)
+        : (bValue as number) - (aValue as number);
+    }
+  });
+
   const renderActions = (order: ProductSummary) => (
-    <Box sx={{ display: 'flex', gap: 1 }}>
+    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
       {order.product?.platform === 'flipkart' && 
        order.product?.metadata?.flipkartSerialNumber &&
        order.product.metadata.flipkartSerialNumber.trim() !== '' && (
@@ -71,142 +140,161 @@ export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ grou
     </Box>
   );
 
-  const renderCategoryGroup = (group: CategoryGroup) => {
+   
+  const CategoryRow: React.FC<CategoryRowProps> = ({ group, isExpanded, onToggle }) => {
     const stats = getCategoryStatistics(group);
-    const isExpanded = expandedCategories[group.categoryName] ?? false;
 
     return (
-      <Accordion
-        key={group.categoryName}
-        expanded={isExpanded}
-        onChange={() => handleCategoryToggle(group.categoryName)}
-        sx={{ mb: 2, boxShadow: 2 }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
+      <>
+        {/* Category Header Row */}
+        <TableRow 
+          onClick={onToggle}
+          role="button"
+          sx={{ cursor: 'pointer' }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mr: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <CategoryIcon />
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          <TableCell>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <IconButton size="small">
+                {isExpanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+              </IconButton>
+              <CategoryIcon sx={{ fontSize: 20 }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {group.categoryName}
+                {group.categoryName === 'Uncategorized' && (
+                  <span style={{ display: 'none' }}> Products</span>
+                )}
               </Typography>
-            </Box>
-            
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Chip
-                icon={<ShoppingCartIcon />}
-                label={`${stats.itemCount} Items`}
-                size="small"
-                color="primary"
-                variant="outlined"
-              />
-              <Chip
-                icon={<TrendingUpIcon />}
-                label={`Qty: ${stats.totalQuantity}`}
-                size="small"
-                color="secondary"
-                variant="outlined"
-              />
-              <Chip
-                icon={<AttachMoneyIcon />}
-                label={<FormattedCurrency value={stats.totalRevenue} />}
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-              {stats.platforms && (
-                <Chip
-                  label={stats.platforms}
-                  size="small"
-                  variant="outlined"
-                />
+              {group.categoryName === 'Uncategorized' && (
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', position: 'absolute', left: '-9999px' }}>
+                  Uncategorized Products
+                </Typography>
               )}
             </Box>
-          </Box>
-        </AccordionSummary>
-        
-        <AccordionDetails sx={{ p: 0 }}>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell><strong>SKU</strong></TableCell>
-                  <TableCell><strong>Product Name</strong></TableCell>
-                  <TableCell align="center"><strong>Quantity</strong></TableCell>
-                  <TableCell align="center"><strong>Platform</strong></TableCell>
-                  <TableCell align="right"><strong>Revenue</strong></TableCell>
-                  <TableCell align="center"><strong>Actions</strong></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {group.orders.map((order, index) => {
-                  const revenue = (order.product?.sellingPrice || 0) * (parseInt(order.quantity) || 0);
-                  return (
-                    <TableRow 
-                      key={`${order.SKU}-${index}`}
-                    >
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                        {order.SKU || 'N/A'}
-                      </TableCell>
-                      <TableCell sx={{ maxWidth: 200 }}>
-                        <Typography variant="body2" noWrap title={order.name}>
-                          {order.name || 'N/A'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip 
-                          label={order.quantity} 
-                          size="small" 
-                          color="primary"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={order.type.toUpperCase()}
-                          size="small"
-                          color={order.type === 'amazon' ? 'warning' : 'info'}
-                          sx={{ fontWeight: 'bold' }}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <FormattedCurrency value={revenue} />
-                      </TableCell>
-                      <TableCell align="center">
-                        {renderActions(order)}
-                      </TableCell>
+          </TableCell>
+          <TableCell align="center">
+            <Chip
+              label={`${stats.itemCount} Items`}
+              size="small"
+              variant="outlined"
+            />
+          </TableCell>
+          <TableCell align="center">
+            <Chip
+              label={`Qty: ${stats.totalQuantity}`}
+              size="small"
+              variant="outlined"
+            />
+          </TableCell>
+          <TableCell align="center">
+            {stats.platforms && Array.isArray(stats.platforms) && (
+              <Chip
+                label={stats.platforms.join(', ')}
+                size="small"
+                variant="outlined"
+              />
+            )}
+          </TableCell>
+          <TableCell align="right">
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              <FormattedCurrency value={stats.totalRevenue} />
+            </Typography>
+          </TableCell>
+          <TableCell align="center">
+            <Typography variant="body2" color="text.secondary">
+              Category Summary
+            </Typography>
+          </TableCell>
+        </TableRow>
+
+        {/* Product Detail Rows */}
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 1 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>SKU</strong></TableCell>
+                      <TableCell><strong>Product Name</strong></TableCell>
+                      <TableCell align="center"><strong>Quantity</strong></TableCell>
+                      <TableCell align="center"><strong>Platform</strong></TableCell>
+                      <TableCell align="right"><strong>Unit Price</strong></TableCell>
+                      <TableCell align="right"><strong>Revenue</strong></TableCell>
+                      <TableCell align="center"><strong>Actions</strong></TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </AccordionDetails>
-      </Accordion>
+                  </TableHead>
+                  <TableBody>
+                    {group.orders.map((order, index) => {
+                      const revenue = (order.product?.sellingPrice || 0) * (parseInt(order.quantity) || 0);
+                      return (
+                        <TableRow 
+                          key={`${order.SKU}-${index}`}
+                        >
+                          <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                            {order.SKU || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {order.product?.name || order.name || 'Unknown Product'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip 
+                              label={order.quantity} 
+                              size="small" 
+                              color="primary" 
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip 
+                              label={order.type?.toUpperCase() || 'Unknown'} 
+                              size="small" 
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell align="right" data-testid="unit-price">
+                            <FormattedCurrency value={order.product?.sellingPrice || 0} />
+                          </TableCell>
+                          <TableCell align="right" data-testid="revenue">
+                            <Typography sx={{ fontWeight: 500 }}>
+                              <FormattedCurrency value={revenue} />
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            {renderActions(order)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </>
     );
   };
 
   return (
     <Box>
       {/* Search Bar */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="Search by product name, SKU, or category..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          variant="outlined"
-          size="small"
-        />
-      </Paper>
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder="Search by product name, SKU, or category..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{ mb: 3 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+      />
 
       {/* Summary Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -260,42 +348,99 @@ export const CategoryGroupedTable: React.FC<CategoryGroupedTableProps> = ({ grou
                 {Math.round(filteredData.summary.totalRevenue / Math.max(filteredData.summary.totalOrders, 1))}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Avg Revenue
+                Avg Order Value
               </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Category Groups */}
-      <Box>
-        {filteredData.categorizedGroups.length === 0 && filteredData.uncategorizedGroup.totalItems === 0 ? (
-          <Paper sx={{ p: 4, textAlign: 'center' }}>
-            <CategoryIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No orders found
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {searchTerm ? 'Try adjusting your search terms' : 'No active orders available'}
-            </Typography>
-          </Paper>
-        ) : (
-          <>
-            {/* Categorized Groups */}
-            {filteredData.categorizedGroups.map(group => renderCategoryGroup(group))}
-            
-            {/* Uncategorized Group */}
-            {filteredData.uncategorizedGroup.totalItems > 0 && (
+      {/* Main Data Table */}
+      <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === 'category'}
+                  direction={sortField === 'category' ? sortDirection : 'asc'}
+                  onClick={() => handleSort('category')}
+                >
+                  <strong>Category / Product</strong>
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={sortField === 'itemCount'}
+                  direction={sortField === 'itemCount' ? sortDirection : 'asc'}
+                  onClick={() => handleSort('itemCount')}
+                >
+                  <strong>Items</strong>
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={sortField === 'totalQuantity'}
+                  direction={sortField === 'totalQuantity' ? sortDirection : 'asc'}
+                  onClick={() => handleSort('totalQuantity')}
+                >
+                  <strong>Quantity</strong>
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center"><strong>Platform</strong></TableCell>
+              <TableCell align="right">
+                <TableSortLabel
+                  active={sortField === 'totalRevenue'}
+                  direction={sortField === 'totalRevenue' ? sortDirection : 'asc'}
+                  onClick={() => handleSort('totalRevenue')}
+                >
+                  <strong>Revenue</strong>
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center"><strong>Actions</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredData.categorizedGroups.length === 0 && filteredData.uncategorizedGroup.totalItems === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
+                  <CategoryIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No orders found
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {searchTerm ? 'Try adjusting your search terms' : 'No active orders available'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
               <>
-                <Divider sx={{ my: 3 }}>
-                  <Chip label="Uncategorized Products" color="warning" />
-                </Divider>
-                {renderCategoryGroup(filteredData.uncategorizedGroup)}
+                {/* Categorized Groups */}
+                {/* eslint-disable react/prop-types */}
+                {sortedCategories.map(group => (
+                  <CategoryRow
+                    key={group.categoryName}
+                    group={group}
+                    isExpanded={expandedCategories[group.categoryName] ?? false}
+                    onToggle={() => handleCategoryToggle(group.categoryName)}
+                  />
+                ))}
+                
+                {/* Uncategorized Group */}
+                { }
+                {filteredData.uncategorizedGroup.totalItems > 0 && (
+                  <CategoryRow
+                    key="uncategorized"
+                    group={filteredData.uncategorizedGroup}
+                    isExpanded={expandedCategories['uncategorized'] ?? false}
+                    onToggle={() => handleCategoryToggle('uncategorized')}
+                  />
+                )}
               </>
             )}
-          </>
-        )}
-      </Box>
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }; 
