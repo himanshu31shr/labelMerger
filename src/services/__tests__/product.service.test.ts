@@ -219,6 +219,261 @@ describe('ProductService', () => {
     });
   });
 
+  describe('saveOrUpdateProducts', () => {
+    let getDocumentsSpy: jest.SpyInstance;
+    let batchOperationSpy: jest.SpyInstance;
+    let updateDocumentSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      getDocumentsSpy = jest.spyOn(service as any, 'getDocuments');
+      batchOperationSpy = jest.spyOn(service as any, 'batchOperation').mockResolvedValue(undefined);
+      updateDocumentSpy = jest.spyOn(service as any, 'updateDocument').mockResolvedValue(undefined);
+    });
+
+    it('should create new products when updateExisting is false', async () => {
+      const newProducts = [getMockProduct()];
+      getDocumentsSpy.mockResolvedValue([]); // No existing products
+
+      const result = await service.saveOrUpdateProducts(newProducts, false);
+
+      expect(batchOperationSpy).toHaveBeenCalledTimes(1);
+      expect(batchOperationSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ...newProducts[0],
+            metadata: expect.objectContaining({
+              ...newProducts[0].metadata,
+              lastImportedFrom: 'Amazon Import',
+              createdAt: expect.any(Object),
+              updatedAt: expect.any(Object)
+            })
+          })
+        ]),
+        'products',
+        'create',
+        expect.any(Function)
+      );
+      expect(result).toEqual({ created: 1, updated: 0 });
+    });
+
+    it('should create new products when updateExisting is true but no existing products found', async () => {
+      const newProducts = [getMockProduct()];
+      getDocumentsSpy.mockResolvedValue([]); // No existing products
+
+      const result = await service.saveOrUpdateProducts(newProducts, true);
+
+      expect(batchOperationSpy).toHaveBeenCalledTimes(1);
+      expect(batchOperationSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ...newProducts[0],
+            metadata: expect.objectContaining({
+              ...newProducts[0].metadata,
+              lastImportedFrom: 'Amazon Import',
+              createdAt: expect.any(Object),
+              updatedAt: expect.any(Object)
+            })
+          })
+        ]),
+        'products',
+        'create',
+        expect.any(Function)
+      );
+      expect(result).toEqual({ created: 1, updated: 0 });
+    });
+
+    it('should only create new products when updateExisting is false and existing products exist', async () => {
+      const existingProduct = getMockProduct();
+      const newProduct = { ...getMockProduct(), sku: 'NEW-SKU' };
+      const products = [existingProduct, newProduct];
+      
+      getDocumentsSpy.mockResolvedValue([existingProduct]); // One existing product
+
+      const result = await service.saveOrUpdateProducts(products, false);
+
+      expect(batchOperationSpy).toHaveBeenCalledTimes(1);
+      expect(batchOperationSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ...newProduct,
+            metadata: expect.objectContaining({
+              lastImportedFrom: 'Amazon Import',
+              createdAt: expect.any(Object),
+              updatedAt: expect.any(Object)
+            })
+          })
+        ]), // Only the new product
+        'products',
+        'create',
+        expect.any(Function)
+      );
+      expect(result).toEqual({ created: 1, updated: 0 });
+    });
+
+    it('should create new and update existing products when updateExisting is true', async () => {
+      const existingProduct = getMockProduct();
+      const newProduct = { ...getMockProduct(), sku: 'NEW-SKU' };
+      const updatedExistingProduct = {
+        ...existingProduct,
+        sellingPrice: 150, // Changed price
+        metadata: {
+          ...existingProduct.metadata,
+          listingStatus: 'updated' as const
+        }
+      };
+      const products = [updatedExistingProduct, newProduct];
+      
+      getDocumentsSpy.mockResolvedValue([existingProduct]); // One existing product
+
+      const result = await service.saveOrUpdateProducts(products, true);
+
+      expect(batchOperationSpy).toHaveBeenCalledTimes(1);
+      
+      // Check create operation for new product
+      expect(batchOperationSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ...newProduct,
+            metadata: expect.objectContaining({
+              lastImportedFrom: 'Amazon Import',
+              createdAt: expect.any(Object),
+              updatedAt: expect.any(Object)
+            })
+          })
+        ]),
+        'products',
+        'create',
+        expect.any(Function)
+      );
+      
+      // Check update operation for existing product uses updateDocument
+      expect(updateDocumentSpy).toHaveBeenCalledWith(
+        'products',
+        existingProduct.sku,
+        expect.objectContaining({
+          sellingPrice: 150,
+          metadata: expect.objectContaining({
+            listingStatus: 'updated',
+            updatedAt: expect.any(Object),
+            lastImportedFrom: 'Amazon Import'
+          })
+        })
+      );
+      
+      expect(result).toEqual({ created: 1, updated: 1 });
+    });
+
+    it('should preserve user customizations during updates', async () => {
+      const existingProduct = {
+        ...getMockProduct(),
+        costPrice: 75, // User-set cost price
+        categoryId: 'USER-CATEGORY', // User-assigned category
+        visibility: 'hidden' as const, // User-set visibility
+        description: 'User customized description' // User customization
+      };
+      
+      const importedProduct = {
+        ...existingProduct,
+        sellingPrice: 200, // Import data
+        costPrice: 100, // Should be ignored
+        categoryId: 'IMPORT-CATEGORY', // Should be ignored
+        visibility: 'visible' as const, // Should be ignored
+        description: 'Import description', // Should be ignored
+        metadata: {
+          ...existingProduct.metadata,
+          listingStatus: 'active' as const,
+          moq: '5'
+        }
+      };
+      
+      getDocumentsSpy.mockResolvedValue([existingProduct]);
+
+      const result = await service.saveOrUpdateProducts([importedProduct], true);
+
+      expect(updateDocumentSpy).toHaveBeenCalledWith(
+        'products',
+        existingProduct.sku,
+        expect.objectContaining({
+          sellingPrice: 200, // Updated from import
+          metadata: expect.objectContaining({
+            listingStatus: 'active', // Updated from import
+            moq: '5', // Updated from import
+            updatedAt: expect.any(Object), // Timestamp updated
+            lastImportedFrom: 'Amazon Import'
+          })
+          // costPrice, categoryId, visibility, description should NOT be in update data
+        })
+      );
+      
+      expect(result).toEqual({ created: 0, updated: 1 });
+    });
+
+    it('should handle mixed scenarios with multiple products', async () => {
+      const existingProduct1 = getMockProduct();
+      const existingProduct2 = { ...getMockProduct(), sku: 'EXISTING-2' };
+      const newProduct1 = { ...getMockProduct(), sku: 'NEW-1' };
+      const newProduct2 = { ...getMockProduct(), sku: 'NEW-2' };
+      
+      const importProducts = [
+        { ...existingProduct1, sellingPrice: 300 }, // Update existing
+        { ...existingProduct2, sellingPrice: 400 }, // Update existing  
+        newProduct1, // Create new
+        newProduct2  // Create new
+      ];
+      
+      getDocumentsSpy.mockResolvedValue([existingProduct1, existingProduct2]);
+
+      const result = await service.saveOrUpdateProducts(importProducts, true);
+
+      expect(batchOperationSpy).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ created: 2, updated: 2 });
+    });
+
+    it('should handle empty product list', async () => {
+      const result = await service.saveOrUpdateProducts([], true);
+
+      expect(batchOperationSpy).not.toHaveBeenCalled();
+      expect(result).toEqual({ created: 0, updated: 0 });
+    });
+
+    it('should handle errors gracefully', async () => {
+      const products = [getMockProduct()];
+      getDocumentsSpy.mockRejectedValue(new Error('Database error'));
+
+      await expect(service.saveOrUpdateProducts(products, true))
+        .rejects.toThrow('Database error');
+    });
+
+    it('should update platform-specific serial numbers correctly', async () => {
+      const existingAmazonProduct = {
+        ...getMockProduct(),
+        platform: 'amazon' as const
+      };
+      
+      const importedAmazonProduct = {
+        ...existingAmazonProduct,
+        metadata: {
+          ...existingAmazonProduct.metadata,
+          amazonSerialNumber: 'NEW-AMAZON-123'
+        }
+      };
+      
+      getDocumentsSpy.mockResolvedValue([existingAmazonProduct]);
+
+      await service.saveOrUpdateProducts([importedAmazonProduct], true);
+
+      expect(updateDocumentSpy).toHaveBeenCalledWith(
+        'products',
+        existingAmazonProduct.sku,
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            amazonSerialNumber: 'NEW-AMAZON-123'
+          })
+        })
+      );
+    });
+  });
+
   describe('updateProduct', () => {
     it('should update product with timestamp', async () => {
       const updateData = { name: 'Updated Product' };

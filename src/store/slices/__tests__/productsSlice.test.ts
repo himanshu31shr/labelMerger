@@ -319,6 +319,268 @@ describe('productsSlice', () => {
         expect(state.loading).toBe(false);
         expect(state.error).toBe('Failed to import');
       });
+
+      describe('product update feature', () => {
+        it('should handle import with updateExisting false (create only)', () => {
+          const initialState: ProductsState = {
+            ...mockInitialState,
+            items: [mockProduct], // Existing product
+            filteredItems: [mockProduct],
+          };
+
+          const newProduct = { ...mockProduct2, sku: 'NEW-SKU' };
+          const action: PayloadAction<{ 
+            products: Product[], 
+            summary: { created: number; updated: number }, 
+            updateExisting: boolean 
+          }> = {
+            type: importProducts.fulfilled.type,
+            payload: {
+              products: [newProduct],
+              summary: { created: 1, updated: 0 },
+              updateExisting: false
+            }
+          };
+          
+          const state = productsReducer(initialState, action);
+
+          expect(state.loading).toBe(false);
+          expect(state.items).toHaveLength(2);
+          expect(state.items).toContainEqual(mockProduct); // Original product preserved
+          expect(state.items).toContainEqual(newProduct); // New product added
+        });
+
+        it('should handle import with updateExisting true (create and update)', () => {
+          const existingProduct = mockProduct;
+          const initialState: ProductsState = {
+            ...mockInitialState,
+            items: [existingProduct],
+            filteredItems: [existingProduct],
+          };
+
+          const updatedProduct = { 
+            ...existingProduct, 
+            sellingPrice: 150, // Price updated
+            metadata: {
+              ...existingProduct.metadata,
+              listingStatus: 'updated' as const
+            }
+          };
+          const newProduct = { ...mockProduct2, sku: 'NEW-SKU' };
+          
+          const action: PayloadAction<{ 
+            products: Product[], 
+            summary: { created: number; updated: number }, 
+            updateExisting: boolean 
+          }> = {
+            type: importProducts.fulfilled.type,
+            payload: {
+              products: [updatedProduct, newProduct],
+              summary: { created: 1, updated: 1 },
+              updateExisting: true
+            }
+          };
+          
+          const state = productsReducer(initialState, action);
+
+          expect(state.loading).toBe(false);
+          expect(state.items).toHaveLength(2);
+          
+          // Find the updated product
+          const foundUpdatedProduct = state.items.find(p => p.sku === existingProduct.sku);
+          expect(foundUpdatedProduct?.sellingPrice).toBe(150);
+          expect(foundUpdatedProduct?.metadata.listingStatus).toBe('updated');
+          
+          // Check new product was added
+          expect(state.items).toContainEqual(newProduct);
+        });
+
+        it('should apply filters correctly after import with updates', () => {
+          const existingAmazonProduct = { ...mockProduct, platform: 'amazon' as const };
+          const existingFlipkartProduct = { ...mockProduct2, platform: 'flipkart' as const };
+          
+          const initialState: ProductsState = {
+            ...mockInitialState,
+            items: [existingAmazonProduct, existingFlipkartProduct],
+            filteredItems: [existingAmazonProduct, existingFlipkartProduct],
+            filters: { platform: 'amazon' }, // Filter for Amazon only
+          };
+
+          const updatedAmazonProduct = { 
+            ...existingAmazonProduct, 
+            sellingPrice: 250,
+            name: 'Updated Amazon Product'
+          };
+          const newFlipkartProduct = { 
+            ...mockProduct, 
+            sku: 'NEW-FLIPKART', 
+            platform: 'flipkart' as const,
+            name: 'New Flipkart Product'
+          };
+          
+          const action: PayloadAction<{ 
+            products: Product[], 
+            summary: { created: number; updated: number }, 
+            updateExisting: boolean 
+          }> = {
+            type: importProducts.fulfilled.type,
+            payload: {
+              products: [updatedAmazonProduct, newFlipkartProduct],
+              summary: { created: 1, updated: 1 },
+              updateExisting: true
+            }
+          };
+          
+          const state = productsReducer(initialState, action);
+
+          expect(state.items).toHaveLength(3); // Original 2 + 1 new
+          
+          // Check filtering still works correctly
+          expect(state.filteredItems).toHaveLength(1); // Only Amazon products
+          expect(state.filteredItems[0].platform).toBe('amazon');
+          expect(state.filteredItems[0].name).toBe('Updated Amazon Product');
+        });
+
+        it('should handle search filters after import with updates', () => {
+          const existingProduct = { ...mockProduct, name: 'Original Product' };
+          
+          const initialState: ProductsState = {
+            ...mockInitialState,
+            items: [existingProduct],
+            filteredItems: [existingProduct],
+            filters: { search: 'Updated' }, // Search for "Updated"
+          };
+
+          const updatedProduct = { 
+            ...existingProduct, 
+            name: 'Updated Product Name' // Now matches search
+          };
+          const newProduct = { 
+            ...mockProduct2, 
+            sku: 'NEW-SKU',
+            name: 'Some Other Product' // Doesn't match search
+          };
+          
+          const action: PayloadAction<{ 
+            products: Product[], 
+            summary: { created: number; updated: number }, 
+            updateExisting: boolean 
+          }> = {
+            type: importProducts.fulfilled.type,
+            payload: {
+              products: [updatedProduct, newProduct],
+              summary: { created: 1, updated: 1 },
+              updateExisting: true
+            }
+          };
+          
+          const state = productsReducer(initialState, action);
+
+          expect(state.items).toHaveLength(2);
+          
+          // Check search filtering works correctly
+          expect(state.filteredItems).toHaveLength(1); // Only "Updated Product Name"
+          expect(state.filteredItems[0].name).toBe('Updated Product Name');
+        });
+
+        it('should handle category filters after import with updates', () => {
+          const existingProduct = { ...mockProduct, categoryId: 'CATEGORY-1' };
+          
+          const initialState: ProductsState = {
+            ...mockInitialState,
+            items: [existingProduct],
+            filteredItems: [existingProduct],
+            filters: { categoryId: 'CATEGORY-2' }, // Filter for different category
+          };
+
+          const updatedProduct = { 
+            ...existingProduct,
+            sellingPrice: 200 // Price updated but category preserved
+          };
+          const newProduct = { 
+            ...mockProduct2, 
+            sku: 'NEW-SKU',
+            categoryId: 'CATEGORY-2' // Matches filter
+          };
+          
+          const action: PayloadAction<{ 
+            products: Product[], 
+            summary: { created: number; updated: number }, 
+            updateExisting: boolean 
+          }> = {
+            type: importProducts.fulfilled.type,
+            payload: {
+              products: [updatedProduct, newProduct],
+              summary: { created: 1, updated: 1 },
+              updateExisting: true
+            }
+          };
+          
+          const state = productsReducer(initialState, action);
+
+          expect(state.items).toHaveLength(2);
+          
+          // Check category filtering works correctly
+          expect(state.filteredItems).toHaveLength(1); // Only new product with CATEGORY-2
+          expect(state.filteredItems[0].categoryId).toBe('CATEGORY-2');
+          expect(state.filteredItems[0].sku).toBe('NEW-SKU');
+        });
+
+        it('should preserve state integrity during mixed operations', () => {
+          const existingProducts = [
+            { ...mockProduct, sku: 'EXISTING-1', name: 'Existing 1' },
+            { ...mockProduct2, sku: 'EXISTING-2', name: 'Existing 2' }
+          ];
+          
+          const initialState: ProductsState = {
+            ...mockInitialState,
+            items: existingProducts,
+            filteredItems: existingProducts,
+          };
+
+          // Import contains: 1 update to existing, 1 new product, 1 existing product not in import
+          const updatedProduct = { 
+            ...existingProducts[0], 
+            sellingPrice: 300,
+            name: 'Updated Existing 1'
+          };
+          const newProduct = { 
+            ...mockProduct, 
+            sku: 'NEW-PRODUCT',
+            name: 'Brand New Product'
+          };
+          
+          const action: PayloadAction<{ 
+            products: Product[], 
+            summary: { created: number; updated: number }, 
+            updateExisting: boolean 
+          }> = {
+            type: importProducts.fulfilled.type,
+            payload: {
+              products: [updatedProduct, newProduct],
+              summary: { created: 1, updated: 1 },
+              updateExisting: true
+            }
+          };
+          
+          const state = productsReducer(initialState, action);
+
+          expect(state.items).toHaveLength(3); // 2 existing + 1 new
+          
+          // Check updated product
+          const foundUpdated = state.items.find(p => p.sku === 'EXISTING-1');
+          expect(foundUpdated?.name).toBe('Updated Existing 1');
+          expect(foundUpdated?.sellingPrice).toBe(300);
+          
+          // Check untouched existing product
+          const foundUntouched = state.items.find(p => p.sku === 'EXISTING-2');
+          expect(foundUntouched?.name).toBe('Existing 2');
+          
+          // Check new product
+          const foundNew = state.items.find(p => p.sku === 'NEW-PRODUCT');
+          expect(foundNew?.name).toBe('Brand New Product');
+        });
+      });
     });
 
     describe('updateProduct', () => {
