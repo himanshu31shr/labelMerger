@@ -1,2 +1,1 @@
-node -v
 npm run pre-commit

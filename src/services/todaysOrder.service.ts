@@ -28,6 +28,40 @@ export class TodaysOrder extends FirebaseService {
     this.categoryService = new CategoryService();
   }
 
+  /**
+   * Remove undefined keys from an order object
+   * @param order The order object to clean
+   * @returns Clean order object without undefined values
+   */
+  private removeUndefinedKeys(order: ActiveOrder): ActiveOrder {
+    // Create a new object with all defined properties
+    const cleanOrder: ActiveOrder = {
+      name: order.name,
+      quantity: order.quantity,
+      type: order.type,
+    };
+    
+    // Add optional properties only if they are defined
+    if (order.SKU !== undefined) cleanOrder.SKU = order.SKU;
+    if (order.orderId !== undefined) cleanOrder.orderId = order.orderId;
+    if (order.createdAt !== undefined) cleanOrder.createdAt = order.createdAt;
+    if (order.category !== undefined) cleanOrder.category = order.category;
+    
+    // Never include the product property when saving to database to avoid circular references
+    // The product property is populated during read operations in mapProductToOrder method
+    
+    return cleanOrder;
+  }
+
+  /**
+   * Clean an array of orders by removing undefined keys
+   * @param orders Array of orders to clean
+   * @returns Array of clean orders
+   */
+  private cleanOrders(orders: ActiveOrder[]): ActiveOrder[] {
+    return orders.map(order => this.removeUndefinedKeys(order));
+  }
+
   async mapProductsToActiveOrder() {
     // Load both products and categories
     this.products = await this.productService.getProducts({});
@@ -36,12 +70,14 @@ export class TodaysOrder extends FirebaseService {
 
   private getCategoryName(categoryId?: string): string | undefined {
     if (!categoryId) return undefined;
-    const category = this.categories.find(cat => cat.id === categoryId);
+    const category = this.categories.find((cat) => cat.id === categoryId);
     return category?.name;
   }
 
   private mapProductToOrder(order: ProductSummary): void {
-    const product = this.products.find((p) => p.sku === order.SKU && p.platform === order.type);
+    const product = this.products.find(
+      (p) => p.sku === order.SKU && p.platform === order.type
+    );
     if (product) {
       order.product = product;
       // Populate category name from product's categoryId
@@ -88,14 +124,14 @@ export class TodaysOrder extends FirebaseService {
           orders.push({
             id: dateStr,
             orders: [],
-            date: dateStr
+            date: dateStr,
           });
         }
       } catch {
         orders.push({
           id: dateStr,
           orders: [],
-          date: dateStr
+          date: dateStr,
         });
       }
     }
@@ -116,8 +152,11 @@ export class TodaysOrder extends FirebaseService {
           // Order missing SKU, skipping inventory check
           return true; // Allow order to proceed
         }
-        
-        const hasSufficient = await this.productService.hasSufficientInventory(order.SKU, Number(order.quantity) || 1);
+
+        const hasSufficient = await this.productService.hasSufficientInventory(
+          order.SKU,
+          Number(order.quantity) || 1
+        );
         if (!hasSufficient) {
           return false;
         }
@@ -142,12 +181,16 @@ export class TodaysOrder extends FirebaseService {
           // Order missing SKU, skipping inventory reduction
           return;
         }
-        
+
         const quantity = Number(order.quantity) || 1;
-        
+
         // Reduce product inventory
-        const updatedProduct = await this.productService.reduceInventoryForOrder(order.SKU, quantity);
-        
+        const updatedProduct =
+          await this.productService.reduceInventoryForOrder(
+            order.SKU,
+            quantity
+          );
+
         // Also reduce category inventory if product has a category
         if (updatedProduct.categoryId) {
           try {
@@ -155,7 +198,7 @@ export class TodaysOrder extends FirebaseService {
               updatedProduct.categoryId,
               -quantity,
               `Order fulfillment for SKU: ${order.SKU}`,
-              'system'
+              "system"
             );
             // Successfully reduced category inventory
           } catch {
@@ -173,9 +216,8 @@ export class TodaysOrder extends FirebaseService {
   async updateTodaysOrder(
     order: ActiveOrderSchema
   ): Promise<ActiveOrderSchema | undefined> {
-
     const existingOrder = await this.getTodaysOrders();
-    
+
     // Process the order
     if (existingOrder) {
       await this.updateDocument<ActiveOrderSchema>(
@@ -183,21 +225,28 @@ export class TodaysOrder extends FirebaseService {
         existingOrder.id,
         {
           ...order,
-          orders: [...existingOrder.orders, ...order.orders],
+          orders: [
+            ...this.cleanOrders(existingOrder.orders),
+            ...this.cleanOrders(order.orders),
+          ],
         }
       );
     } else {
+      const cleanOrderData = {
+        ...order,
+        orders: this.cleanOrders(order.orders),
+      };
       await this.batchOperation<ActiveOrderSchema>(
-        [order],
+        [cleanOrderData],
         this.COLLECTION_NAME,
         "create",
         (item) => item.id
       );
     }
-    
+
     // Reduce inventory after the order is successfully processed
     await this.reduceInventoryForOrders(order.orders);
-    
-    return (await this.getTodaysOrders());
+
+    return await this.getTodaysOrders();
   }
 }

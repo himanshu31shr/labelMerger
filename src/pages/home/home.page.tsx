@@ -55,8 +55,8 @@ export const HomePage: React.FC = () => {
       }
 
       await dispatch(mergePDFs({ amazonFile, flipkartFile })).unwrap();
-    } catch {
-      // Error handling - could show toast notification
+    } catch (err) {
+      console.error(err);
     }
   };
 

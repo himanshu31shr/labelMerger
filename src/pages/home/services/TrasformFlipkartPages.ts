@@ -81,10 +81,10 @@ export class FlipkartPageTransformer extends BaseTransformer {
             : "";
 
           if (/^\d/.test(lastInt)) {
-            currentSUmmary.quantity += parseInt(
-              qty.at(qty.length - 1) || "0",
-              10
-            );
+            currentSUmmary.quantity = (
+              parseInt(qty.at(qty.length - 1) || "0", 10) +
+              parseInt(currentSUmmary.quantity, 10)
+            ).toString();
           }
 
           const name = qty
