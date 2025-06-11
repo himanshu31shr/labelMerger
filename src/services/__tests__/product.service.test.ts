@@ -619,19 +619,19 @@ describe('ProductService', () => {
     it('should update inventory quantity', async () => {
       jest.spyOn(service as any, 'getDocument').mockResolvedValue(getMockProduct());
       const updateSpy = jest.spyOn(service as any, 'updateDocument').mockResolvedValue(undefined);
-      const updatedProduct = {
+      const updatedProduct: Product = {
         ...getMockProduct(),
         inventory: {
-          ...getMockProduct().inventory,
+          ...getMockProduct().inventory!,
           quantity: 15,
         }
       };
       jest.spyOn(service, 'getProductDetails')
-        .mockImplementation(async (sku: string) => {
+        .mockImplementation(async (sku: string): Promise<Product> => {
           const isTargetSku = sku === 'TEST-SKU-1';
           const hasBeenUpdated = updateSpy.mock.calls.length > 0;
           if (isTargetSku && hasBeenUpdated) {
-            return updatedProduct;
+            return updatedProduct as Product;
           }
           return getMockProduct();
         });
@@ -645,7 +645,7 @@ describe('ProductService', () => {
           lowStockThreshold: 5,
         },
       });
-      expect(result.inventory.quantity).toBe(15);
+      expect(result.inventory!.quantity).toBe(15);
     });
 
     it('should throw error if product not found for inventory update', async () => {
@@ -662,10 +662,10 @@ describe('ProductService', () => {
 
   describe('reduceInventoryForOrder', () => {
     it('should reduce inventory for order', async () => {
-      const updatedProduct = {
+      const updatedProduct: Product = {
         ...getMockProduct(),
         inventory: {
-          ...getMockProduct().inventory,
+          ...getMockProduct().inventory!,
           quantity: 7,
         }
       };
@@ -674,7 +674,7 @@ describe('ProductService', () => {
       const result = await service.reduceInventoryForOrder('TEST-SKU-1', 3);
 
       expect(service.updateInventory).toHaveBeenCalledWith('TEST-SKU-1', -3);
-      expect(result.inventory.quantity).toBe(7);
+      expect(result?.inventory?.quantity).toBe(7);
     });
 
     it('should throw error if insufficient inventory', async () => {
