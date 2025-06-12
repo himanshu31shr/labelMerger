@@ -1,10 +1,12 @@
-import { Box, MenuItem, TextField, Button, Autocomplete, CircularProgress } from "@mui/material";
+import { Box, MenuItem, TextField, Button, Autocomplete, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import React, { useState } from "react";
 import { createFilterOptions, FilterOptionsState } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useAppDispatch } from '../../../store/hooks';
 import { addCategory, fetchCategories } from '../../../store/slices/productsSlice';
 import { Category } from '../../../services/category.service';
-import { ProductFilter } from '../../../services/product.service';
+import { Product, ProductFilter } from '../../../services/product.service';
+import { exportProductsToCSV } from '../../../utils/csvExport';
 
 // Define interface for the new category suggestion object
 interface CategorySuggestion {
@@ -18,6 +20,7 @@ interface Props {
   search: ProductFilter['search'];
   selectedProducts: string[];
   categories: Category[];
+  allProducts: Product[]; // All products for CSV export
   onFilterChange: (filter: ProductFilter) => void;
   onBulkCategoryUpdate: (skus: string[], categoryId: string) => void;
 }
@@ -29,6 +32,7 @@ export const ProductTableToolbar: React.FC<Props> = ({
   search,
   selectedProducts,
   categories,
+  allProducts,
   onFilterChange,
   onBulkCategoryUpdate,
 }) => {
@@ -51,6 +55,10 @@ export const ProductTableToolbar: React.FC<Props> = ({
       platform,
       search: value,
     });
+  };
+
+  const handleCSVExport = () => {
+    exportProductsToCSV(allProducts, categories);
   };
 
   const handleAddCategory = async () => {
@@ -131,6 +139,25 @@ export const ProductTableToolbar: React.FC<Props> = ({
           flexGrow: 1
         }}
       />
+
+      {/* CSV Export Button */}
+      <Tooltip title="Export all products to CSV">
+        <IconButton
+          onClick={handleCSVExport}
+          color="primary"
+          disabled={allProducts.length === 0}
+          sx={{
+            border: '1px solid',
+            borderColor: 'primary.main',
+            '&:hover': {
+              backgroundColor: 'primary.light',
+              color: 'white'
+            }
+          }}
+        >
+          <DownloadIcon />
+        </IconButton>
+      </Tooltip>
 
       {selectedProducts.length > 0 && (
         <>

@@ -126,6 +126,7 @@ export const ProductsPage: React.FC = () => {
               </Typography>
               <ProductTable
                 products={filteredProducts}
+                allProducts={products}
                 onEdit={setEditingProduct}
                 onFilterChange={handleFilterChange}
                 onBulkCategoryUpdate={handleBulkCategoryUpdate}

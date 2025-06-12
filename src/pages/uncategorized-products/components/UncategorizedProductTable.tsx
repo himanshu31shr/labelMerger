@@ -168,6 +168,7 @@ export const UncategorizedProductTable: React.FC<Props> = ({
         search={currentFilters.search}
         selectedProducts={selectedProducts}
         categories={categories}
+        allProducts={products}
         onFilterChange={handleFilterChange}
         onBulkCategoryUpdate={handleBulkCategoryUpdate}
       />

@@ -21,6 +21,7 @@ import { fetchCategories, selectCategories } from '../../../store/slices/product
 
 interface Props {
   products: Product[];
+  allProducts?: Product[]; // All products for CSV export (optional, defaults to products)
   onEdit: (product: Product) => void;
   onFilterChange: (filter: ProductFilter) => void;
   onBulkCategoryUpdate?: (skus: string[], categoryId: string) => void;
@@ -28,6 +29,7 @@ interface Props {
 
 export const ProductTable: React.FC<Props> = ({
   products,
+  allProducts,
   onEdit,
   onFilterChange,
   onBulkCategoryUpdate,
@@ -175,6 +177,7 @@ export const ProductTable: React.FC<Props> = ({
         search={currentFilters.search}
         selectedProducts={selectedProducts}
         categories={categories}
+        allProducts={allProducts || products} // Use allProducts if provided, otherwise use filtered products
         onFilterChange={handleFilterChange}
         onBulkCategoryUpdate={handleBulkCategoryUpdate}
       />
