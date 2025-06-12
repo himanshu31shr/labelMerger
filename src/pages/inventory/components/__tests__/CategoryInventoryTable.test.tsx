@@ -198,14 +198,14 @@ describe('CategoryInventoryTable', () => {
       renderWithProvider(<CategoryInventoryTable />);
 
       // Assert
-      const editButtons = screen.getAllByText('Edit');
+      const editButtons = screen.getAllByLabelText(/edit-/);
       expect(editButtons).toHaveLength(3); // One for each category
     });
 
     it('should open edit modal when edit button is clicked', async () => {
       // Arrange
       renderWithProvider(<CategoryInventoryTable />);
-      const editButton = screen.getAllByText('Edit')[0];
+      const editButton = screen.getAllByLabelText(/edit-/)[0];
 
       // Act
       fireEvent.click(editButton);
@@ -257,11 +257,12 @@ describe('CategoryInventoryTable', () => {
       // Arrange
       const user = userEvent.setup();
       renderWithProvider(<CategoryInventoryTable />);
-      const statusFilter = screen.getByLabelText('Filter by status');
+      
+      // Find the Status column filter input
+      const statusFilterInput = screen.getByPlaceholderText('Filter Status');
 
-      // Act
-      await user.click(statusFilter);
-      await user.click(screen.getByRole('option', { name: 'Low Stock' }));
+      // Act - Type "Low Stock" in the status filter
+      await user.type(statusFilterInput, 'Low Stock');
 
       // Assert
       await waitFor(() => {

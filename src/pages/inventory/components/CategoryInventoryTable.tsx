@@ -1,25 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch } from '../../../store';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Button,
   Chip,
   CircularProgress,
   Alert,
   Typography,
   Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TableSortLabel,
+  IconButton,
 } from '@mui/material';
 import { Refresh as RefreshIcon, Edit as EditIcon } from '@mui/icons-material';
 import {
@@ -32,11 +21,7 @@ import {
 } from '../../../store/slices/categoryInventorySlice';
 import { CategoryWithInventory } from '../../../types/categoryInventory.types';
 import CategoryInventoryEditModal from './CategoryInventoryEditModal';
-
-
-type SortField = 'name' | 'totalQuantity' | 'lowStockThreshold' | 'productCount';
-type SortDirection = 'asc' | 'desc';
-type StatusFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
+import { Column, DataTable } from '../../../components/DataTable/DataTable';
 
 const CategoryInventoryTable: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -44,9 +29,6 @@ const CategoryInventoryTable: React.FC = () => {
   const loading = useSelector(selectCategoryInventoryLoading);
   const error = useSelector(selectCategoryInventoryError);
 
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryWithInventory | null>(null);
 
@@ -75,57 +57,7 @@ const CategoryInventoryTable: React.FC = () => {
     }
   };
 
-  const filteredAndSortedCategories = useMemo(() => {
-    let filtered = categories;
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = categories.filter(category => getStockStatus(category) === statusFilter);
-    }
-
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
-
-      switch (sortField) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'totalQuantity':
-          aValue = a.inventory.totalQuantity;
-          bValue = b.inventory.totalQuantity;
-          break;
-        case 'lowStockThreshold':
-          aValue = a.inventory.lowStockThreshold;
-          bValue = b.inventory.lowStockThreshold;
-          break;
-        case 'productCount':
-          aValue = a.inventory.productCount;
-          bValue = b.inventory.productCount;
-          break;
-        default:
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [categories, statusFilter, sortField, sortDirection]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
 
   const handleRefresh = () => {
     dispatch(fetchCategoriesWithInventory());
@@ -174,6 +106,91 @@ const CategoryInventoryTable: React.FC = () => {
     }
   };
 
+  const columns: Column<CategoryWithInventory>[] = [
+    {
+      id: 'name',
+      label: 'Category',
+      filter: true,
+      format: (_, row) => row ? (
+        <Box>
+          <Typography variant="body1" fontWeight="medium">
+            {row.name}
+          </Typography>
+          {row.description && (
+            <Typography variant="body2" color="textSecondary">
+              {row.description}
+            </Typography>
+          )}
+        </Box>
+      ) : null,
+      filterValue: (row) => `${row.name} ${row.description || ''}`,
+    },
+    {
+      id: 'inventory.totalQuantity',
+      label: 'Total Quantity',
+      align: 'right',
+      format: (_, row) => row ? (
+        <Typography variant="body1">
+          {row.inventory.totalQuantity}
+        </Typography>
+      ) : null,
+    },
+    {
+      id: 'inventory.lowStockThreshold',
+      label: 'Low Stock Threshold',
+      align: 'right',
+      format: (_, row) => row ? (
+        <Typography variant="body1">
+          {row.inventory.lowStockThreshold}
+        </Typography>
+      ) : null,
+    },
+    {
+      id: 'inventory.productCount',
+      label: 'Product Count',
+      align: 'right',
+      format: (_, row) => row ? (
+        <Typography variant="body1">
+          {row.inventory.productCount}
+        </Typography>
+      ) : null,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      align: 'center',
+      filter: true,
+      format: (_, row) => {
+        if (!row) return null;
+        const status = getStockStatus(row);
+        return (
+          <Chip
+            label={getStatusLabel(status)}
+            color={getStatusColor(status) as 'success' | 'warning' | 'error' | 'default'}
+            size="small"
+          />
+        );
+      },
+      filterValue: (row) => getStatusLabel(getStockStatus(row)),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'center',
+      format: (_, row) => row ? (
+        <Box display="flex" gap={1} justifyContent="center">
+          <IconButton
+            size="small"
+            onClick={() => handleEdit(row)}
+            aria-label={`edit-${row.name}`}
+          >
+            <EditIcon />
+          </IconButton>
+        </Box>
+      ) : null,
+    },
+  ];
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -206,22 +223,7 @@ const CategoryInventoryTable: React.FC = () => {
   return (
     <Box>
       {/* Controls */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel id="status-filter-label">Filter by status</InputLabel>
-          <Select
-            labelId="status-filter-label"
-            value={statusFilter}
-            label="Filter by status"
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="in-stock">In Stock</MenuItem>
-            <MenuItem value="low-stock">Low Stock</MenuItem>
-            <MenuItem value="out-of-stock">Out of Stock</MenuItem>
-          </Select>
-        </FormControl>
-
+      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2}>
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
@@ -231,108 +233,16 @@ const CategoryInventoryTable: React.FC = () => {
         </Button>
       </Box>
 
-      {/* Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={sortField === 'name'}
-                  direction={sortField === 'name' ? sortDirection : 'asc'}
-                  onClick={() => handleSort('name')}
-                >
-                  Category
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === 'totalQuantity'}
-                  direction={sortField === 'totalQuantity' ? sortDirection : 'asc'}
-                  onClick={() => handleSort('totalQuantity')}
-                >
-                  Total Quantity
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === 'lowStockThreshold'}
-                  direction={sortField === 'lowStockThreshold' ? sortDirection : 'asc'}
-                  onClick={() => handleSort('lowStockThreshold')}
-                >
-                  Low Stock Threshold
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === 'productCount'}
-                  direction={sortField === 'productCount' ? sortDirection : 'asc'}
-                  onClick={() => handleSort('productCount')}
-                >
-                  Product Count
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredAndSortedCategories.map((category) => {
-              const status = getStockStatus(category);
-              return (
-                <TableRow key={category.id}>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body1" fontWeight="medium">
-                        {category.name}
-                      </Typography>
-                      {category.description && (
-                        <Typography variant="body2" color="textSecondary">
-                          {category.description}
-                        </Typography>
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body1">
-                      {category.inventory.totalQuantity}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body1">
-                      {category.inventory.lowStockThreshold}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body1">
-                      {category.inventory.productCount}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={getStatusLabel(status)}
-                      color={getStatusColor(status) as 'success' | 'warning' | 'error' | 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Box display="flex" gap={1} justifyContent="center">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<EditIcon />}
-                        onClick={() => handleEdit(category)}
-                      >
-                        Edit
-                      </Button>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* DataTable */}
+      <DataTable
+        columns={columns}
+        data={categories}
+        defaultSortColumn="name"
+        defaultSortDirection="asc"
+        rowsPerPageOptions={[10, 25, 50]}
+        defaultRowsPerPage={10}
+        id="category-inventory-table"
+      />
 
       {/* Edit Modal */}
       {editModalOpen && selectedCategory && (
