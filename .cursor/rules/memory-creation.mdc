@@ -1,6 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-Always check if the memory mcp tool, if a memory is not created create one and use the same throughout.
