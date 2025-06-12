@@ -4,20 +4,13 @@ import {
   Typography, 
   Paper, 
   Container, 
-  Grid, 
-  TextField, 
-  InputAdornment,
-  MenuItem,
   Button,
   CircularProgress,
   Snackbar,
   Alert,
   Divider,
-  Chip,
-  Card,
-  CardContent
+  Chip
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import WarningIcon from '@mui/icons-material/Warning';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -36,9 +29,7 @@ export const InventoryPage: React.FC = () => {
   const { categories, lowStockCategories, loading } = useAppSelector((state) => state.categoryInventory);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   
-  const [searchTerm, setSearchTerm] = useState('');
-  const [tagFilter, setTagFilter] = useState<string>('all');
-  const [filteredCategories, setFilteredCategories] = useState(categories);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
@@ -51,33 +42,7 @@ export const InventoryPage: React.FC = () => {
     }
   }, [dispatch, isAuthenticated]);
 
-  useEffect(() => {
-    // Filter categories based on search term and tag
-    let filtered = [...categories];
-    
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (category) => 
-          category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (category.tag && category.tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-    
-    if (tagFilter !== 'all') {
-      filtered = filtered.filter((category) => category.tag === tagFilter);
-    }
-    
-    setFilteredCategories(filtered);
-  }, [categories, searchTerm, tagFilter]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleTagChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTagFilter(event.target.value);
-  };
 
   const handleRefresh = () => {
     dispatch(fetchCategoriesWithInventory());
@@ -101,8 +66,7 @@ export const InventoryPage: React.FC = () => {
     setSnackbarOpen(false);
   };
 
-  // Get unique tags for filter dropdown
-  const uniqueTags = Array.from(new Set(categories.map(cat => cat.tag).filter(Boolean)));
+
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -141,56 +105,12 @@ export const InventoryPage: React.FC = () => {
           />
         )}
 
-        <Card sx={{ mb: 3, borderRadius: 2, border: '1px solid', borderColor: 'primary.light' }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.dark' }}>
-              Filter Categories
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label="Search categories"
-                  placeholder="Search by name, description, or tag"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="primary" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  select
-                  fullWidth
-                  variant="outlined"
-                  label="Tag"
-                  value={tagFilter}
-                  onChange={handleTagChange}
-                >
-                  <MenuItem value="all">All Tags</MenuItem>
-                  {uniqueTags.map((tag) => (
-                    <MenuItem key={tag} value={tag}>
-                      {tag}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
             Category Inventory Table
           </Typography>
           <Chip 
-            label={`${filteredCategories.length} of ${categories.length} Categories`} 
+            label={`${categories.length} Categories`} 
             color="primary" 
             size="medium" 
           />
