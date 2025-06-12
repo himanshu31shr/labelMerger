@@ -44,11 +44,6 @@ const HiddenProductsPage = React.lazy(() =>
   }))
 );
 
-const InventoryPage = React.lazy(() =>
-  import("../pages/inventory/inventory.page").then((module) => ({
-    default: module.InventoryPage,
-  }))
-);
 
 const CategoriesPage = React.lazy(() =>
   import("../pages/categories/categories.page").then((module) => ({
@@ -86,7 +81,6 @@ export const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
         <Route path="/transactions/" element={<TransactionAnalytics />} />
         <Route path="/activeOrders/" element={<ActiveOrders />} />
         <Route path="/hidden-products/" element={<HiddenProductsPage />} />
-        <Route path="/inventory/" element={<InventoryPage />} />
         <Route path="/categories/" element={<CategoriesPage />} />
         <Route path="/order-analytics/" element={<OrderAnalytics />} />
         <Route path="/uncategorized-products/" element={<UncategorizedProductsPage />} />
