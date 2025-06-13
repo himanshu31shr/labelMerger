@@ -314,32 +314,15 @@ export const DefaultContainer = ({
               style={{ textDecoration: 'none', color: 'inherit' }}
               onClick={handleNavigation}
             >
-              <ListItem key={"Categories"} disablePadding>
+              <ListItem key={"Categories & Inventory"} disablePadding>
                 <StyledListItemButton selected={isActiveRoute("/flipkart-amazon-tools/categories/")}>
                   <StyledListItemIcon>
                     <CategoryIcon />
                   </StyledListItemIcon>
-                  <StyledListItemText primary={"Categories"} />
+                  <StyledListItemText primary={"Categories & Inventory"} />
                 </StyledListItemButton>
               </ListItem>
             </Link>
-            <Link
-              component={RouterLink}
-              to={"/flipkart-amazon-tools/inventory/"}
-              data-testid="inventory-management"
-              style={{ textDecoration: 'none', color: 'inherit' }}
-              onClick={handleNavigation}
-            >
-              <ListItem key={"Inventory Management"} disablePadding>
-                <StyledListItemButton selected={isActiveRoute("/flipkart-amazon-tools/inventory/")}>
-                  <StyledListItemIcon>
-                    <InventoryManagementIcon />
-                  </StyledListItemIcon>
-                  <StyledListItemText primary={"Inventory Management"} />
-                </StyledListItemButton>
-              </ListItem>
-            </Link>
-
           </List>
         </Collapse>
 

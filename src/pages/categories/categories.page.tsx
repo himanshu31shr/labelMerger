@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -9,7 +9,7 @@ import {
   Snackbar,
   Alert,
   Divider,
-  Chip
+  Chip,
 } from '@mui/material';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -21,18 +21,17 @@ import {
   updateCategoryInventory 
 } from '../../store/slices/categoryInventorySlice';
 import { selectIsAuthenticated } from '../../store/slices/authSlice';
-import CategoryList from './CategoryList';
 import CategoryLowStockAlert from '../inventory/components/CategoryLowStockAlert';
+import UnifiedCategoryTable from './UnifiedCategoryTable';
 
 export const CategoriesPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { categories, lowStockCategories, loading } = useAppSelector((state) => state.categoryInventory);
+  const { lowStockCategories, loading } = useAppSelector((state) => state.categoryInventory);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState<'success' | 'error'>('success');
 
   useEffect(() => {
     // Only fetch data if authenticated
@@ -41,8 +40,6 @@ export const CategoriesPage: React.FC = () => {
       dispatch(fetchLowStockCategories());
     }
   }, [dispatch, isAuthenticated]);
-
-
 
   const handleRefresh = () => {
     dispatch(fetchCategoriesWithInventory());
@@ -65,8 +62,6 @@ export const CategoriesPage: React.FC = () => {
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
-
-
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -105,20 +100,8 @@ export const CategoriesPage: React.FC = () => {
           />
         )}
 
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark' }}>
-            Category Management & Inventory
-          </Typography>
-          <Chip 
-            label={`${categories.length} Categories`} 
-            color="primary" 
-            size="medium" 
-          />
-        </Box>
-
-        <div id="category-inventory-table">
-          <CategoryList />
-        </div>
+        {/* Unified Category Table */}
+        <UnifiedCategoryTable />
       </Paper>
 
       <Snackbar 
