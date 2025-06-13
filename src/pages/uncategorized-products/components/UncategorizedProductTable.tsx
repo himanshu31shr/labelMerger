@@ -6,8 +6,9 @@ import {
   Checkbox,
   Snackbar,
   Alert,
+  Tooltip,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product, ProductFilter } from "../../../services/product.service";
@@ -18,6 +19,7 @@ import {
 import { ProductTableToolbar } from "../../products/components/ProductTableToolbar";
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchCategories, selectCategories } from '../../../store/slices/productsSlice';
+import { CostPriceResolutionService } from '../../../services/costPrice.service';
 
 interface Props {
   products: Product[];
@@ -37,17 +39,41 @@ export const UncategorizedProductTable: React.FC<Props> = ({
   const [currentFilters, setCurrentFilters] = useState<ProductFilter>({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [productCostPrices, setProductCostPrices] = useState<Record<string, { value: number; source: string }>>({});
+
+  const costPriceService = useMemo(() => new CostPriceResolutionService(), []);
 
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  // Fetch cost prices for all products
+  useEffect(() => {
+    const fetchCostPrices = async () => {
+      const costPrices: Record<string, { value: number; source: string }> = {};
+      
+      for (const product of products) {
+        const resolution = await costPriceService.getProductCostPrice(product.sku);
+        costPrices[product.sku] = {
+          value: resolution.value,
+          source: resolution.source
+        };
+      }
+      
+      setProductCostPrices(costPrices);
+    };
+
+    fetchCostPrices();
+  }, [products, costPriceService]);
 
   const categories = useAppSelector(selectCategories);
 
   const handleFilterChange = (filters: ProductFilter) => {
     setCurrentFilters(filters);
     onFilterChange(filters);
-  };  const handleSelectProduct = (sku: string) => {
+  };
+
+  const handleSelectProduct = (sku: string) => {
     setSelectedProducts(prev => {
       if (prev.includes(sku)) {
         return prev.filter(p => p !== sku);
@@ -101,7 +127,8 @@ export const UncategorizedProductTable: React.FC<Props> = ({
       ) : null,
     },
     { id: "sku", label: "SKU", filter: true },
-    { id: "name", label: "Name", filter: true },    {
+    { id: "name", label: "Name", filter: true },
+    {
       id: "categoryId",
       label: "Category",
       format: () => <Chip label="No Category" color="warning" size="small" />,
@@ -124,7 +151,18 @@ export const UncategorizedProductTable: React.FC<Props> = ({
       id: "costPrice",
       label: "Cost Price",
       align: "right",
-      format: (value) => <FormattedCurrency value={value as number} />,
+      format: (_, row?: Product) => {
+        if (!row?.sku || !productCostPrices[row.sku]) return null;
+        
+        const { value, source } = productCostPrices[row.sku];
+        return (
+          <Tooltip title={`Inherited from ${source}`}>
+            <Box>
+              <FormattedCurrency value={value} />
+            </Box>
+          </Tooltip>
+        );
+      },
     },
     {
       id: "sellingPrice",
@@ -161,7 +199,9 @@ export const UncategorizedProductTable: React.FC<Props> = ({
         />
       )}
     </>
-  );  return (
+  );
+
+  return (
     <Box sx={{ width: "100%" }}>
       <ProductTableToolbar
         platform={currentFilters.platform}

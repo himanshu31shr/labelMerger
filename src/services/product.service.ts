@@ -3,12 +3,14 @@ import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { DEFAULT_PRODUCT_PRICES } from "../constants/defaultPrices";
 import { FirebaseService } from "./firebase.service";
+import { CostPriceResolutionService } from "./costPrice.service";
 
 export interface Product {
+  id?: string;
   sku: string;
   name: string;
   description: string;
-  costPrice: number;
+  customCostPrice: number | null; // Custom cost price, null means inherit from category
   platform: "amazon" | "flipkart";
   visibility: "visible" | "hidden";
   sellingPrice: number;
@@ -91,6 +93,12 @@ interface RawAmazonData {
 
 export class ProductService extends FirebaseService {
   private readonly COLLECTION_NAME = "products";
+  private costPriceService: CostPriceResolutionService;
+
+  constructor() {
+    super();
+    this.costPriceService = new CostPriceResolutionService();
+  }
 
   async parseProducts(file: File): Promise<Product[]> {
     if (this.isAmazonFormat(file)) {
@@ -166,7 +174,7 @@ export class ProductService extends FirebaseService {
       name: row["item-name"],
       description:
         prices.get(row["seller-sku"])?.description ?? row["item-description"],
-      costPrice: prices.get(row["seller-sku"])?.costPrice ?? 0, // To be updated by user
+      customCostPrice: null, // Default to inheriting from category
       platform: "amazon" as const,
       sellingPrice: Number(row["price"]) || 0,
       metadata: {
@@ -191,7 +199,7 @@ export class ProductService extends FirebaseService {
         row["Product Name"] ??
         "",
       sellingPrice: Number(row["Your Selling Price"]) || 0,
-      costPrice: prices.get(row["Seller SKU Id"])?.costPrice ?? 0,
+      customCostPrice: null, // Default to inheriting from category
       platform: "flipkart" as const,
       metadata: {
         listingStatus: row["Listing Status"],
@@ -480,5 +488,28 @@ export class ProductService extends FirebaseService {
     } catch {
       return 0;
     }
+  }
+
+  /**
+   * Get the resolved cost price for a product
+   */
+  async getProductCostPrice(sku: string): Promise<number> {
+    try {
+      const resolution = await this.costPriceService.getProductCostPrice(sku);
+      return resolution.value;
+    } catch (error) {
+      console.error(`Error getting cost price for product ${sku}:`, error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get all products inheriting cost price from a category
+   */
+  async getProductsInheritingCost(categoryId: string): Promise<Product[]> {
+    return this.getDocuments<Product>(
+      this.COLLECTION_NAME,
+      [where('categoryId', '==', categoryId)]
+    );
   }
 }

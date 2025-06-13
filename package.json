@@ -30,7 +30,9 @@
     "test:watch:coverage": "npm run test:coverage -- --watch",
     "test:ci": "npm run test -- --watchAll=false",
     "pre-commit": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky",
+    "migrate:cost-price": "node src/scripts/migrateCostPrice.js",
+    "migrate:cost-price:rollback": "node src/scripts/migrateCostPrice.js rollback"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx,js,jsx}": [
@@ -99,6 +101,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^16.0.0",
     "sharp": "^0.34.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.18.2",

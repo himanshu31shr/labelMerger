@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { CategoryInventoryService } from '../../services/categoryInventory.service';
+import { CostPriceResolutionService } from '../../services/costPrice.service';
 import { selectIsAuthenticated } from '../../store/slices/authSlice';
 import {
   createCategory,
@@ -17,6 +18,7 @@ import { DataTable, Column } from '../../components/DataTable/DataTable';
 import { ProductSidesheet } from './ProductSidesheet';
 import { CategoryForm } from './CategoryForm';
 import CategoryInventoryEditModal from '../inventory/components/CategoryInventoryEditModal';
+import { CostPriceUpdateModal } from './CostPriceUpdateModal';
 
 import {
   Box,
@@ -43,10 +45,20 @@ import {
   Inventory as InventoryIcon,
   LocalOffer as TagIcon,
   Refresh as RefreshIcon,
+  AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
 
 interface UnifiedCategory extends CategoryWithInventory {
   tag?: string;
+  costPrice: number | null;
+  productsInheritingCost: number;
+}
+
+interface CategoryFormData {
+  name: string;
+  description?: string;
+  tag?: string;
+  costPrice?: number | null;
 }
 
 interface SnackbarState {
@@ -55,15 +67,10 @@ interface SnackbarState {
   severity: 'success' | 'error' | 'info' | 'warning';
 }
 
-type CategoryFormData = {
-  name: string;
-  description?: string;
-  tag?: string;
-}
-
 export const UnifiedCategoryTable: React.FC = () => {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const costPriceService = useMemo(() => new CostPriceResolutionService(), []);
 
   // Form and dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -88,6 +95,11 @@ export const UnifiedCategoryTable: React.FC = () => {
   });
   const [sidesheetOpen, setSidesheetOpen] = useState(false);
   const [categories, setCategories] = useState<UnifiedCategory[]>([]);
+  
+  // Cost price modal state
+  const [costPriceModalOpen, setCostPriceModalOpen] = useState(false);
+  const [selectedCategoryForCostPrice, setSelectedCategoryForCostPrice] = useState<UnifiedCategory | null>(null);
+  const [isUpdatingCostPrice, setIsUpdatingCostPrice] = useState(false);
 
   // Derived states
   const existingTags = useMemo(() => {
@@ -123,6 +135,12 @@ export const UnifiedCategoryTable: React.FC = () => {
     }
   };
 
+  // Utility function to format price in Rupees
+  const formatRupeePrice = (price: number | null): string => {
+    if (price === null) return '—';
+    return `₹${price.toFixed(2)}`;
+  };
+
   // Data loading
   useEffect(() => {
     const loadCategories = async () => {
@@ -130,20 +148,31 @@ export const UnifiedCategoryTable: React.FC = () => {
       try {
         const service = new CategoryInventoryService();
         const result = await service.getAllCategoriesWithInventory();
-        setCategories(
+        
+        // Load categories with cost price information
+        const categoriesWithCost = await Promise.all(
           result
             .filter(cat => !!cat.id)
-            .map(cat => ({
-              ...cat,
-              id: String(cat.id),
-              inventory: cat.inventory || { 
-                totalQuantity: 0,
-                lowStockThreshold: 0,
-                productCount: 0 
-              },
-            }))
+            .map(async cat => {
+              const productsInheriting = await costPriceService.getProductsInheritingCost(cat.id!);
+              const costPriceInfo = await costPriceService.getCategoryCostPrice(cat.id!);
+              return {
+                ...cat,
+                id: String(cat.id),
+                inventory: cat.inventory || { 
+                  totalQuantity: 0,
+                  lowStockThreshold: 0,
+                  productCount: 0 
+                },
+                costPrice: costPriceInfo.value,
+                productsInheritingCost: productsInheriting.length
+              };
+            })
         );
-      } catch {
+
+        setCategories(categoriesWithCost);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
         setSnackbar({
           open: true,
           message: 'Failed to load categories',
@@ -152,7 +181,54 @@ export const UnifiedCategoryTable: React.FC = () => {
       }
     };
     loadCategories();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, costPriceService]);
+
+  // Cost price handlers
+  const handleCostPriceUpdate = async (newPrice: number | null) => {
+    if (!selectedCategoryForCostPrice?.id) return;
+    
+    setIsUpdatingCostPrice(true);
+    try {
+      await costPriceService.updateCategoryCostPrice(selectedCategoryForCostPrice.id, newPrice);
+      
+      // Update the local state immediately
+      setCategories(prevCategories => 
+        prevCategories.map(cat => 
+          cat.id === selectedCategoryForCostPrice.id 
+            ? { ...cat, costPrice: newPrice }
+            : cat
+        )
+      );
+
+      setSnackbar({
+        open: true,
+        message: 'Cost price updated successfully',
+        severity: 'success',
+      });
+
+      // Close the modal
+      setCostPriceModalOpen(false);
+      setSelectedCategoryForCostPrice(null);
+
+      // Refresh the data in the background
+      dispatch(fetchCategoriesWithInventory());
+    } catch (error) {
+      console.error('Failed to update cost price:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update cost price',
+        severity: 'error',
+      });
+    } finally {
+      setIsUpdatingCostPrice(false);
+    }
+  };
+
+  // Handler for opening cost price modal
+  const handleOpenCostPriceModal = (category: UnifiedCategory) => {
+    setSelectedCategoryForCostPrice(category);
+    setCostPriceModalOpen(true);
+  };
 
   // Event handlers
   const handleFormSubmit = async (data: CategoryFormData) => {
@@ -164,6 +240,7 @@ export const UnifiedCategoryTable: React.FC = () => {
           name: data.name,
           description: data.description || '',
           tag: data.tag || '',
+          costPrice: data.costPrice ?? null,
         };
         await dispatch(updateCategory(updateData)).unwrap();
         setSnackbar({
@@ -172,7 +249,10 @@ export const UnifiedCategoryTable: React.FC = () => {
           severity: 'success',
         });
       } else {
-        await dispatch(createCategory(data)).unwrap();
+        await dispatch(createCategory({
+          ...data,
+          costPrice: data.costPrice ?? null,
+        })).unwrap();
         setSnackbar({
           open: true,
           message: 'Category created successfully',
@@ -189,6 +269,7 @@ export const UnifiedCategoryTable: React.FC = () => {
         severity: 'error',
       });
     }
+    setIsSubmitting(false);
   };
 
   const handleSaveInventory = async (data: {
@@ -312,87 +393,89 @@ export const UnifiedCategoryTable: React.FC = () => {
   const columns: Column<UnifiedCategory>[] = [
     {
       id: 'name',
-      label: 'Category',
-      filter: true,
-      format: (_, row) => row ? (
-        <Box>
-          <Typography variant="body1" fontWeight="medium">
-            {row.name}
-          </Typography>
-          {row.description && (
-            <Typography variant="body2" color="textSecondary">
-              {row.description}
-            </Typography>
-          )}
+      label: 'Name',
+      format: (_: unknown, row: UnifiedCategory | undefined) => row && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography>{row.name}</Typography>
           {row.tag && (
             <Chip
-              icon={<TagIcon />}
               label={row.tag}
               size="small"
               color="primary"
               variant="outlined"
-              sx={{ mt: 0.5 }}
+              sx={{ height: 20 }}
             />
           )}
         </Box>
-      ) : null,
-      filterValue: (row) => `${row.name} ${row.description || ''} ${row.tag || ''}`,
+      ),
+    },
+    {
+      id: 'description',
+      label: 'Description',
+      format: (_: unknown, row: UnifiedCategory | undefined) => row ? (row.description || '—') : '—',
+    },
+    {
+      id: 'inventory',
+      label: 'Stock Status',
+      format: (_: unknown, row: UnifiedCategory | undefined) => row && (
+        <Chip
+          label={getStatusLabel(getStockStatus(row))}
+          color={getStatusColor(getStockStatus(row))}
+          size="small"
+          sx={{ minWidth: 80 }}
+        />
+      ),
     },
     {
       id: 'inventory.totalQuantity',
       label: 'Total Quantity',
-      align: 'right',
-      format: (_, row) => row ? (
-        <Typography variant="body1">
-          {row.inventory.totalQuantity}
-        </Typography>
-      ) : null,
     },
     {
       id: 'inventory.lowStockThreshold',
       label: 'Low Stock Threshold',
-      align: 'right',
-      format: (_, row) => row ? (
-        <Typography variant="body1">
-          {row.inventory.lowStockThreshold}
-        </Typography>
-      ) : null,
     },
     {
       id: 'inventory.productCount',
       label: 'Product Count',
-      align: 'right',
-      format: (_, row) => row ? (
-        <Typography variant="body1">
-          {row.inventory.productCount}
-        </Typography>
-      ) : null,
     },
     {
-      id: 'status',
-      label: 'Status',
-      align: 'center',
-      filter: true,
-      format: (_, row) => {
-        if (!row) return null;
-        const status = getStockStatus(row);
-        return (
-          <Chip
-            label={getStatusLabel(status)}
-            color={getStatusColor(status)}
-            size="small"
-          />
-        );
-      },
-      filterValue: (row) => getStatusLabel(getStockStatus(row)),
+      id: 'costPrice',
+      label: 'Cost Price (₹)',
+      format: (_: unknown, row: UnifiedCategory | undefined) => row && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography>
+            {row.costPrice === null ? '(Inherited)' : formatRupeePrice(row.costPrice)}
+          </Typography>
+          <Tooltip title="Update cost price">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenCostPriceModal(row);
+              }}
+            >
+              <MoneyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {row.productsInheritingCost > 0 && (
+            <Tooltip title={`${row.productsInheritingCost} product(s) inherit this cost price`}>
+              <Chip
+                size="small"
+                label={row.productsInheritingCost}
+                color="info"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
+          )}
+        </Box>
+      ),
     },
     {
       id: 'actions',
       label: 'Actions',
-      align: 'center',
-      format: (_, row) => row ? (
-        <Box display="flex" gap={1} justifyContent="center">
-          <Tooltip title="Edit Category">
+      format: (_: unknown, row: UnifiedCategory | undefined) => row && (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title="Edit category">
             <IconButton
               size="small"
               onClick={(e) => {
@@ -401,22 +484,10 @@ export const UnifiedCategoryTable: React.FC = () => {
                 setIsFormOpen(true);
               }}
             >
-              <EditIcon />
+              <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Manage Inventory">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedCategory(row);
-                setEditModalOpen(true);
-              }}
-            >
-              <InventoryIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete Category">
+          <Tooltip title="Delete category">
             <IconButton
               size="small"
               onClick={(e) => {
@@ -425,11 +496,23 @@ export const UnifiedCategoryTable: React.FC = () => {
                 setDeleteDialogOpen(true);
               }}
             >
-              <DeleteIcon />
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit inventory">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedCategory(row);
+                setEditModalOpen(true);
+              }}
+            >
+              <InventoryIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
-      ) : null,
+      ),
     },
   ];
 
@@ -487,23 +570,23 @@ export const UnifiedCategoryTable: React.FC = () => {
       </Box>
 
       {/* DataTable */}
-      <DataTable
+      <DataTable<UnifiedCategory>
         columns={columns}
         data={categories}
         defaultSortColumn="name"
         defaultSortDirection="asc"
-        rowsPerPageOptions={[10, 25, 50]}
-        defaultRowsPerPage={25}
-        id="unified-category-table"
-        enableSelection
-        onSelect={handleSelect}
-        onSelectAll={handleSelectAll}
-        selected={selectedCategoryIds.filter(Boolean)}
-        getRowId={(row) => row.id}
         onRowClick={(row) => {
           setSelectedCategory(row);
           setSidesheetOpen(true);
         }}
+        rowsPerPageOptions={[10, 25, 50]}
+        defaultRowsPerPage={25}
+        id="unified-category-table"
+        enableSelection
+        selected={selectedCategoryIds}
+        onSelect={handleSelect}
+        onSelectAll={handleSelectAll}
+        getRowId={(row) => row.id}
       />
 
       {/* Category Form Dialog */}
@@ -590,6 +673,19 @@ export const UnifiedCategoryTable: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <CostPriceUpdateModal
+        open={costPriceModalOpen}
+        onClose={() => {
+          setCostPriceModalOpen(false);
+          setSelectedCategoryForCostPrice(null);
+        }}
+        onSubmit={handleCostPriceUpdate}
+        categoryName={selectedCategoryForCostPrice?.name || ''}
+        currentPrice={selectedCategoryForCostPrice?.costPrice || null}
+        productsInheritingCount={selectedCategoryForCostPrice?.productsInheritingCost || 0}
+        isSubmitting={isUpdatingCostPrice}
+      />
     </Box>
   );
 };

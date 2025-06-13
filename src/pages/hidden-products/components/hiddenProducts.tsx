@@ -1,6 +1,6 @@
 import { ArrowUpwardOutlined } from "@mui/icons-material";
-import { Box, Chip, CircularProgress, colors } from "@mui/material";
-import React from "react";
+import { Box, CircularProgress, Tooltip } from "@mui/material";
+import React, { useState, useEffect, useMemo } from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { FormattedCurrency } from "../../../components/FormattedCurrency";
 import { Product } from "../../../services/product.service";
@@ -10,16 +10,39 @@ import {
   ViewFlipkartListingButton,
 } from "../../../shared/ActionButtons";
 import { useAppSelector } from "../../../store/hooks";
+import { CostPriceResolutionService } from '../../../services/costPrice.service';
 
 interface HiddenProductsProps {
   mode?: "hidden" | "price";
 }
+
 export const HiddenProducts: React.FC<HiddenProductsProps> = ({
   mode = "price",
 }) => {
   const { items: products, loading } = useAppSelector(
     (state) => state.products
   );
+  const [productCostPrices, setProductCostPrices] = useState<Record<string, { value: number; source: string }>>({});
+  const costPriceService = useMemo(() => new CostPriceResolutionService(), []);
+
+  // Fetch cost prices for all products
+  useEffect(() => {
+    const fetchCostPrices = async () => {
+      const costPrices: Record<string, { value: number; source: string }> = {};
+      
+      for (const product of products) {
+        const resolution = await costPriceService.getProductCostPrice(product.sku);
+        costPrices[product.sku] = {
+          value: resolution.value,
+          source: resolution.source
+        };
+      }
+      
+      setProductCostPrices(costPrices);
+    };
+
+    fetchCostPrices();
+  }, [products, costPriceService]);
 
   let hiddenProducts = [];
 
@@ -49,19 +72,24 @@ export const HiddenProducts: React.FC<HiddenProductsProps> = ({
     {
       id: "costPrice",
       label: "Cost Price",
-      align: "center",
-      format: (value, row?: Product) => (
-        <>
-          <FormattedCurrency
-            color={colors.green[500]}
-            value={(row?.costPrice ?? 0) * Number(row?.metadata?.moq ?? "0")}
-          />
-          <Box fontSize={12}>
-            <FormattedCurrency value={row?.costPrice ?? 0} /> x{" "}
-            {row?.metadata?.moq}
-          </Box>
-        </>
-      ),
+      align: "right",
+      format: (_, row?: Product) => {
+        if (!row?.sku || !productCostPrices[row.sku]) return null;
+        
+        const { value, source } = productCostPrices[row.sku];
+        const moq = Number(row?.metadata?.moq ?? "1");
+        
+        return (
+          <Tooltip title={`Inherited from ${source}`}>
+            <Box>
+              <FormattedCurrency value={value * moq} />
+              <Box fontSize={12}>
+                <FormattedCurrency value={value} /> x {moq}
+              </Box>
+            </Box>
+          </Tooltip>
+        );
+      },
     },
     {
       id: "sellingPrice",

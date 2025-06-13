@@ -34,14 +34,12 @@ export const ProductEditModal: React.FC<Props> = ({ product, onClose, onSave }) 
   const [formData, setFormData] = useState({
     name: product.name,
     description: product.description,
-    costPrice: product.costPrice,
   });
 
   const handleChange = (field: keyof typeof formData) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const value = field === 'costPrice' ? Number(event.target.value) : event.target.value;
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -88,19 +86,6 @@ export const ProductEditModal: React.FC<Props> = ({ product, onClose, onSave }) 
               rows={3}
               required
               inputProps={{ 'aria-label': 'Description' }}
-            />
-            <TextField
-              label="Cost Price"
-              type="number"
-              value={formData.costPrice}
-              onChange={handleChange('costPrice')}
-              fullWidth
-              required
-              inputProps={{ 
-                min: 0,
-                step: 0.01,
-                'aria-label': 'Cost Price'
-              }}
             />
             <Box display="flex" gap={2} justifyContent="flex-end">
               <Button onClick={onClose} color="inherit">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   // Removed unused Material-UI Table components
   // Table,
@@ -9,6 +9,7 @@ import {
   // TableRow,
   // Paper, // Removed unused Paper import
   Box,
+  CircularProgress,
 } from '@mui/material';
 // Removed useSelector and RootState imports as data is passed as props
 // import { useSelector } from 'react-redux';
@@ -20,6 +21,8 @@ import { DataTable, Column } from '../../../components/DataTable/DataTable';
 // Import necessary types for props
 import { Category } from '../../../services/category.service';
 import { ProductSummary } from '../../home/services/base.transformer';
+import { CostPriceResolutionService } from '../../../services/costPrice.service';
+import { FormattedCurrency } from '../../../components/FormattedCurrency';
 
 // Define prop types for CategoryDistributionTable
 interface CategoryDistributionTableProps {
@@ -30,76 +33,66 @@ interface CategoryDistributionTableProps {
 // Define the structure of the data that will be passed to the DataTable
 interface CategoryDataRow {
   category: string;
-  orderCount: number;
-  totalQuantity: number;
-  revenue: number;
-  cost: number;
+  totalOrders: number;
+  totalRevenue: number;
+  totalCost: number;
   profit: number;
 }
 
 const CategoryDistributionTable: React.FC<CategoryDistributionTableProps> = ({ orders, categories }) => {
-  // Data is received via props
+  const costPriceService = useMemo(() => new CostPriceResolutionService(), []);
+  const [loading, setLoading] = useState(true);
+  const [categoryRows, setCategoryRows] = useState<CategoryDataRow[]>([]);
 
   // Map categoryId to category name
-  const categoryIdToName: Record<string, string> = {};
-  categories.forEach(cat => {
-    if (cat.id) categoryIdToName[cat.id] = cat.name;
-  });
+  const categoryIdToName = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.forEach(cat => {
+      if (cat.id) {
+        map[cat.id] = cat.name;
+      }
+    });
+    return map;
+  }, [categories]);
 
-  // Format currency in INR
-  const formatINR = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
+  useEffect(() => {
+    const calculateCategoryData = async () => {
+      setLoading(true);
+      const categoryData: Record<string, CategoryDataRow> = {};
 
-  // Calculate profit margin
-  const calculateProfitMargin = (revenue: number, profit: number) => {
-    return revenue ? ((profit / revenue) * 100).toFixed(1) : '0.0';
-  };
+      for (const order of orders) {
+        const categoryId = order.product?.categoryId;
+        const category = categoryId ? (categoryIdToName[categoryId] || 'Uncategorized') : 'Uncategorized';
 
-  // Aggregate by category
-  const categoryMap: Record<string, {
-    orderCount: number;
-    totalQuantity: number;
-    revenue: number;
-    cost: number;
-    profit: number;
-  }> = {};
+        if (!categoryData[category]) {
+          categoryData[category] = {
+            category,
+            totalOrders: 0,
+            totalRevenue: 0,
+            totalCost: 0,
+            profit: 0,
+          };
+        }
 
-  orders.forEach(order => {
-    const categoryId = order.product?.categoryId;
-    const category = categoryId ? (categoryIdToName[categoryId] || 'Uncategorized') : 'Uncategorized';
-    const price = order.product?.sellingPrice || 0;
-    const quantity = parseInt(order.quantity) || 0;
-    const cost = order.product?.costPrice || 0;
+        if (order.product?.sku) {
+          const resolution = await costPriceService.getProductCostPrice(order.product.sku);
+          const costPrice = resolution.value;
+          const quantity = parseInt(order.quantity) || 1;
+          const sellingPrice = order.product.sellingPrice || 0;
 
-    if (!categoryMap[category]) {
-      categoryMap[category] = {
-        orderCount: 0,
-        totalQuantity: 0,
-        revenue: 0,
-        cost: 0,
-        profit: 0,
-      };
-    }
+          categoryData[category].totalOrders += 1;
+          categoryData[category].totalRevenue += sellingPrice * quantity;
+          categoryData[category].totalCost += costPrice * quantity;
+          categoryData[category].profit = categoryData[category].totalRevenue - categoryData[category].totalCost;
+        }
+      }
 
-    categoryMap[category].orderCount += 1;
-    categoryMap[category].totalQuantity += quantity;
-    categoryMap[category].revenue += price * quantity;
-    categoryMap[category].cost += cost * quantity;
-    categoryMap[category].profit = categoryMap[category].revenue - categoryMap[category].cost;
-  });
+      setCategoryRows(Object.values(categoryData));
+      setLoading(false);
+    };
 
-  const sortedData = Object.entries(categoryMap)
-    .map(([category, data]) => ({
-      category,
-      ...data,
-    }))
-    .sort((a, b) => b.revenue - a.revenue);
+    calculateCategoryData();
+  }, [orders, categories, categoryIdToName, costPriceService]);
 
   // Define columns for the DataTable
   const columns: Column<CategoryDataRow>[] = [
@@ -108,42 +101,37 @@ const CategoryDistributionTable: React.FC<CategoryDistributionTableProps> = ({ o
       label: 'Category',
     },
     {
-      id: 'orderCount',
-      label: 'Orders',
+      id: 'totalOrders',
+      label: 'Total Orders',
       align: 'right',
     },
     {
-      id: 'totalQuantity',
-      label: 'Quantity',
+      id: 'totalRevenue',
+      label: 'Total Revenue',
       align: 'right',
+      format: (value) => <FormattedCurrency value={value as number} />,
     },
     {
-      id: 'revenue',
-      label: 'Revenue (INR)',
+      id: 'totalCost',
+      label: 'Total Cost',
       align: 'right',
-      format: (value: unknown) => formatINR(value as number),
-    },
-    {
-      id: 'cost',
-      label: 'Cost (INR)',
-      align: 'right',
-      format: (value: unknown) => formatINR(value as number),
+      format: (value) => <FormattedCurrency value={value as number} />,
     },
     {
       id: 'profit',
-      label: 'Profit (INR)',
+      label: 'Profit',
       align: 'right',
-      format: (value: unknown) => formatINR(value as number),
-    },
-    {
-      id: 'profitMargin',
-      label: 'Profit Margin',
-      align: 'right',
-      // Calculate profit margin within the format function or add it to the data
-      format: (value: unknown, row: CategoryDataRow | undefined) =>
-        row ? `${calculateProfitMargin(row.revenue, row.profit)}%` : '-',
+      format: (value) => <FormattedCurrency value={value as number} />,
     },
   ];
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" p={2}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!orders.length) {
     return (
@@ -157,8 +145,8 @@ const CategoryDistributionTable: React.FC<CategoryDistributionTableProps> = ({ o
     // Use the DataTable component
     <DataTable
       columns={columns}
-      data={sortedData}
-      defaultSortColumn="revenue"
+      data={categoryRows}
+      defaultSortColumn="totalRevenue"
       defaultSortDirection="desc"
       // Add other DataTable props as needed (e.g., onRowClick, rowsPerPageOptions)
     />
