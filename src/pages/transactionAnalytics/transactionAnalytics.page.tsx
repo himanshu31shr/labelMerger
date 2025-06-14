@@ -21,6 +21,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TransactionAnalysisService } from "../../services/transactionAnalysis.service";
+import { CostPriceResolutionService } from "../../services/costPrice.service";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchProducts } from "../../store/slices/productsSlice";
 import { fetchTransactions, saveTransactions } from "../../store/slices/transactionsSlice";
@@ -58,6 +59,7 @@ export const TransactionAnalytics: React.FC = () => {
     minDate: null,
     maxDate: null,
   });
+  const [analyzingPrices, setAnalyzingPrices] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -77,37 +79,55 @@ export const TransactionAnalytics: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (transactions.length > 0 && products.length > 0) {
-      // Convert products to ProductPrice format and store in Map
-      const priceMap = new Map(
-        products.map(product => [product.sku.toLowerCase(), product])
-      );
+    const analyzeTransactions = async () => {
+      if (transactions.length > 0 && products.length > 0) {
+        try {
+          setAnalyzingPrices(true);
+          
+          // Convert products to ProductPrice format and store in Map
+          const priceMap = new Map(
+            products.map(product => [product.sku.toLowerCase(), product])
+          );
 
-      const transactionsWithPrices = transactions.map(
-        (transaction) => ({
-          ...transaction,
-          product: {
-            ...transaction.product,
-            ...priceMap.get(transaction.sku.toLowerCase()),
-          },
-        })
-      );
+          const transactionsWithPrices = transactions.map(
+            (transaction) => ({
+              ...transaction,
+              product: {
+                ...transaction.product,
+                ...priceMap.get(transaction.sku.toLowerCase()),
+              },
+            })
+          );
 
-      const dates = transactionsWithPrices.map(
-        (transaction) => new Date(transaction.orderDate)
-      );
+          const dates = transactionsWithPrices.map(
+            (transaction) => new Date(transaction.orderDate)
+          );
 
-      setDateRange({
-        minDate: new Date(Math.min(...dates.map((date) => date.getTime()))),
-        maxDate: new Date(Math.max(...dates.map((date) => date.getTime()))),
-      });
+          setDateRange({
+            minDate: new Date(Math.min(...dates.map((date) => date.getTime()))),
+            maxDate: new Date(Math.max(...dates.map((date) => date.getTime()))),
+          });
 
-      const service = new TransactionAnalysisService(
-        transactionsWithPrices,
-        priceMap
-      );
-      setSummary(service.analyze());
-    }
+          // Create services
+          const costPriceService = new CostPriceResolutionService();
+          const transactionService = new TransactionAnalysisService(
+            transactionsWithPrices,
+            priceMap,
+            costPriceService
+          );
+          
+          // Wait for async analyze to complete
+          const results = await transactionService.analyze();
+          setSummary(results);
+        } catch (error) {
+          console.error("Error analyzing transactions:", error);
+        } finally {
+          setAnalyzingPrices(false);
+        }
+      }
+    };
+
+    analyzeTransactions();
   }, [transactions, products]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -167,10 +187,12 @@ export const TransactionAnalytics: React.FC = () => {
             />
           )}
           <Box sx={{ flexGrow: 1 }} />
-          {loading && (
+          {(loading || analyzingPrices) && (
             <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
               <CircularProgress size={24} sx={{ mr: 1 }} color="primary" />
-              <Typography color="primary.main">Processing...</Typography>
+              <Typography color="primary.main">
+                {loading ? "Processing..." : "Analyzing prices..."}
+              </Typography>
             </Box>
           )}
         </Box>
@@ -261,12 +283,12 @@ export const TransactionAnalytics: React.FC = () => {
               </Box>
             </Box>
 
-            <TabPanel value={tabValue} index={0} key="transactions">
+            <TabPanel value={tabValue} index={0}>
               <OrderList transactions={transactions} />
             </TabPanel>
 
-            <TabPanel value={tabValue} index={1} key="product-list">
-              <ProductList transactions={transactions} />
+            <TabPanel value={tabValue} index={1}>
+              <ProductList transactions={transactions} summary={summary} />
             </TabPanel>
           </>
         )}

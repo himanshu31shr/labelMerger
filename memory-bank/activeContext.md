@@ -1,24 +1,32 @@
-# Active Context
+# ACTIVE CONTEXT: TRANSACTION ANALYTICS REPAIR
 
-## Last Completed Task
-- Category Cost Price Inheritance (Level 3)
-- Completion Date: 2025-06-13
-- Archive: memory-bank/archive/archive-cost-price-inheritance.md
+## Current Focus
+Fixing the transaction analytics functionality and implementing category price inheritance in all calculations.
 
-## Current State
-### Completed Features
-- Hierarchical cost price system with Rupee (₹) support
-- Category-based price inheritance with override capability
-- Cost price update modal with validation
-- Migration tools with rollback support
+## Key Components
+- **TransactionAnalysisService**: Core service that calculates analytics data from transactions
+- **FlipkartFactory**: Processes imported Flipkart data into transaction objects
+- **CostPriceResolutionService**: Manages cost price inheritance from categories to products
+- **Transaction Analytics UI Components**: Display analytics data in the frontend
 
-### Migration Readiness
-- Migration scripts prepared and tested
-- Rollback procedures documented
-- Database backup strategy defined
-- Monitoring plan in place
+## Technical Challenges
+1. Cost price inheritance not reflected in transaction calculations
+2. Analytics table not correctly processing or displaying data
+3. Calculations need to properly account for category-based pricing
+4. Imported data from Flipkart must be properly mapped
 
-### Next Steps
-- Ready for next task
-- All documentation updated
-- System prepared for production deployment
+## Implementation Requirements
+- Update TransactionAnalysisService to integrate with CostPriceResolutionService
+- Fix calculation errors in the analyze() method
+- Update FlipkartFactory to handle category inheritance
+- Review and fix the UI components for proper data display
+
+## Reference Files
+- src/services/transactionAnalysis.service.ts
+- src/pages/transactionAnalytics/transactionAnalytics.page.tsx
+- src/pages/transactionAnalytics/services/FlipkartFactory.ts
+- src/services/costPrice.service.ts
+
+## Import File Context
+- Flipkart import file (04a60bb3-a48c-4a33-a1e1-8b60cc7dd0ff_1749817677000.xlsx) needs review
+- Must verify calculations against this file's data

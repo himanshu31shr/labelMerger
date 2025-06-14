@@ -1,0 +1,50 @@
+# TASK: Transaction Analytics Repair
+
+## TASK OVERVIEW
+**Objective**: Fix the transaction analytics table which is not working correctly and update it to use category price inheritance for products.
+
+**Complexity Level**: 3 (Intermediate Feature)
+**Type**: Bug Fix & Feature Enhancement
+**Status**: IN PROGRESS 🔄
+
+## IMPLEMENTATION PLAN
+
+### 1. Issue Analysis
+- [ ] Examine the transaction analytics implementation and identify the main issues
+- [ ] Analyze the calculations in the TransactionAnalysisService
+- [ ] Review the FlipkartFactory implementation for data processing
+- [ ] Verify the Flipkart import file structure and required fields
+- [ ] Check how cost prices are currently integrated in the analytics
+
+### 2. Implementation Requirements
+- [ ] Update product price resolution to use category price inheritance
+- [ ] Modify TransactionAnalysisService to use the correct cost price source
+- [ ] Fix any calculation errors in the analytics service
+- [ ] Update the UI components to display the correct data
+- [ ] Ensure compatibility with imported data from Flipkart
+
+### 3. Core Components
+- [ ] **TransactionAnalysisService updates**
+  - [ ] Integrate with CostPriceResolutionService
+  - [ ] Fix calculation errors in the analyze() method
+  - [ ] Ensure correct cost price inheritance is used
+
+- [ ] **FlipkartFactory updates**
+  - [ ] Ensure imported data properly maps to transaction objects
+  - [ ] Add proper category inheritance for products
+  - [ ] Fix any data mapping issues
+
+- [ ] **UI Components**
+  - [ ] Fix transaction analytics table display
+  - [ ] Update relevant components to show cost price source
+  - [ ] Ensure correct calculations are displayed
+
+### 4. Testing Strategy
+- [ ] Test with sample Flipkart import file
+- [ ] Verify calculations against expected values
+- [ ] Test cost price inheritance through categories
+- [ ] Validate UI display of all values
+
+## PROGRESS TRACKING
+- Started implementation: [Current Date]
+- Expected completion: [Target Date]

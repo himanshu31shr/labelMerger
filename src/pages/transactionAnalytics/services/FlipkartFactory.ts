@@ -9,6 +9,8 @@ export default class FlipkartFactory implements AbstractFactory {
   private workbook: XLSX.WorkBook | undefined;
   private ordersData: FlipkartOrderData[] = [];
   public transactions: Transaction[] = [];
+  // Category mapping to map product SKUs to category IDs
+  private categoryMapping: Map<string, string> = new Map();
 
   constructor(file: File) {
     this.file = file;
@@ -18,6 +20,7 @@ export default class FlipkartFactory implements AbstractFactory {
     this.readWorkbook = this.readWorkbook.bind(this);
     this.reponseAdapter = this.reponseAdapter.bind(this);
     this.process = this.process.bind(this);
+    this.extractCategoryInfo = this.extractCategoryInfo.bind(this);
   }
 
   private parseCurrencyValue(value: string | undefined): number {
@@ -41,11 +44,40 @@ export default class FlipkartFactory implements AbstractFactory {
       if (!sheet || XLSX.utils.sheet_to_json(sheet).length === 0) {
         throw new Error("No data found in Orders P&L sheet");
       }
+
+      // Check for category sheet
+      if (this.workbook.SheetNames.includes("Categories")) {
+        await this.extractCategoryInfo();
+      }
     } catch (error) {
       if (error instanceof Error) {
         throw error;
       }
       throw new Error("Failed to read workbook");
+    }
+  }
+
+  /**
+   * Extract category information from Categories sheet if available
+   */
+  private async extractCategoryInfo(): Promise<void> {
+    if (!this.workbook || !this.workbook.SheetNames.includes("Categories")) {
+      return;
+    }
+
+    try {
+      const categoriesSheet = this.workbook.Sheets["Categories"];
+      const categories = XLSX.utils.sheet_to_json<{SKU: string, CategoryID: string}>(categoriesSheet);
+      
+      if (categories && categories.length > 0) {
+        categories.forEach(item => {
+          if (item.SKU && item.CategoryID) {
+            this.categoryMapping.set(item.SKU, item.CategoryID);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error extracting category information:", error);
     }
   }
 
@@ -71,8 +103,33 @@ export default class FlipkartFactory implements AbstractFactory {
       .filter((txn): txn is Transaction => !!txn);
   }
 
+  /**
+   * Extract category ID from order data or lookup from category mapping
+   */
+  private getCategoryId(order: FlipkartOrderData): string | undefined {
+    // Try direct lookup from order if SKU exists
+    if (order["SKU Name"] && this.categoryMapping.has(order["SKU Name"])) {
+      return this.categoryMapping.get(order["SKU Name"]);
+    }
+
+    // Try to extract from product category field if available
+    if (order["Product Category"]) {
+      return order["Product Category"];
+    }
+
+    // Default category lookup from predefined mappings could be added here
+
+    return undefined;
+  }
+
   private rowToTransaction(order: FlipkartOrderData): Transaction | null {
     if (!order["Order ID"]) return null;
+
+    // Get category ID if available
+    const categoryId = this.getCategoryId(order);
+    const sellingPrice = this.parseCurrencyValue(
+      order["Final Selling Price (incl. seller opted in default offers)"]
+    );
 
     return {
       transactionId: order["Order ID"],
@@ -83,9 +140,7 @@ export default class FlipkartFactory implements AbstractFactory {
       type: "delivered",
       orderDate: order["Order Date"],
       quantity: order["Gross Units"],
-      sellingPrice: this.parseCurrencyValue(
-        order["Final Selling Price (incl. seller opted in default offers)"]
-      ),
+      sellingPrice,
       orderStatus: order["Order Status"],
       total: this.parseCurrencyValue(order["Net Earnings (INR)"]),
       productSales: this.parseCurrencyValue(order["Accounted Net Sales (INR)"]),
@@ -102,10 +157,15 @@ export default class FlipkartFactory implements AbstractFactory {
         sku: order["SKU Name"],
         description: order["SKU Name"] || "",
         platform: "flipkart",
-        costPrice: 0,
-        metadata: {},
+        customCostPrice: null, // Set to null to enable category inheritance
+        categoryId, // Include category ID if available
+        metadata: {
+          lastImportedFrom: "flipkart",
+          listingStatus: "active",
+          moq: "1"
+        },
         visibility: "visible",
-        sellingPrice: 0,
+        sellingPrice,
         inventory: {
           quantity: 0,
           lowStockThreshold: 5,

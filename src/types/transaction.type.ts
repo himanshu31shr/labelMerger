@@ -1,4 +1,12 @@
 import { Product } from "../services/product.service";
+import { CostPriceResolution } from "../services/costPrice.service";
+
+// Extend Product interface to support resolvedCostPrice
+declare module "../services/product.service" {
+  interface Product {
+    resolvedCostPrice?: CostPriceResolution;
+  }
+}
 
 export interface Transaction {
   transactionId: string;
@@ -53,12 +61,18 @@ export interface TransactionSummary {
       profitPerUnit: number;
       name: string;
       description?: string;
+      costPriceSource?: 'category' | 'product' | 'default';
     };
   };
   totalProfit: number;
   totalUnits: number;
   totalCost: number;
   profitBeforeCost: number;
+  costPriceSources?: {
+    product: number;
+    category: number;
+    default: number;
+  };
 }
 
 export interface PriceMapping {

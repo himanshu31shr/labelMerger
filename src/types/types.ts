@@ -12,6 +12,7 @@ export interface FlipkartOrderData {
   "Total Expenses (INR)": string;
   "Shipping Fee (INR)": string;
   "Commission (INR)": string;
+  "Product Category"?: string;
 }
 
 export interface FlipkartSkuData {

@@ -1,6 +1,14 @@
 import React from "react";
 import { Column, DataTable } from "../../../components/DataTable/DataTable";
 import { Transaction } from "../../../types/transaction.type";
+import { CostPriceResolution } from "../../../services/costPrice.service";
+
+// Extend Product type to include resolved cost price
+declare module "../../../services/product.service" {
+  interface Product {
+    resolvedCostPrice?: CostPriceResolution;
+  }
+}
 
 interface OrderListProps {
   transactions: Transaction[];
@@ -14,22 +22,31 @@ interface OrderTableData {
   sellingPrice: number;
   total: number;
   productCost: number;
+  costPriceSource: string;
   type: string;
 }
 
 const OrderList: React.FC<OrderListProps> = ({ transactions }) => {
   const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
 
-  const tableData: OrderTableData[] = transactions.map(transaction => ({
-    transactionId: transaction.transactionId || '',
-    sku: transaction.sku || '',
-    productName: transaction.product.name || transaction.description || 'Unknown Product',
-    platform: transaction.platform || '',
-    sellingPrice: transaction.sellingPrice || 0,
-    total: transaction.total || 0,
-    productCost: transaction.product?.costPrice || 0,
-    type: transaction.type || ''
-  }));
+  const tableData: OrderTableData[] = transactions.map(transaction => {
+    // Get cost price from the product's updated properties after analysis
+    // The TransactionAnalysisService should have added the resolved cost price
+    const resolvedCostPrice = transaction.product.resolvedCostPrice?.value || 0;
+    const costPriceSource = transaction.product.resolvedCostPrice?.source || 'default';
+    
+    return {
+      transactionId: transaction.transactionId || '',
+      sku: transaction.sku || '',
+      productName: transaction.product.name || transaction.description || 'Unknown Product',
+      platform: transaction.platform || '',
+      sellingPrice: transaction.sellingPrice || 0,
+      total: transaction.total || 0,
+      productCost: resolvedCostPrice,
+      costPriceSource: costPriceSource,
+      type: transaction.type || ''
+    };
+  });
 
   const columns: Column<OrderTableData>[] = [
     { id: 'transactionId', label: '#', filter: true },
@@ -54,6 +71,26 @@ const OrderList: React.FC<OrderListProps> = ({ transactions }) => {
       label: 'Product Cost', 
       align: 'right',
       format: (value) => formatCurrency(value as number)
+    },
+    {
+      id: 'costPriceSource',
+      label: 'Price Source',
+      filter: true,
+      format: (value) => {
+        const source = value as string;
+        let textColor = 'inherit';
+        if (source === 'product') textColor = '#1976d2';
+        if (source === 'category') textColor = '#9c27b0';
+        
+        return (
+          <span style={{ 
+            fontWeight: source === 'default' ? 'normal' : 'bold', 
+            color: textColor 
+          }}>
+            {source}
+          </span>
+        );
+      }
     },
     { id: 'type', label: 'Type', filter: true },
   ];
