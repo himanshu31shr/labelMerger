@@ -12,6 +12,12 @@
 
 ### Fixed
 - Fixed seed-emulator.js to properly handle active orders seeding
+- Fixed DataTable tests to work with the new MobileDataRow implementation
+- Fixed DOM nesting warnings by rewriting MobileDataRow to use Paper/Box instead of TableRow/TableCell
+- Fixed ESLint configuration to properly ignore dist directory and generated files
+- Fixed unescaped entities in MobileFilters components
+- Fixed TypeScript errors in DataTable and MobileDataRow components
+- Updated tests to match the new component implementations
 - Updated CategoryWithInventory interface to include costPrice field
 - Fixed CategoryInventoryService to include costPrice in returned objects
 - Updated CategoryList component to handle costPrice correctly

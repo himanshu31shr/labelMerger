@@ -220,10 +220,13 @@ export function DataTable<T>({
           {paginatedData.map((row, index) => (
             <MobileDataRow
               key={index}
-              row={row}
-              columns={columns}
-              index={index}
-              onClick={onRowClick}
+              row={row as unknown as Record<string, unknown>}
+              columns={columns as unknown as Column<Record<string, unknown>>[]}
+              selectable={enableSelection}
+              selected={isSelected(row)}
+              onSelect={handleSelect}
+              idField={getRowId ? undefined : 'id'}
+              onRowClick={onRowClick ? (r) => onRowClick(r as unknown as T) : undefined}
             />
           ))}
         </Stack>

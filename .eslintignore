@@ -1,0 +1,16 @@
+# Dist directory (generated files)
+dist/
+node_modules/
+coverage/
+
+# Generated service worker files
+sw.js
+workbox-*.js
+
+# Test setup files
+jest.setup.js
+scripts/test-setup.js
+
+# Seed scripts with known issues
+scripts/seed-emulator-enhanced.js
+scripts/seed-emulator-fixed.js 

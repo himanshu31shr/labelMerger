@@ -1,120 +1,117 @@
-import React, { memo, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  Stack,
   IconButton,
   Collapse,
-  CardActions,
-  Button
+  Box,
+  Typography,
+  Checkbox,
+  Divider,
+  Paper,
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import { Column } from './DataTable';
 
-interface MobileDataRowProps<T> {
-  row: T;
-  columns: Column<T>[];
-  index: number;
-  onClick?: (row: T) => void;
+// Define a type for the row data
+type RowData = Record<string, unknown>;
+
+interface MobileDataRowProps {
+  columns: Column<RowData>[];
+  row: RowData;
+  onSelect?: (id: string | number, checked: boolean) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  idField?: string;
+  onRowClick?: (row: RowData) => void;
 }
 
-function MobileDataRowBase<T>(props: MobileDataRowProps<T>) {
-  const { row, columns, index, onClick } = props;
-  const [expanded, setExpanded] = useState(false);
+export const MobileDataRow: React.FC<MobileDataRowProps> = ({
+  columns,
+  row,
+  onSelect,
+  selectable,
+  selected,
+  idField = 'id',
+  onRowClick,
+}) => {
+  const [open, setOpen] = useState(false);
 
-  // Get primary display columns and secondary (detail) columns
-  // Primary columns are those marked with priorityOnMobile or the first 2-3 columns
-  const primaryColumns = columns.filter(col => col.priorityOnMobile || columns.indexOf(col) < 2);
-  const detailColumns = columns.filter(col => !primaryColumns.includes(col));
-
-  const toggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering onClick when toggling expansion
-    setExpanded(!expanded);
+  const handleRowClick = () => {
+    if (onRowClick) {
+      onRowClick(row);
+    }
   };
 
+  const handleSelectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onSelect) {
+      onSelect(row[idField] as string | number, !selected);
+    }
+  };
+
+  // Find the primary column (usually the first one)
+  const primaryColumn = columns[0];
+  const primaryValue = row[primaryColumn.id];
+
   return (
-    <Card
-      sx={{
-        mb: 1.5,
-        '&:hover': {
-          bgcolor: 'action.hover',
-        }
+    <Paper 
+      elevation={1} 
+      sx={{ 
+        mb: 1, 
+        overflow: 'hidden',
+        cursor: onRowClick ? 'pointer' : 'default'
       }}
-      elevation={1}
+      onClick={onRowClick ? handleRowClick : undefined}
     >
-      {/* Summary view (always visible) */}
-      <CardContent sx={{ p: 1.5, pb: 0, '&:last-child': { pb: 0 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Stack spacing={0.5} sx={{ flex: 1 }}>
-            {primaryColumns.map((column, colIndex) => {
-              const value = row[column.id as keyof T];
-              return (
-                <Box key={String(column.id)}>
-                  <Typography variant="caption" color="text.secondary">
-                    {column.label}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: colIndex === 0 ? 'medium' : 'normal' }}>
-                    {column.format
-                      ? column.format(value, row)
-                      : String(value ?? '')}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Stack>
-          <IconButton
-            size="small"
-            onClick={toggleExpand}
-            sx={{ mt: -0.5, mr: -0.5 }}
-          >
-            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        p: 1.5,
+        justifyContent: 'space-between'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {selectable && (
+            <Box sx={{ mr: 1.5 }} onClick={handleSelectClick}>
+              <Checkbox checked={!!selected} />
+            </Box>
+          )}
+          <Box>
+            <Typography variant="body1" fontWeight="medium">
+              {String(primaryValue ?? '')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {columns[1] && String(row[columns[1].id] ?? '')}
+            </Typography>
+          </Box>
         </Box>
-      </CardContent>
-
-      {/* Actions row */}
-      <CardActions sx={{ pt: 0, pb: 1, px: 1.5, justifyContent: 'flex-end' }}>
-        {onClick && (
-          <Button
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick(row);
-            }}
-          >
-            View
-          </Button>
-        )}
-      </CardActions>
-
-      {/* Expanded detail view */}
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <CardContent sx={{ p: 1.5, pt: 0, bgcolor: 'action.hover' }}>
-          <Divider sx={{ mt: 0.5, mb: 1.5 }} />
-          <Stack spacing={1.5}>
-            {detailColumns.map((column) => {
-              const value = row[column.id as keyof T];
-              return (
-                <Box key={String(column.id)}>
-                  <Typography variant="caption" color="text.secondary">
-                    {column.label}
-                  </Typography>
-                  <Typography variant="body2">
-                    {column.format
-                      ? column.format(value, row)
-                      : String(value ?? '')}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Stack>
-        </CardContent>
+        <IconButton size="small" onClick={(e) => {
+          e.stopPropagation();
+          setOpen(!open);
+        }}>
+          {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+        </IconButton>
+      </Box>
+      
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <Box sx={{ p: 1.5, pt: 0 }}>
+          {columns.slice(2).map((column) => (
+            <Box key={String(column.id)} sx={{ mb: 1.5 }}>
+              <Typography variant="body2" color="text.secondary" component="span">
+                {column.label}:
+              </Typography>
+              <Typography 
+                variant="body1" 
+                component="span" 
+                sx={{ ml: 1 }}
+              >
+                {column.format 
+                  ? column.format(row[column.id], row) 
+                  : String(row[column.id] ?? '')}
+              </Typography>
+              <Divider sx={{ mt: 1.5 }} />
+            </Box>
+          ))}
+        </Box>
       </Collapse>
-    </Card>
+    </Paper>
   );
-}
-
-export const MobileDataRow = memo(MobileDataRowBase) as typeof MobileDataRowBase;
+};

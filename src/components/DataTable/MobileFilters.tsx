@@ -122,7 +122,7 @@ export function MobileFilters<T>(props: MobileFiltersProps<T>) {
       {activeFilterCount > 0 && (
         <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center' }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
-            Showing results for "{searchText}"
+            Showing results for &quot;{searchText}&quot;
           </Typography>
           <Chip 
             label="Clear" 
@@ -171,6 +171,13 @@ export function MobileFilters<T>(props: MobileFiltersProps<T>) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* No filters message */}
+      {activeFilterCount === 0 && (
+        <Typography variant="body2" color="text.secondary">
+          No filters are currently applied. Click &quot;Add Filter&quot; to filter the data.
+        </Typography>
+      )}
     </Box>
   );
 }

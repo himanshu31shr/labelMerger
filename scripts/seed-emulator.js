@@ -355,8 +355,8 @@ async function seedActiveOrders() {
     for (const order of ACTIVE_ORDERS_SEED_DATA) {
       const orderData = {
         ...order,
-        orderDate: order.orderDate ? Timestamp.fromDate(order.orderDate) : Timestamp.now(),
-        createdAt: order.createdAt ? Timestamp.fromDate(order.createdAt) : Timestamp.now()
+        orderDate: Timestamp.fromDate(order.orderDate),
+        createdAt: Timestamp.fromDate(order.createdAt)
       };
       await setDoc(doc(db, "activeOrders", order.id), orderData);
     }

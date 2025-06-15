@@ -6,7 +6,7 @@ export interface Category {
   name: string;
   description?: string;
   tag?: string;
-  costPrice: number | null;
+  costPrice?: number | null;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

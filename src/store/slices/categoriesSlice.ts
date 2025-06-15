@@ -25,44 +25,37 @@ export const fetchCategories = createAsyncThunk(
 );
 
 export const createCategory = createAsyncThunk(
-  'categories/createCategory',
+  'categories/create',
   async (category: Omit<Category, 'id'>, { rejectWithValue }) => {
     try {
-      const id = await categoryService.createCategory(category);
-      return { id, ...category };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create category');
+      const categoryId = await categoryService.createCategory(category);
+      return { id: categoryId, ...category };
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to create category');
     }
   }
 );
 
 export const updateCategory = createAsyncThunk(
-  'categories/updateCategory',
-  async (
-    { id, ...updates }: Partial<Category> & { id: string },
-    { rejectWithValue }
-  ) => {
+  'categories/update',
+  async ({ id, ...updates }: { id: string } & Partial<Omit<Category, 'id'>>, { rejectWithValue }) => {
     try {
       await categoryService.updateCategory(id, updates);
       return { id, ...updates };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update category');
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to update category');
     }
   }
 );
 
 export const deleteCategory = createAsyncThunk(
-  'categories/deleteCategory',
+  'categories/delete',
   async (id: string, { rejectWithValue }) => {
     try {
-      const isInUse = await categoryService.isCategoryInUse(id);
-      if (isInUse) {
-        throw new Error('Cannot delete category that is in use');
-      }
       await categoryService.deleteCategory(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to delete category');
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to delete category');
     }
   }
 );

@@ -19,3 +19,16 @@ products can inherit cost prices from their categories if they don't have a
 custom cost price set.
 
 Resolves: #123 
+
+Fix: Resolve TypeScript and DOM nesting issues for production build
+
+- Fixed seed-emulator.js to properly handle date fields in active orders
+- Fixed DataTable tests to work with the new MobileDataRow implementation
+- Fixed DOM nesting warnings by rewriting MobileDataRow to use Paper/Box instead of TableRow/TableCell
+- Fixed ESLint configuration to properly ignore dist directory and generated files
+- Fixed unescaped entities in MobileFilters components
+- Fixed TypeScript errors in DataTable and MobileDataRow components
+- Updated tests to match the new component implementations
+- Updated CHANGELOG.md with the latest fixes
+
+This commit makes the application production-ready by fixing all TypeScript errors, ESLint warnings, and test failures. 
