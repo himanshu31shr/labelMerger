@@ -321,6 +321,8 @@ const ORDERS_SEED_DATA = [
 const ACTIVE_ORDERS_SEED_DATA = [{
   id: format(new Date(), "yyyy-MM-dd"),
   date: format(new Date(), "yyyy-MM-dd"),
+  createdAt: new Date(),
+  orderDate: new Date(),
   orders: [
     {
       SKU: "TSHIRT-001",
@@ -351,11 +353,12 @@ async function seedActiveOrders() {
   try {
     console.log("⚡ Seeding active orders...");
     for (const order of ACTIVE_ORDERS_SEED_DATA) {
-      await setDoc(doc(db, "activeOrders", order.id), {
+      const orderData = {
         ...order,
-        orderDate: Timestamp.fromDate(order.orderDate),
-        createdAt: Timestamp.fromDate(order.createdAt),
-      });
+        orderDate: order.orderDate ? Timestamp.fromDate(order.orderDate) : Timestamp.now(),
+        createdAt: order.createdAt ? Timestamp.fromDate(order.createdAt) : Timestamp.now()
+      };
+      await setDoc(doc(db, "activeOrders", order.id), orderData);
     }
     console.log(`✅ Seeded ${ACTIVE_ORDERS_SEED_DATA.length} active orders`);
   } catch (error) {

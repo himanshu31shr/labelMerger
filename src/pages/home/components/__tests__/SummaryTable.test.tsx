@@ -78,7 +78,7 @@ const createMockProduct = (platform: 'flipkart' | 'amazon', serialNumber?: strin
   sku: `${platform.toUpperCase()}-001`,
   name: `Test ${platform} Product`,
   description: `Test description for ${platform} product`,
-  costPrice: 100,
+  customCostPrice: 100,
   platform,
   visibility: 'visible' as const,
   sellingPrice: 150,

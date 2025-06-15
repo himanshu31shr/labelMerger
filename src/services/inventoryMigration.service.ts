@@ -51,8 +51,17 @@ export class InventoryMigrationService {
       // Create "Uncategorized" category if it doesn't exist
       let uncategorizedCategory = categories.find((cat: Category) => cat.name.toLowerCase() === 'uncategorized');
       if (!uncategorizedCategory) {
-        const categoryId = await this.categoryService.createCategory({ name: 'Uncategorized', description: 'Products without assigned categories' });
-        uncategorizedCategory = { id: categoryId, name: 'Uncategorized', description: 'Products without assigned categories' };
+        const categoryId = await this.categoryService.createCategory({
+          name: 'Uncategorized',
+          description: 'Products without assigned categories',
+          costPrice: null
+        });
+        uncategorizedCategory = {
+          id: categoryId,
+          name: 'Uncategorized',
+          description: 'Products without assigned categories',
+          costPrice: null
+        };
       }
 
       // Analyze products and create migration rules

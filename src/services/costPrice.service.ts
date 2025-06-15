@@ -166,7 +166,7 @@ export class CostPriceResolutionService extends FirebaseService {
       value: category.costPrice ?? this.DEFAULT_COST_PRICE,
       source: category.costPrice !== null && category.costPrice !== undefined ? 'category' : 'default',
       categoryId,
-      sku: null
+      sku: ''
     };
   }
 

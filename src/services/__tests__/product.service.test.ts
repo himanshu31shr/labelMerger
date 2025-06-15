@@ -62,7 +62,7 @@ describe('ProductService', () => {
       sku: 'TEST-SKU-1',
       name: 'Test Product',
       description: 'Test description',
-      costPrice: 50,
+      customCostPrice: 50,
       platform: 'amazon',
       visibility: 'visible',
       sellingPrice: 100,
@@ -366,7 +366,7 @@ describe('ProductService', () => {
     it('should preserve user customizations during updates', async () => {
       const existingProduct = {
         ...getMockProduct(),
-        costPrice: 75, // User-set cost price
+        customCostPrice: 75, // User-set cost price
         categoryId: 'USER-CATEGORY', // User-assigned category
         visibility: 'hidden' as const, // User-set visibility
         description: 'User customized description' // User customization
@@ -375,7 +375,7 @@ describe('ProductService', () => {
       const importedProduct = {
         ...existingProduct,
         sellingPrice: 200, // Import data
-        costPrice: 100, // Should be ignored
+        customCostPrice: 100, // Should be ignored
         categoryId: 'IMPORT-CATEGORY', // Should be ignored
         visibility: 'visible' as const, // Should be ignored
         description: 'Import description', // Should be ignored
@@ -401,7 +401,7 @@ describe('ProductService', () => {
             updatedAt: expect.any(Object), // Timestamp updated
             lastImportedFrom: 'Amazon Import'
           })
-          // costPrice, categoryId, visibility, description should NOT be in update data
+          // customCostPrice, categoryId, visibility, description should NOT be in update data
         })
       );
       

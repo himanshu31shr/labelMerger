@@ -43,6 +43,7 @@ export class CategoryInventoryService {
         name: data.name,
         description: data.description,
         tag: data.tag,
+        costPrice: data.costPrice ?? null,
         inventory: data.inventory || {
           totalQuantity: 0,
           lowStockThreshold: 5,
@@ -71,6 +72,7 @@ export class CategoryInventoryService {
           name: data.name,
           description: data.description,
           tag: data.tag,
+          costPrice: data.costPrice ?? null,
           inventory: data.inventory || {
             totalQuantity: 0,
             lowStockThreshold: 5,

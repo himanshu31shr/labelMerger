@@ -1,7 +1,7 @@
 import { where } from 'firebase/firestore';
-import { FirebaseService } from '../services/firebase.service.ts';
-import { Category } from '../services/category.service.ts';
-import { Product } from '../services/product.service.ts';
+import { FirebaseService } from '../services/firebase.service';
+import { Category } from '../services/category.service';
+import { Product } from '../services/product.service';
 
 class CostPriceMigrationService extends FirebaseService {
   private readonly CATEGORIES_COLLECTION = 'categories';

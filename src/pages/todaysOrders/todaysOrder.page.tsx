@@ -49,7 +49,7 @@ export const TodaysOrderPage: React.FC = () => {
   }, 0);
 
   const totalCost = orders.reduce((sum, order) => {
-    const cost = order.product?.costPrice || 0;
+    const cost = order.product?.customCostPrice ?? 0;
     const quantity = parseInt(order.quantity) || 0;
     return sum + (cost * quantity);
   }, 0);

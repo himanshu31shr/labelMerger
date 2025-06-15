@@ -101,7 +101,7 @@ export class AmazonFactory implements AbstractFactory {
       },
       product: {
         name: row["description"] || "",
-        costPrice: 0,
+        customCostPrice: null,
         sku: sku,
         description: row["description"] || "",
         platform: "amazon",

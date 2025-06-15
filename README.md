@@ -1,188 +1,86 @@
 # Sacred Sutra Tools
 
-A comprehensive business management application for e-commerce operations built with React, TypeScript, and Material-UI.
+An e-commerce inventory and transaction management application built with React, TypeScript, and Firebase.
 
 ## Features
 
-### Product Import and Update System
-- **Smart Import**: Import new products from Excel files (Amazon/Flipkart formats)
-- **Update Existing**: Option to update existing products during import with selective field updates
-- **Data Preservation**: Automatically preserves user customizations (cost price, categories, visibility)
-- **Import Safety**: Selective update strategy that only modifies import-relevant fields
-- **Batch Operations**: Efficient bulk processing for large product catalogs
+- Product inventory management with category-based organization
+- Cost price inheritance system (products can inherit cost prices from categories)
+- Transaction analytics with cost price resolution
+- Today's orders tracking
+- Dashboard with inventory alerts and sales metrics
+- CSV import/export functionality
+- Firebase integration for authentication and data storage
 
-### Multi-Category Selection and Product Management
-- **Category Management**: Advanced multi-select functionality with inline tag application
-- **Product Organization**: Comprehensive product categorization with automatic inventory tracking
-- **Bulk Operations**: Select multiple categories and apply tags efficiently
-- **Product Search**: Category-specific product viewing with advanced search and filtering
+## Development Setup
 
-### Active Orders Management  
-- **Real-time Order Tracking**: View today's orders with complete product information
-- **Category Display**: Properly resolved category names for all order items
-- **Action Buttons**: Direct links to marketplace listings (Amazon & Flipkart) when available
-- **Inventory Integration**: Automatic inventory updates when orders are processed
-- **Analytics Dashboard**: Revenue, cost, and profit margin calculations
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server with Firebase emulators:
+   ```bash
+   npm run dev
+   ```
+   This will start both the Firebase emulators and the Vite development server.
 
-### Inventory Management
-- **Real-time Tracking**: Live inventory levels with low stock alerts  
-- **Category-based Views**: Inventory organized by product categories
-- **Automatic Updates**: Inventory adjustments on order fulfillment
-- **Historical Data**: Track inventory changes over time
+## Building for Production
 
-### Analytics and Reporting
-- **Order Analytics**: Comprehensive order tracking and analysis
-- **Transaction Analytics**: Financial reporting and profit analysis  
-- **Dashboard Overview**: Key metrics and performance indicators
-- **Export Capabilities**: Data export for external analysis
-
-## Recent Updates
-
-### Product Update Feature (Latest - December 23, 2024)
-- ✅ **Smart Product Updates**: Added ability to update existing products during import process
-- ✅ **Selective Field Updates**: Only updates import-relevant fields while preserving user customizations
-- ✅ **Enhanced UI**: Added intuitive checkbox control with helpful tooltip in import section
-- ✅ **Data Safety**: Protects user-set cost prices, categories, and visibility settings
-- ✅ **Backward Compatibility**: Existing import functionality unchanged, new feature is opt-in
-- ✅ **Comprehensive Documentation**: Complete feature guide and technical documentation
-
-### Active Orders Page Fixes
-- ✅ **Fixed Category Display**: Categories now properly resolve from categoryId to category names
-- ✅ **Enhanced Action Buttons**: Buttons only appear when marketplace serial numbers are available
-- ✅ **Improved Data Validation**: Better handling of missing or empty product metadata
-- ✅ **Comprehensive Testing**: 40+ tests covering SummaryTable and ActionButtons functionality
-- ✅ **Bug Fixes**: Corrected data-testid issues and improved accessibility
-
-### Multi-Category Selection Feature
-- ✅ **DataTable Enhancement**: Added checkbox-based multi-selection functionality
-- ✅ **Category Management**: Integrated CategoryInventoryService for product counts
-- ✅ **Product Sidesheet**: View category-specific products with search and pagination
-- ✅ **Redux Integration**: Full state management for category products
-- ✅ **Comprehensive Testing**: 41+ tests covering all feature functionality
-
-## Technology Stack
-
-- **Frontend**: React 18, TypeScript, Material-UI v5
-- **State Management**: Redux Toolkit with RTK Query
-- **Backend**: Firebase (Firestore, Authentication, Storage)
-- **Testing**: Jest, React Testing Library
-- **Build Tools**: Vite, ESLint, Prettier
-- **PWA**: Service Worker, Offline Support
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-
-### Installation
+To build the application for production:
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd sacred-sutra-tools
-
-# Install dependencies
-npm install
-
-# Copy environment file and configure
-cp .env.example .env.local
-# Edit .env.local with your Firebase configuration
-
-# Start development server
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
+npm run build:prod
 ```
 
-### Environment Configuration
+This will create a production-ready build in the `dist` directory.
 
-Create a `.env.local` file with your Firebase configuration:
+## Deployment
 
-```env
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+The application is configured for GitHub Pages deployment:
+
+```bash
+npm run deploy
+```
+
+This will build the application and deploy it to GitHub Pages.
+
+## Firebase Configuration
+
+The application uses Firebase for authentication and Firestore for data storage. You need to configure your Firebase project:
+
+1. Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication and Firestore
+3. Update the Firebase configuration in `src/services/firebase.config.ts`
+
+## Cost Price Inheritance System
+
+The application implements a category-based cost price inheritance system:
+
+- Products can have their own custom cost price
+- If no custom cost price is set, products inherit cost price from their category
+- The CostPriceResolutionService handles the resolution logic
+
+To migrate existing data to use the new cost price system:
+
+```bash
+npm run migrate:cost-price
+```
+
+To rollback the migration:
+
+```bash
+npm run migrate:cost-price:rollback
 ```
 
 ## Testing
 
-### Running Tests
+Run tests with:
 
 ```bash
-# Run all tests
 npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific test suites
-npm test -- --testPathPattern="SummaryTable"
-npm test -- --testPathPattern="ActionButtons"
 ```
-
-### Test Coverage
-- **40+ Component Tests**: Comprehensive UI component testing
-- **Integration Tests**: Full feature workflow testing  
-- **Accessibility Tests**: WCAG compliance verification
-- **Edge Case Testing**: Robust error handling validation
-
-## Architecture
-
-### Component Structure
-```
-src/
-├── components/          # Reusable UI components
-│   ├── DataTable/      # Enhanced table with multi-select
-│   └── ...
-├── pages/              # Application pages
-│   ├── categories/     # Category management
-│   ├── todaysOrders/   # Active orders page  
-│   └── ...
-├── services/           # Business logic and API services
-├── shared/             # Shared utilities and components
-├── store/              # Redux store and slices
-└── types/              # TypeScript type definitions
-```
-
-### Key Services
-- **TodaysOrder Service**: Order management and category resolution
-- **Product Service**: Product CRUD operations with filtering
-- **Category Service**: Category management and organization
-- **CategoryInventory Service**: Category-based inventory tracking
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow TypeScript best practices
-- Write comprehensive tests for new features
-- Use Material-UI components consistently
-- Maintain proper documentation
 
 ## License
 
-This project is proprietary software for Sacred Sutra business operations.
-
-## Support
-
-For support and questions, please contact the development team.
-
-## PDF Export for Grouped Active Orders
-
-- Only the summary PDF export (category + order count) is available for grouped active orders.
-- All detailed/statistics PDF export logic and UI have been removed.
-- See `src/pages/todaysOrders/utils/nativePdfExport.ts` for implementation.
-- Project builds cleanly and all tests pass after migration.
+This project is licensed under the MIT License.

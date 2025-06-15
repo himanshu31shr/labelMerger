@@ -165,7 +165,7 @@ describe('CostPriceResolutionService', () => {
         value: 50,
         source: 'category',
         categoryId,
-        sku: null
+        sku: ""
       });
       expect(mockGetDocument).toHaveBeenCalledWith('categories', categoryId);
     });
@@ -185,7 +185,7 @@ describe('CostPriceResolutionService', () => {
         value: DEFAULT_COST_PRICE,
         source: 'default',
         categoryId,
-        sku: null
+        sku: ""
       });
     });
 

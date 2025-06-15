@@ -81,7 +81,7 @@ export const exportProductsToCSV = (products: Product[], categories: Category[] 
     escapeCSVValue(product.description),
     escapeCSVValue(product.platform),
     escapeCSVValue(product.visibility),
-    escapeCSVValue(product.costPrice),
+    escapeCSVValue(product.customCostPrice),
     escapeCSVValue(product.sellingPrice),
     escapeCSVValue(product.categoryId ? categoryMap.get(product.categoryId) || 'Unknown Category' : 'Uncategorized'),
     escapeCSVValue(product.inventory?.quantity),

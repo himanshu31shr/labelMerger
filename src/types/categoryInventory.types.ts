@@ -13,6 +13,7 @@ export interface CategoryWithInventory {
   name: string;
   description?: string;
   tag?: string;
+  costPrice?: number | null;
   inventory: CategoryInventory;
   createdAt: Date | Timestamp;
   updatedAt: Date | Timestamp;

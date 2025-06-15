@@ -56,7 +56,7 @@ describe('productsSlice', () => {
     name: 'Test Product',
     description: 'Test description',
     sellingPrice: 100,
-    costPrice: 50,
+    customCostPrice: 50,
     platform: 'amazon' as const,
     visibility: 'visible' as const,
     inventory: {
@@ -78,7 +78,7 @@ describe('productsSlice', () => {
     name: 'Test Product 2',
     description: 'Test description 2',
     sellingPrice: 200,
-    costPrice: 100,
+    customCostPrice: 100,
     platform: 'flipkart' as const,
     visibility: 'hidden' as const,
     inventory: {

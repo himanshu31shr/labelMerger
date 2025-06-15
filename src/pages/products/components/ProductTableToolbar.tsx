@@ -67,7 +67,10 @@ export const ProductTableToolbar: React.FC<Props> = ({
     setAddingCategory(true);
     try {
       // Dispatch addCategory thunk and await its result
-      const resultAction = await dispatch(addCategory(newCategoryName));
+      const resultAction = await dispatch(addCategory({
+        name: newCategoryName,
+        costPrice: null
+      }));
 
       // Check if the action was fulfilled and contains the new category ID (string payload)
       if (addCategory.fulfilled.match(resultAction) && typeof resultAction.payload === 'string') {

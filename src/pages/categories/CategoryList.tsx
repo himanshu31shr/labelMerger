@@ -7,7 +7,6 @@ import {
   updateCategory, 
   deleteCategory,
 } from '../../store/slices/categoriesSlice';
-import { Category as ServiceCategory } from '../../services/category.service';
 import { Timestamp } from 'firebase/firestore';
 import { DataTable, Column } from '../../components/DataTable/DataTable';
 import { ProductSidesheet } from './ProductSidesheet';
@@ -37,6 +36,7 @@ type CategoryFormData = {
   name: string;
   description?: string;
   tag?: string;
+  costPrice?: number | null;
 }
 
 type CategoryListProps = Record<string, never>;
@@ -47,11 +47,12 @@ interface SnackbarState {
   severity: 'success' | 'error' | 'info' | 'warning';
 }
 
-interface Category extends Omit<ServiceCategory, 'createdAt' | 'updatedAt'> {
+interface Category {
   id: string;
   name: string;
   description?: string;
   tag?: string;
+  costPrice?: number | null;
   createdAt?: Timestamp | Date | string;
   updatedAt?: Timestamp | Date | string;
   inventory: { productCount: number };
@@ -61,6 +62,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -87,7 +89,7 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
 
   useEffect(() => {
     const loadCategories = async () => {
-      if (!isAuthenticated) return;
+      setIsLoading(true);
       try {
         const service = new CategoryInventoryService();
         const result = await service.getAllCategoriesWithInventory();
@@ -97,15 +99,19 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
             .map(cat => ({
               ...cat,
               id: String(cat.id),
+              costPrice: cat.costPrice ?? null,
               inventory: cat.inventory || { productCount: 0 },
-            }))
+            }) as Category)
         );
-      } catch {
+      } catch (error) {
+        console.error('Error loading categories:', error);
         setSnackbar({
           open: true,
           message: 'Failed to load categories',
           severity: 'error',
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     loadCategories();
@@ -113,21 +119,22 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
 
   const handleFormSubmit = async (data: CategoryFormData) => {
     try {
+      const categoryData = {
+        name: data.name,
+        description: data.description || '',
+        tag: data.tag || '',
+        costPrice: data.costPrice ?? null
+      };
+      
       if (editingCategory?.id) {
-        const updateData = {
-          id: editingCategory.id,
-          name: data.name,
-          description: data.description || '',
-          tag: data.tag || '',
-        };
-        await dispatch(updateCategory(updateData)).unwrap();
+        await dispatch(updateCategory({ id: editingCategory.id, ...categoryData })).unwrap();
         setSnackbar({
           open: true,
           message: 'Category updated successfully',
           severity: 'success',
         });
       } else {
-        await dispatch(createCategory(data)).unwrap();
+        await dispatch(createCategory(categoryData)).unwrap();
         setSnackbar({
           open: true,
           message: 'Category created successfully',
@@ -246,8 +253,9 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
           .map(cat => ({
             ...cat,
             id: String(cat.id),
+            costPrice: cat.costPrice ?? null,
             inventory: cat.inventory || { productCount: 0 },
-          }))
+          }) as Category)
       );
     } catch {
       setSnackbar({
@@ -299,6 +307,14 @@ const CategoryList: React.FC<CategoryListProps> = (): ReactElement => {
       },
     },
   ];
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (isDeleting) {
     return (
