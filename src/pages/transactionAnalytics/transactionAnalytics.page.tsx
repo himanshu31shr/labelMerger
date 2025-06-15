@@ -284,7 +284,7 @@ export const TransactionAnalytics: React.FC = () => {
             </Box>
 
             <TabPanel value={tabValue} index={0}>
-              <OrderList transactions={transactions} />
+              <OrderList transactions={summary?.analyzedTransactions || []} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>

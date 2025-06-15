@@ -136,8 +136,12 @@ export class TransactionAnalysisService {
         product: 0,
         category: 0,
         default: 0
-      }
+      },
+      analyzedTransactions: []
     };
+
+    // Create a copy of transactions that will include resolved cost prices
+    const analyzedTransactions: Transaction[] = [];
 
     for (const transaction of this.transactions) {
       // Type safety is guaranteed by the filter in constructor
@@ -154,6 +158,9 @@ export class TransactionAnalysisService {
       if (transaction.product) {
         transaction.product.resolvedCostPrice = costPriceResolution;
       }
+
+      // Add the transaction with resolved cost price to analyzedTransactions
+      analyzedTransactions.push({...transaction});
 
       if (this.isExpense(transactionType)) {
         const category = transactionType?.toLowerCase();
@@ -218,6 +225,9 @@ export class TransactionAnalysisService {
       }
     }
 
+    // Add the analyzed transactions to the summary
+    summary.analyzedTransactions = analyzedTransactions;
+    
     return summary;
   }
 }

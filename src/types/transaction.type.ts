@@ -73,6 +73,7 @@ export interface TransactionSummary {
     category: number;
     default: number;
   };
+  analyzedTransactions?: Transaction[];
 }
 
 export interface PriceMapping {
