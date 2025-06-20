@@ -8,6 +8,11 @@ import {
   connectFirestoreEmulator,
   FirestoreError
 } from 'firebase/firestore';
+import {
+  FirebaseStorage,
+  getStorage,
+  connectStorageEmulator
+} from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'test-api-key',
@@ -22,6 +27,7 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
+let storage: FirebaseStorage;
 
 // Check if we're in a test environment
 if (process.env.NODE_ENV === 'test') {
@@ -51,6 +57,11 @@ if (process.env.NODE_ENV === 'test') {
       orderBy: jest.fn()
     }))
   } as unknown as Firestore;
+  
+  storage = {
+    ref: jest.fn(),
+    refFromURL: jest.fn()
+  } as unknown as FirebaseStorage;
 } else {
   // Real Firebase initialization for non-test environments
   app = initializeApp(firebaseConfig);
@@ -61,6 +72,9 @@ if (process.env.NODE_ENV === 'test') {
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,
     experimentalForceLongPolling: true // Better for certain network conditions
   });
+  
+  // Initialize Firebase Storage
+  storage = getStorage(app);
   
   // Connect to the emulators if the environment variables are set
   if (import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT) {
@@ -75,6 +89,29 @@ if (process.env.NODE_ENV === 'test') {
   if (import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT) {
     const authUrl = `http://${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST}:${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_PORT}`;
     connectAuthEmulator(auth, authUrl, { disableWarnings: true });
+  }
+  
+  // Connect to Storage emulator if environment variables are set or in development mode
+  const isDevEnvironment = process.env.NODE_ENV === 'development' || import.meta.env.DEV;
+  
+  if (import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST && import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_PORT) {
+    // Use environment variables if available
+    connectStorageEmulator(
+      storage,
+      import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST,
+      parseInt(import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_PORT, 10)
+    );
+    console.log('Connected to Firebase Storage emulator via environment variables');
+  } else if (isDevEnvironment) {
+    // Default to localhost:9199 for development if not specified
+    try {
+      // Use port 9199 which is the default for Firebase Storage emulator
+      connectStorageEmulator(storage, 'localhost', 9199);
+      console.log('Connected to Firebase Storage emulator at localhost:9199');
+    } catch (error) {
+      console.error('Failed to connect to Firebase Storage emulator:', error);
+      console.log('Continuing without Storage emulator connection');
+    }
   }
   
   // Enable offline persistence
@@ -101,4 +138,4 @@ if (process.env.NODE_ENV === 'test') {
   }
 }
 
-export { app, auth, db };
+export { app, auth, db, storage };

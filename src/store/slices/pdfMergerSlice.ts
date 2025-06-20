@@ -1,9 +1,10 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { PDFMergerService } from '../../pages/home/services/merge.service';
 import { ProductSummary } from '../../pages/home/services/base.transformer';
 import { store } from '..';
+import { CategorySortConfig } from "../../utils/pdfSorting";
 
-interface PDFMergerState {
+export interface PdfMergerState {
   amazonFile: File | null;
   flipkartFile: File | null;
   finalPdf: string | null;
@@ -12,7 +13,7 @@ interface PDFMergerState {
   error: string | null;
 }
 
-const initialState: PDFMergerState = {
+const initialState: PdfMergerState = {
   amazonFile: null,
   flipkartFile: null,
   finalPdf: null,
@@ -21,9 +22,33 @@ const initialState: PDFMergerState = {
   error: null,
 };
 
+interface MergePDFsParams {
+  amazonFile: File | null;
+  flipkartFile: File | null;
+  sortConfig?: CategorySortConfig;
+}
+
+// Helper function to read file contents
+const readFileFromInput = (file: File): Promise<Uint8Array> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result instanceof ArrayBuffer) {
+        resolve(new Uint8Array(reader.result));
+      } else {
+        reject(new Error('Failed to read file'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+};
+
 export const mergePDFs = createAsyncThunk(
   'pdfMerger/mergePDFs',
-  async ({ amazonFile, flipkartFile }: { amazonFile: File | null; flipkartFile: File | null }) => {
+  async (params: MergePDFsParams) => {
+    const { amazonFile, flipkartFile, sortConfig } = params;
+
     if (!amazonFile && !flipkartFile) {
       throw new Error('No files provided');
     }
@@ -32,9 +57,12 @@ export const mergePDFs = createAsyncThunk(
     const categories = store.getState().products.categories;
 
     const mergePdfs = new PDFMergerService(products, categories);
+    
+    // Pass the sort config if provided
     const pdf = await mergePdfs.mergePdfs({
       amzon: amazonFile ? await readFileFromInput(amazonFile) : null,
       flp: flipkartFile ? await readFileFromInput(flipkartFile) : null,
+      sortConfig: sortConfig // Pass the sortConfig to use in merging
     });
 
     if (!pdf) {
@@ -52,29 +80,14 @@ export const mergePDFs = createAsyncThunk(
   }
 );
 
-const readFileFromInput = async (file: File): Promise<Uint8Array> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(new Uint8Array(reader.result));
-      } else {
-        reject(new Error('Failed to read file'));
-      }
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file);
-  });
-};
-
 const pdfMergerSlice = createSlice({
   name: 'pdfMerger',
   initialState,
   reducers: {
-    setAmazonFile: (state, action) => {
+    setAmazonFile: (state, action: PayloadAction<File | null>) => {
       state.amazonFile = action.payload;
     },
-    setFlipkartFile: (state, action) => {
+    setFlipkartFile: (state, action: PayloadAction<File | null>) => {
       state.flipkartFile = action.payload;
     },
     clearFiles: (state) => {
@@ -82,7 +95,7 @@ const pdfMergerSlice = createSlice({
       state.flipkartFile = null;
       state.finalPdf = null;
       state.summary = [];
-    },
+    }
   },
   extraReducers: (builder) => {
     builder

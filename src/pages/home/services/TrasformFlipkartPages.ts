@@ -3,6 +3,7 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { BaseTransformer, ProductSummary, TextItem } from "./base.transformer";
 import { Product } from "../../../services/product.service";
 import { Category } from "../../../services/category.service";
+import { CategorySortConfig } from "../../../utils/pdfSorting";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export class FlipkartPageTransformer extends BaseTransformer {
@@ -13,9 +14,10 @@ export class FlipkartPageTransformer extends BaseTransformer {
   constructor(
     filePath: Uint8Array,
     products: Product[],
-    categories: Category[]
+    categories: Category[],
+    sortConfig?: CategorySortConfig
   ) {
-    super(filePath, products, categories);
+    super(filePath, products, categories, sortConfig);
   }
 
   async initialize(): Promise<void> {
@@ -34,7 +36,20 @@ export class FlipkartPageTransformer extends BaseTransformer {
     }
 
     const pages = this.pdfDoc.getPages();
+    const processedData: Array<{
+      page: number;
+      pageData: {
+        width: number;
+        height: number;
+        lowerLeftX: number;
+        lowerLeftY: number;
+        upperRightX: number;
+        upperRightY: number;
+      };
+      summary: ProductSummary;
+    }> = [];
 
+    // First pass: Process all pages and collect product data
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
       const mediabox = page.getMediaBox();
@@ -46,13 +61,6 @@ export class FlipkartPageTransformer extends BaseTransformer {
       const upperRightX = width;
       const upperRightY = height - 10;
 
-      page.setWidth(width - 180);
-      page.setHeight(upperRightY);
-
-      page.setCropBox(lowerLeftX, lowerLeftY, upperRightX, upperRightY);
-      const [copiedPage] = await this.outputPdf.copyPages(this.pdfDoc, [i]);
-      this.outputPdf.addPage(copiedPage);
-
       const currPage = await this.pdf.getPage(i + 1);
       const textContent = await currPage.getTextContent();
       const items = textContent.items as TextItem[];
@@ -61,7 +69,7 @@ export class FlipkartPageTransformer extends BaseTransformer {
       const lines = this.combineTextIntoLines(sortedItems);
 
       let j = 1;
-      const currentSUmmary: ProductSummary = {
+      const currentSummary: ProductSummary = {
         name: "",
         quantity: "0",
         type: "flipkart",
@@ -81,9 +89,9 @@ export class FlipkartPageTransformer extends BaseTransformer {
             : "";
 
           if (/^\d/.test(lastInt)) {
-            currentSUmmary.quantity = (
+            currentSummary.quantity = (
               parseInt(qty.at(qty.length - 1) || "0", 10) +
-              parseInt(currentSUmmary.quantity, 10)
+              parseInt(currentSummary.quantity, 10)
             ).toString();
           }
 
@@ -91,12 +99,12 @@ export class FlipkartPageTransformer extends BaseTransformer {
             .filter((item) => !!item)
             .reduce((acc, curr) => acc.trim() + " " + curr.trim(), "");
 
-          if (currentSUmmary.SKU !== sku && currentSUmmary.SKU) {
-            currentSUmmary.name += " && " + name;
-            currentSUmmary.SKU += " && " + sku;
+          if (currentSummary.SKU !== sku && currentSummary.SKU) {
+            currentSummary.name += " && " + name;
+            currentSummary.SKU += " && " + sku;
           } else {
-            currentSUmmary.name = name;
-            currentSUmmary.SKU = sku;
+            currentSummary.name = name;
+            currentSummary.SKU = sku;
           }
 
           j++;
@@ -105,20 +113,87 @@ export class FlipkartPageTransformer extends BaseTransformer {
         }
       }
 
+      // Find product info for category
+      const skuProduct = this.products.find((p) => p.sku === currentSummary.SKU);
+      const category = this.categories.find((c) => c.id === skuProduct?.categoryId);
+      
+      // Store category information for sorting
+      currentSummary.categoryId = skuProduct?.categoryId;
+      currentSummary.category = category?.name;
+
+      processedData.push({
+        page: i,
+        pageData: {
+          width,
+          height,
+          lowerLeftX,
+          lowerLeftY,
+          upperRightX,
+          upperRightY,
+        },
+        summary: { ...currentSummary } // Copy to avoid reference issues
+      });
+
+      this.summaryText.push({ ...currentSummary });
+    }
+
+    // Apply category sorting if enabled (always enabled by default)
+    if (this.sortConfig?.groupByCategory && processedData.length > 0) {
+      // Sort the processed data based on categories
+      processedData.sort((a, b) => {
+        // Use the product categories for sorting
+        const catA = this.categories.find((cat) => cat.id === a.summary.categoryId);
+        const catB = this.categories.find((cat) => cat.id === b.summary.categoryId);
+
+        // Prioritize items with categories
+        if (a.summary.categoryId && !b.summary.categoryId) return -1;
+        if (!a.summary.categoryId && b.summary.categoryId) return 1;
+
+        // If both have categories, sort by category name
+        if (catA && catB) {
+          if (this.sortConfig?.sortCategoriesAlphabetically) {
+            return catA.name.localeCompare(catB.name);
+          }
+          // Default sort by category id or other criteria
+        }
+
+        // If no category or same category, sort by SKU as fallback
+        const skuA = a.summary.SKU || '';
+        const skuB = b.summary.SKU || '';
+        return skuA.localeCompare(skuB);
+      });
+    } else if (processedData.length > 0) {
+      // If category grouping is disabled, sort by SKU as fallback
+      processedData.sort((a, b) => {
+        const skuA = a.summary.SKU || '';
+        const skuB = b.summary.SKU || '';
+        return skuA.localeCompare(skuB);
+      });
+    }
+
+    // Second pass: Apply the processed data to create pages in the desired order
+    for (const item of processedData) {
+      const page = pages[item.page];
+      const { width, lowerLeftX, lowerLeftY, upperRightX, upperRightY } = item.pageData;
+
+      page.setWidth(width - 180);
+      page.setHeight(upperRightY);
+      page.setCropBox(lowerLeftX, lowerLeftY, upperRightX, upperRightY);
+      
+      const [copiedPage] = await this.outputPdf.copyPages(this.pdfDoc, [item.page]);
+      this.outputPdf.addPage(copiedPage);
+
       const { rgb, StandardFonts } = await import("pdf-lib");
       const pageWidth = page.getWidth();
       const fontSize = 5;
-      let text = `${currentSUmmary.quantity} X [${currentSUmmary?.name}]`;
+      
+      // Find product info for adding text
+      const skuProduct = this.products.find((p) => p.sku === item.summary.SKU);
+      const category = this.categories.find((c) => c.id === skuProduct?.categoryId);
 
-      const skuProduct = this.products.find(
-        (p) => p.sku === currentSUmmary.SKU
-      );
-
-      const category = this.categories.find(
-        (c) => c.id === skuProduct?.categoryId
-      );
+      let text = `${item.summary.quantity} X [${item.summary?.name}]`;
       if (category) {
-        text = `${currentSUmmary.quantity} X [${
+        text = `${item.summary.quantity} X [${
           category.name
         }] ${skuProduct?.name.substring(0, 80)}`;
       }
@@ -134,8 +209,6 @@ export class FlipkartPageTransformer extends BaseTransformer {
         font,
         maxWidth: pageWidth - 180,
       });
-
-      this.summaryText.push(currentSUmmary);
     }
 
     return this.outputPdf;

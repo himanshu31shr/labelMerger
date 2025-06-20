@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default rule - deny all access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+    
+    // PDF files storage rules with date-based folder structure
+    match /pdfs/{userId}/{dateFolder}/{fileName} {
+      // Allow authenticated users to read and write their own files
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow reading shared files with specific visibility settings
+      allow read: if 
+        // Public files can be read by anyone
+        resource.metadata.visibility == 'public' ||
+        // Organization files can be read by authenticated users
+        (request.auth != null && resource.metadata.visibility == 'organization');
+    }
+    
+    // Allow admins to access all files
+    match /{path=**} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+} 

@@ -3,6 +3,7 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { BaseTransformer, ProductSummary, TextItem } from "./base.transformer";
 import { Product } from "../../../services/product.service";
 import { Category } from "../../../services/category.service";
+import { CategorySortConfig, sortProductsByCategory } from "../../../utils/pdfSorting";
 
 export class AmazonPDFTransformer extends BaseTransformer {
   protected filePath: Uint8Array;
@@ -13,9 +14,10 @@ export class AmazonPDFTransformer extends BaseTransformer {
   constructor(
     filePath: Uint8Array,
     products: Product[],
-    categories: Category[]
+    categories: Category[],
+    sortConfig?: CategorySortConfig
   ) {
-    super(filePath, products, categories);
+    super(filePath, products, categories, sortConfig);
     this.filePath = filePath;
   }
 
@@ -109,18 +111,24 @@ export class AmazonPDFTransformer extends BaseTransformer {
     const category = this.categories.find(
       (c) => c.id === skuProduct?.categoryId
     );
+    
+    // Store category information for sorting
+    const productSummary: ProductSummary = {
+      name: skuProduct?.name || product.name,
+      quantity: product.quantity,
+      type: "amazon",
+      SKU: product.SKU,
+      categoryId: skuProduct?.categoryId,
+      category: category?.name
+    };
+    
     if (category) {
       text = `${product.quantity} X [${
         category.name
       }] ${skuProduct?.name.substring(0, 80)}`;
     }
 
-    this.summaryText.push({
-      name: skuProduct?.name || product.name,
-      quantity: product.quantity,
-      type: "amazon",
-      SKU: product.SKU,
-    });
+    this.summaryText.push(productSummary);
 
     // Using standard Helvetica font which supports basic ASCII characters
     const font = await this.outputPdf.embedFont(StandardFonts.Helvetica);
@@ -139,12 +147,16 @@ export class AmazonPDFTransformer extends BaseTransformer {
     await this.initialize();
     const pages = this.pdfDoc.getPages();
     let j = 0;
-
+    
+    // Process all pages first to gather the complete product data
+    const productsData: { 
+      page: number, 
+      product: ProductSummary,
+      pageIndex: number 
+    }[] = [];
+    
     for (let i = 0; i < pages.length; i++) {
-      if (i % 2 === 0) {
-        const [copiedPage] = await this.outputPdf.copyPages(this.pdfDoc, [i]);
-        this.outputPdf.addPage(copiedPage);
-      } else {
+      if (i % 2 === 1) {
         const page = await this.pdf.getPage(i + 1);
         const textContent = await page.getTextContent();
         const items = textContent.items as TextItem[];
@@ -152,16 +164,64 @@ export class AmazonPDFTransformer extends BaseTransformer {
         const sortedItems = this.sortTextItems(items);
         const lines = this.combineTextIntoLines(sortedItems);
         const product = this.extractProductInfo(lines);
-
-        const [copiedPage] = await this.outputPdf.copyPages(this.pdfDoc, [
-          i - 1,
-        ]);
-        await this.addFooterText(copiedPage, product);
-
-        this.outputPdf.removePage(j);
-        this.outputPdf.addPage(copiedPage);
+        
+        // Store the product and associated page index for later processing
+        productsData.push({ 
+          page: i - 1, // The actual page we want to copy
+          product,
+          pageIndex: j
+        });
+        
         j++;
       }
+    }
+    
+    // Apply category sorting if enabled (always enabled by default)
+    if (this.sortConfig?.groupByCategory) {
+      // Extract products for sorting
+      const products = productsData.map(data => data.product);
+      
+      // Sort products by category 
+      const sortedProducts = sortProductsByCategory(
+        products, 
+        this.categories, 
+        this.sortConfig
+      );
+      
+      // Reorder productsData based on the sorted products
+      const sortedProductsData: typeof productsData = [];
+      for (const sortedProduct of sortedProducts) {
+        const originalProductData = productsData.find(
+          data => data.product.SKU === sortedProduct.SKU && 
+                  data.product.name === sortedProduct.name
+        );
+        
+        if (originalProductData) {
+          sortedProductsData.push(originalProductData);
+        }
+      }
+      
+      // Use the sorted data for processing
+      if (sortedProductsData.length === productsData.length) {
+        productsData.length = 0; // Clear array
+        productsData.push(...sortedProductsData);
+      }
+    } else {
+      // If category grouping is disabled, sort by SKU as fallback
+      productsData.sort((a, b) => {
+        const skuA = a.product.SKU || '';
+        const skuB = b.product.SKU || '';
+        return skuA.localeCompare(skuB);
+      });
+    }
+    
+    // Now process the pages in the determined order
+    for (const data of productsData) {
+      const [copiedPage] = await this.outputPdf.copyPages(this.pdfDoc, [
+        data.page
+      ]);
+      await this.addFooterText(copiedPage, data.product);
+      this.outputPdf.addPage(copiedPage);
     }
 
     return this.outputPdf;

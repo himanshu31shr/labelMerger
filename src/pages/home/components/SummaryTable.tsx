@@ -8,13 +8,19 @@ import {
   ViewFlipkartListingButton,
 } from "../../../shared/ActionButtons";
 import { ProductSummary } from "../services/base.transformer";
+import { Product } from "../../../types/product";
+import { Category } from "../../../types/category";
 
 interface SummaryTableProps {
   summary: ProductSummary[];
+  products?: Product[];
+  categories?: Category[];
 }
 
 export const SummaryTable: React.FC<SummaryTableProps> = ({
   summary,
+  products,
+  categories,
 }: SummaryTableProps) => {
   const renderActions = (product: ProductSummary) => (
     <>
@@ -36,6 +42,23 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
     </>
   );
 
+  // Get category name if available from products and categories props
+  const getCategoryName = (item: ProductSummary) => {
+    // Use the item's category if it already has it
+    if (item.category) return item.category;
+    
+    // Try to find product matching the SKU
+    if (products?.length && item.SKU) {
+      const product = products.find(p => p.sku === item.SKU);
+      if (product?.categoryId && categories?.length) {
+        const category = categories.find(c => c.id === product.categoryId);
+        return category?.name || 'Uncategorized';
+      }
+    }
+    
+    return 'Uncategorized';
+  };
+
   const columns: Column<ProductSummary>[] = [
     { id: "SKU", label: "SKU", filter: true },
     { id: "name", label: "Name", filter: true },
@@ -43,9 +66,9 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
       id: "category",
       label: "Category",
       filter: true,
-      format: (value: unknown) => {
-        const categoryName = value as string;
-        return categoryName ? (
+      format: (_, row) => {
+        const categoryName = getCategoryName(row as ProductSummary);
+        return categoryName !== 'Uncategorized' ? (
           <Chip
             label={categoryName}
             color="secondary"

@@ -1,7 +1,26 @@
-# Task Tracking
+# Sacred Sutra Tools - Task Management
 
-No active tasks at the moment. The system is ready for new task assignments.
+> **Single Source of Truth for Active Tasks**  
+> Created: December 24, 2024  
+> Last Updated: December 24, 2024 - 12:15
+> Status: READY FOR NEXT TASK
 
-## Completed Tasks
-1. Category Cost Price Inheritance - Completed June 12, 2023
-2. Transaction Analytics Repair - Completed June 18, 2023
+## 🎯 PREVIOUS TASK: PDF Category Sorting & Firebase Storage Feature
+**Status:** ARCHIVED ✅  
+**Archive:** [PDF Category Sorting & Firebase Storage Archive](memory-bank/archive/archive-pdf-category-sorting-storage.md)
+
+The PDF Category Sorting & Firebase Storage feature has been successfully implemented, tested, and archived. The feature provides category-based sorting for PDFs and secure storage in Firebase with a simplified date-based folder structure.
+
+## 🆕 NEXT TASK: PDF Auto-Deletion Feature
+
+The next feature to be implemented is the PDF Auto-Deletion Feature, which will provide automated lifecycle management for stored PDFs.
+
+**To begin work on this feature, please enter VAN Mode.**
+
+---
+
+## 📋 Task History
+
+| Task ID | Description | Status | Archive Link |
+|---------|-------------|--------|-------------|
+| pdf-category-sorting-storage | PDF Category Sorting & Firebase Storage | ARCHIVED ✅ | [Archive](memory-bank/archive/archive-pdf-category-sorting-storage.md) |

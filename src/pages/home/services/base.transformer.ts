@@ -1,6 +1,7 @@
 import { PDFDocument } from "pdf-lib";
-import { Product } from "../../../services/product.service";
-import { Category } from "../../../services/category.service";
+import { Product } from "../../../types/product";
+import { Category } from "../../../types/category";
+import { CategorySortConfig, defaultSortConfig } from "../../../utils/pdfSorting";
 
 export interface TextItem {
   str: string;
@@ -16,6 +17,7 @@ export interface ProductSummary {
   product?: Product;
   createdAt?: string;
   category?: string;
+  categoryId?: string;
 }
 
 export class BaseTransformer {
@@ -23,11 +25,26 @@ export class BaseTransformer {
   protected pdfDoc!: PDFDocument;
   protected outputPdf!: PDFDocument;
   protected summaryText: ProductSummary[] = [];
+  protected sortConfig?: CategorySortConfig;
 
-  constructor(filePath: Uint8Array, protected products: Product[], protected categories: Category[]) {
+  constructor(
+    filePath: Uint8Array, 
+    protected products: Product[], 
+    protected categories: Category[],
+    sortConfig?: CategorySortConfig
+  ) {
     this.filePath = filePath;
     this.products = products;
     this.categories = categories;
+    
+    // Always use category sorting with SKU as secondary sort
+    this.sortConfig = {
+      ...defaultSortConfig,
+      primarySort: 'category',
+      secondarySort: 'sku',
+      groupByCategory: true,
+      ...sortConfig
+    };
   }
 
   async initialize(): Promise<void> {}
@@ -73,5 +90,101 @@ export class BaseTransformer {
     }
 
     return lines;
+  }
+  
+  /**
+   * Sort products based on the provided sort configuration
+   * @param products Products to sort
+   * @returns Sorted products array
+   */
+  protected sortProducts(products: ProductSummary[]): ProductSummary[] {
+    if (products.length <= 1) {
+      return products;
+    }
+
+    // Map product summaries to enrich with category information
+    const enrichedProducts = products.map(summary => {
+      // Try to find product by SKU
+      const matchedProduct = this.products.find(p => p.sku === summary.SKU);
+      const categoryId = matchedProduct?.categoryId || '';
+      const category = this.categories.find(c => c.id === categoryId);
+      
+      return {
+        ...summary,
+        categoryId,
+        category: category?.name || 'Uncategorized'
+      };
+    });
+    
+    // Group products by category
+    const categoryGroups: Record<string, ProductSummary[]> = {};
+    
+    enrichedProducts.forEach(product => {
+      const categoryKey = product.category || 'Uncategorized';
+      if (!categoryGroups[categoryKey]) {
+        categoryGroups[categoryKey] = [];
+      }
+      categoryGroups[categoryKey].push(product);
+    });
+    
+    // Determine category order
+    const categoryKeys = Object.keys(categoryGroups);
+    
+    // Sort categories alphabetically but put Uncategorized last
+    categoryKeys.sort((a, b) => {
+      if (a === 'Uncategorized') return 1;
+      if (b === 'Uncategorized') return -1;
+      return a.localeCompare(b);
+    });
+    
+    // Combine sorted products
+    const sortedProducts: ProductSummary[] = [];
+    categoryKeys.forEach(categoryKey => {
+      const productsInCategory = categoryGroups[categoryKey];
+      // Sort by SKU within each category
+      this.sortByField(productsInCategory, 'sku');
+      sortedProducts.push(...productsInCategory);
+    });
+    
+    return sortedProducts;
+  }
+  
+  /**
+   * Helper method to sort products by a specific field
+   * @param products Products to sort
+   * @param field Field to sort by
+   * @param order Sort order (asc/desc)
+   */
+  protected sortByField(
+    products: ProductSummary[], 
+    field: 'name' | 'price' | 'sku',
+    order: 'asc' | 'desc' = 'asc'
+  ): void {
+    products.sort((a, b) => {
+      let valueA: string | number;
+      let valueB: string | number;
+      
+      switch (field) {
+        case 'name':
+          valueA = a.name || '';
+          valueB = b.name || '';
+          break;
+        case 'sku':
+          valueA = a.SKU || '';
+          valueB = b.SKU || '';
+          break;
+        default:
+          valueA = '';
+          valueB = '';
+      }
+      
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return order === 'asc' 
+          ? valueA.localeCompare(valueB) 
+          : valueB.localeCompare(valueA);
+      }
+      
+      return 0;
+    });
   }
 }
