@@ -1,8 +1,10 @@
 export interface Category {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
+  tag?: string;
   color?: string;
-  createdAt?: Date | number | string;
-  updatedAt?: Date | number | string;
+  costPrice?: number | null;
+  createdAt?: Date | number | string | { toDate(): Date; toMillis(): number };
+  updatedAt?: Date | number | string | { toDate(): Date; toMillis(): number };
 } 

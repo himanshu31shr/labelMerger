@@ -62,7 +62,8 @@ const OrderAnalytics: React.FC = () => {
     filteredOrders,
     updateFilter,
     clearFilters,
-  } = useOrderFilters({ allOrders, categories, products });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = useOrderFilters({ allOrders: allOrders as any, categories, products });
 
   useEffect(() => {
     if (allOrders.length === 0 && !allOrdersLoading && !allOrdersError) {

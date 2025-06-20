@@ -2,7 +2,7 @@ export interface Product {
   sku: string;
   name: string;
   description: string;
-  categoryId: string; // Required for cost price inheritance from category
+  categoryId?: string; // Optional to match product.service.ts definition
   platform: "amazon" | "flipkart";
   visibility: "visible" | "hidden";
   sellingPrice: number;
@@ -10,11 +10,11 @@ export interface Product {
   inventory?: {
     quantity: number;
     lowStockThreshold: number;
-    lastUpdated: Date;
+    lastUpdated: Date | { toDate(): Date; toMillis(): number }; // Compatible with both Date and Firestore Timestamp
   };
   metadata: {
-    createdAt?: Date;
-    updatedAt?: Date;
+    createdAt?: Date | { toDate(): Date; toMillis(): number }; // Compatible with both Date and Firestore Timestamp
+    updatedAt?: Date | { toDate(): Date; toMillis(): number }; // Compatible with both Date and Firestore Timestamp
     lastImportedFrom?: string;
     listingStatus?: string;
     moq?: string;

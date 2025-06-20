@@ -4,14 +4,14 @@ import { Category } from '../../../services/category.service';
 import { Product } from '../../../services/product.service';
 import { ProductSummary } from '../../../pages/home/services/base.transformer';
 
-// Define the Order interface to match the OrderItem type from the Redux slice
-interface Order extends ProductSummary {
-  date: string; // Add date information from the daily document
-  product?: Product; // Use the Product type from product.service
-}
+// Define a type for the order items coming from the Redux store
+type OrderItem = ProductSummary & {
+  date: string;
+  product?: Product;
+};
 
 interface UseOrderFiltersProps {
-  allOrders: Order[];
+  allOrders: OrderItem[]; // Use the OrderItem type
   categories: Category[];
   products: Product[];
 }

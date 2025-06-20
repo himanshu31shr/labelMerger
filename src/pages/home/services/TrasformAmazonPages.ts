@@ -179,12 +179,32 @@ export class AmazonPDFTransformer extends BaseTransformer {
     // Apply category sorting if enabled (always enabled by default)
     if (this.sortConfig?.groupByCategory) {
       // Extract products for sorting
-      const products = productsData.map(data => data.product);
+      const productsForSorting = productsData.map(data => {
+        // Find the actual product from the products array
+        const matchedProduct = this.products.find(p => p.sku === data.product.SKU);
+        if (matchedProduct) {
+          // Return the matched product with the correct type
+          return matchedProduct;
+        }
+        // Create a minimal product object if no match found
+        return {
+          sku: data.product.SKU || '',
+          name: data.product.name,
+          description: '',
+          platform: 'amazon' as const,
+          visibility: 'visible' as const,
+          sellingPrice: 0,
+          customCostPrice: null,
+          metadata: {},
+          categoryId: data.product.categoryId
+        };
+      });
       
       // Sort products by category 
       const sortedProducts = sortProductsByCategory(
-        products, 
-        this.categories, 
+        productsForSorting, 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.categories as any,
         this.sortConfig
       );
       
@@ -192,7 +212,7 @@ export class AmazonPDFTransformer extends BaseTransformer {
       const sortedProductsData: typeof productsData = [];
       for (const sortedProduct of sortedProducts) {
         const originalProductData = productsData.find(
-          data => data.product.SKU === sortedProduct.SKU && 
+          data => data.product.SKU === sortedProduct.sku && 
                   data.product.name === sortedProduct.name
         );
         

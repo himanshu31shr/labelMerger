@@ -17,7 +17,8 @@ export class FlipkartPageTransformer extends BaseTransformer {
     categories: Category[],
     sortConfig?: CategorySortConfig
   ) {
-    super(filePath, products, categories, sortConfig);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super(filePath, products, categories as any, sortConfig);
   }
 
   async initialize(): Promise<void> {

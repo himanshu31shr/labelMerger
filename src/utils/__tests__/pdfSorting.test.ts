@@ -126,6 +126,8 @@ describe('pdfSorting', () => {
         secondarySort: 'name',
         sortOrder: 'asc',
         groupByCategory: true,
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
 
       const result = sortProductsByCategory(mockProducts, mockCategories, config);
@@ -150,6 +152,8 @@ describe('pdfSorting', () => {
         secondarySort: 'name',
         sortOrder: 'desc',
         groupByCategory: true,
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
 
       const result = sortProductsByCategory(mockProducts, mockCategories, config);
@@ -167,6 +171,8 @@ describe('pdfSorting', () => {
         primarySort: 'price',
         sortOrder: 'asc',
         groupByCategory: false,
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
 
       const result = sortProductsByCategory(mockProducts, mockCategories, config);
@@ -184,6 +190,8 @@ describe('pdfSorting', () => {
         primarySort: 'name',
         sortOrder: 'asc',
         groupByCategory: false,
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
 
       const result = sortProductsByCategory(mockProducts, mockCategories, config);
@@ -203,6 +211,8 @@ describe('pdfSorting', () => {
         sortOrder: 'asc',
         groupByCategory: true,
         categoryOrder: ['Electronics', 'Clothing', 'Books', 'Uncategorized'],
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
 
       const result = sortProductsByCategory(mockProducts, mockCategories, config);
@@ -367,6 +377,8 @@ describe('pdfSorting', () => {
         secondarySort: 'name',
         sortOrder: 'asc',
         groupByCategory: true,
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
       
       const preview = createSortPreview(mockProducts, mockCategories, config);
@@ -415,6 +427,8 @@ describe('pdfSorting', () => {
         secondarySort: 'name',
         sortOrder: 'asc',
         groupByCategory: true,
+        prioritizeActiveCategories: true,
+        sortCategoriesAlphabetically: false,
       };
       
       const preview = createSortPreview(manyProducts, mockCategories, config);

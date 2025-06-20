@@ -65,7 +65,7 @@ export function sortProductsByCategory(
   
   // Enhance products with category information
   const productsWithCategory: ProductWithCategory[] = products.map(product => {
-    const category = categoryMap.get(product.categoryId);
+    const category = product.categoryId ? categoryMap.get(product.categoryId) : undefined;
     return {
       ...product,
       categoryName: category?.name || 'Uncategorized',
@@ -185,7 +185,7 @@ export function getUniqueCategories(
   const categoryCounts = new Map<string, number>();
   
   products.forEach(product => {
-    const category = categoryMap.get(product.categoryId);
+    const category = product.categoryId ? categoryMap.get(product.categoryId) : undefined;
     const categoryId = category?.id || 'uncategorized';
     
     categoryCounts.set(categoryId, (categoryCounts.get(categoryId) || 0) + 1);
@@ -224,7 +224,7 @@ export function generateCategoryStats(
   const categoryGroups: Record<string, ProductWithCategory[]> = {};
   
   products.forEach(product => {
-    const category = categoryMap.get(product.categoryId);
+    const category = product.categoryId ? categoryMap.get(product.categoryId) : undefined;
     const categoryId = category?.id || 'uncategorized';
     const categoryName = category?.name || 'Uncategorized';
     

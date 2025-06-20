@@ -4,7 +4,7 @@ import { Box, Button, Paper, Typography } from "@mui/material";
 import { downloadFile } from "../utils";
 
 interface DownloadButtonsProps {
-  pdfUrl?: string;
+  pdfUrl?: string | null;
 }
 
 export const DownloadButtons = ({ pdfUrl }: DownloadButtonsProps) => {
