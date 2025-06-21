@@ -69,6 +69,24 @@ const StorageManagementPage = React.lazy(() =>
   }))
 );
 
+const HealthPage = React.lazy(() =>
+  import("../pages/health/health.page").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const MonitoringDashboard = React.lazy(() =>
+  import("../pages/admin/monitoring-dashboard.page").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const DeploymentStatusPage = React.lazy(() =>
+  import("../pages/admin/deployment-status.page").then((module) => ({
+    default: module.default,
+  }))
+);
+
 interface ProtectedRoutesProps {
   toggleTheme: () => void;
   mode: "light" | "dark";
@@ -91,6 +109,9 @@ export const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
         <Route path="/order-analytics/" element={<OrderAnalytics />} />
         <Route path="/uncategorized-products/" element={<UncategorizedProductsPage />} />
         <Route path="/storage-management/" element={<StorageManagementPage />} />
+        <Route path="/health/" element={<HealthPage />} />
+        <Route path="/monitoring/" element={<MonitoringDashboard />} />
+        <Route path="/deployment-status/" element={<DeploymentStatusPage />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>

@@ -1,42 +1,62 @@
-name: Deploy to GitHub Pages
+name: Deploy
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
+    environment: 
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deployment.outputs.page_url || 'https://himanshu31shr.github.io/flipkart-amazon-tools/' }}
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Setup Environment
+        uses: ./.github/actions/setup
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Create .env file
-        run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-        shell: bash
-
-      - name: Build
+      - name: Build Application
         run: npm run build
 
       - name: Copy index.html to 404.html
         run: cp dist/index.html dist/404.html
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
-          branch: gh-pages 
+          branch: gh-pages
+          clean: true
+          single-commit: true
+
+      - name: Deployment Success Notification
+        if: success()
+        run: |
+          echo "✅ Deployment successful to ${{ github.event.inputs.environment || 'production' }}"
+          echo "🌐 URL: ${{ steps.deployment.outputs.page_url || 'https://himanshu31shr.github.io/flipkart-amazon-tools/' }}"
+
+      - name: Deployment Failure Notification
+        if: failure()
+        run: |
+          echo "❌ Deployment failed to ${{ github.event.inputs.environment || 'production' }}"
+          exit 1 
