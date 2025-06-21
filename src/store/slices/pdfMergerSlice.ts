@@ -5,8 +5,8 @@ import { store } from '..';
 import { CategorySortConfig } from "../../utils/pdfSorting";
 
 export interface PdfMergerState {
-  amazonFile: File | null;
-  flipkartFile: File | null;
+  amazonFiles: File[];
+  flipkartFiles: File[];
   finalPdf: string | null;
   summary: ProductSummary[];
   loading: boolean;
@@ -14,8 +14,8 @@ export interface PdfMergerState {
 }
 
 const initialState: PdfMergerState = {
-  amazonFile: null,
-  flipkartFile: null,
+  amazonFiles: [],
+  flipkartFiles: [],
   finalPdf: null,
   summary: [],
   loading: false,
@@ -23,8 +23,8 @@ const initialState: PdfMergerState = {
 };
 
 interface MergePDFsParams {
-  amazonFile: File | null;
-  flipkartFile: File | null;
+  amazonFiles: File[];
+  flipkartFiles: File[];
   sortConfig?: CategorySortConfig;
 }
 
@@ -47,9 +47,9 @@ const readFileFromInput = (file: File): Promise<Uint8Array> => {
 export const mergePDFs = createAsyncThunk(
   'pdfMerger/mergePDFs',
   async (params: MergePDFsParams) => {
-    const { amazonFile, flipkartFile, sortConfig } = params;
+    const { amazonFiles, flipkartFiles, sortConfig } = params;
 
-    if (!amazonFile && !flipkartFile) {
+    if (amazonFiles.length === 0 && flipkartFiles.length === 0) {
       throw new Error('No files provided');
     }
 
@@ -58,10 +58,20 @@ export const mergePDFs = createAsyncThunk(
 
     const mergePdfs = new PDFMergerService(products, categories);
     
+    // Read all Amazon files
+    const amazonFileContents = await Promise.all(
+      amazonFiles.map(file => readFileFromInput(file))
+    );
+    
+    // Read all Flipkart files
+    const flipkartFileContents = await Promise.all(
+      flipkartFiles.map(file => readFileFromInput(file))
+    );
+    
     // Pass the sort config if provided
     const pdf = await mergePdfs.mergePdfs({
-      amzon: amazonFile ? await readFileFromInput(amazonFile) : null,
-      flp: flipkartFile ? await readFileFromInput(flipkartFile) : null,
+      amzon: amazonFileContents,
+      flp: flipkartFileContents,
       sortConfig: sortConfig // Pass the sortConfig to use in merging
     });
 
@@ -84,15 +94,27 @@ const pdfMergerSlice = createSlice({
   name: 'pdfMerger',
   initialState,
   reducers: {
-    setAmazonFile: (state, action: PayloadAction<File | null>) => {
-      state.amazonFile = action.payload;
+    addAmazonFile: (state, action: PayloadAction<File>) => {
+      state.amazonFiles.push(action.payload);
     },
-    setFlipkartFile: (state, action: PayloadAction<File | null>) => {
-      state.flipkartFile = action.payload;
+    addFlipkartFile: (state, action: PayloadAction<File>) => {
+      state.flipkartFiles.push(action.payload);
+    },
+    removeAmazonFile: (state, action: PayloadAction<number>) => {
+      state.amazonFiles.splice(action.payload, 1);
+    },
+    removeFlipkartFile: (state, action: PayloadAction<number>) => {
+      state.flipkartFiles.splice(action.payload, 1);
+    },
+    clearAmazonFiles: (state) => {
+      state.amazonFiles = [];
+    },
+    clearFlipkartFiles: (state) => {
+      state.flipkartFiles = [];
     },
     clearFiles: (state) => {
-      state.amazonFile = null;
-      state.flipkartFile = null;
+      state.amazonFiles = [];
+      state.flipkartFiles = [];
       state.finalPdf = null;
       state.summary = [];
     }
@@ -115,5 +137,13 @@ const pdfMergerSlice = createSlice({
   },
 });
 
-export const { setAmazonFile, setFlipkartFile, clearFiles } = pdfMergerSlice.actions;
+export const { 
+  addAmazonFile, 
+  addFlipkartFile, 
+  removeAmazonFile,
+  removeFlipkartFile,
+  clearAmazonFiles,
+  clearFlipkartFiles,
+  clearFiles
+} = pdfMergerSlice.actions;
 export const pdfMergerReducer = pdfMergerSlice.reducer; 

@@ -2,10 +2,7 @@ import {
   HomeOutlined,
   MergeOutlined,
   PictureAsPdf,
-  UploadFile,
-  CloudUpload,
-  CategoryOutlined,
-  FileUpload
+  CloudUpload
 } from "@mui/icons-material";
 import {
   Box,
@@ -16,10 +13,8 @@ import {
   CircularProgress,
   Container,
   Divider,
-  Grid,
   Paper,
   Typography,
-  Stack,
   Alert,
   Collapse,
   useTheme,
@@ -30,8 +25,12 @@ import React, { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   mergePDFs,
-  setAmazonFile,
-  setFlipkartFile,
+  addAmazonFile,
+  addFlipkartFile,
+  removeAmazonFile,
+  removeFlipkartFile,
+  clearAmazonFiles,
+  clearFlipkartFiles
 } from "../../store/slices/pdfMergerSlice";
 import { DownloadButtons } from "./components/DownloadButtons";
 
@@ -45,146 +44,15 @@ import { StorageConfirmationDialog } from "./components/StorageConfirmationDialo
 import { DownloadLinkDisplay } from "./components/DownloadLinkDisplay";
 import { defaultSortConfig } from "../../utils/pdfSorting";
 import { StorageConfig, UploadResult, pdfStorageService, defaultStorageConfig } from "../../services/pdfStorageService";
-import { Product } from "../../types/product";
-import { Category } from "../../types/category";
 import { selectIsAuthenticated } from "../../store/slices/authSlice";
-
-// Create a new FileUploadSectionWrapper component to match the new interface requirements
-const FileUploadSectionWrapper: React.FC<{
-  type: 'amazon' | 'flipkart';
-  value: File | null;
-  onChange: (file: File | undefined) => void;
-}> = ({ type, value, onChange }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  const label = type === 'amazon' ? 'Amazon' : 'Flipkart';
-  const color = type === 'amazon' ? 'primary' : 'secondary';
-  const icon = <FileUpload />;
-  
-  return (
-    <Box sx={{ 
-      border: 1, 
-      borderColor: theme.palette.mode === 'dark' ? `${color}.dark` : `${color}.light`, 
-      borderRadius: 2, 
-      p: 2,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.7)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-      height: '100%',
-      transition: 'all 0.3s ease'
-    }}>
-      <Typography 
-        variant={isMobile ? "subtitle1" : "h6"} 
-        color={`${color}.main`} 
-        gutterBottom
-        sx={{ fontWeight: 600 }}
-      >
-        {label} PDF
-      </Typography>
-      
-      {!value ? (
-        <Box sx={{ 
-          width: '100%', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 2,
-          flex: 1
-        }}>
-          <input
-            accept="application/pdf"
-            style={{ display: 'none' }}
-            id={`upload-${type}-file`}
-            type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              onChange(file);
-            }}
-          />
-          <label htmlFor={`upload-${type}-file`} style={{ width: '100%', textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              component="span"
-              color={color}
-              startIcon={icon}
-              size={isMobile ? "medium" : "large"}
-              sx={{ 
-                py: isMobile ? 1 : 1.5, 
-                px: isMobile ? 2 : 4,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                boxShadow: 2,
-                '&:hover': {
-                  boxShadow: 4
-                }
-              }}
-            >
-              Select {label} PDF
-            </Button>
-          </label>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ mt: 2, textAlign: 'center' }}
-          >
-            Upload your {label} PDF file
-          </Typography>
-        </Box>
-      ) : (
-        <Box sx={{ 
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          py: 1
-        }}>
-          <Alert 
-            severity="success" 
-            sx={{ 
-              mb: 2, 
-              width: '100%',
-              borderRadius: 2,
-              '& .MuiAlert-message': {
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%'
-              }
-            }}
-          >
-            <Typography noWrap>
-              {value.name}
-            </Typography>
-          </Alert>
-          <Button 
-            size="small" 
-            color="error" 
-            variant="outlined"
-            onClick={() => onChange(undefined)}
-            startIcon={<UploadFile />}
-            sx={{
-              borderRadius: 4,
-              textTransform: 'none'
-            }}
-          >
-            Change File
-          </Button>
-        </Box>
-      )}
-    </Box>
-  );
-};
+import { FileUploadSection } from "./components/FileUploadSection";
 
 export const HomePage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const dispatch = useAppDispatch();
-  const { amazonFile, flipkartFile, finalPdf, summary, loading, error } =
+  const { amazonFiles, flipkartFiles, finalPdf, summary, loading, error } =
     useAppSelector((state) => state.pdfMerger);
   const { categories, items: products } = useAppSelector(
     (state) => state.products
@@ -292,7 +160,7 @@ export const HomePage: React.FC = () => {
   }, [finalPdf, isUploading, uploadResult, summary.length, categories, isAuthenticated, processedPdfUrl]);
 
   const handleSubmit = async () => {
-    if (!amazonFile && !flipkartFile) return;
+    if (amazonFiles.length === 0 && flipkartFiles.length === 0) return;
 
     // Reset upload result and processed PDF when generating a new PDF
     setUploadResult(null);
@@ -302,8 +170,8 @@ export const HomePage: React.FC = () => {
     try {
       // Apply sort configuration to the merge process
       await dispatch(mergePDFs({ 
-        amazonFile, 
-        flipkartFile,
+        amazonFiles, 
+        flipkartFiles,
         sortConfig: defaultSortConfig
       })).unwrap();
       
@@ -313,17 +181,39 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  const handleAmazonFileChange = (file: File | undefined) => {
-    dispatch(setAmazonFile(file || null));
+  const handleAddAmazonFile = (file: File) => {
+    dispatch(addAmazonFile(file));
     // Reset download link when files change
-    setShowDownloadLink(false);
-    setUploadResult(null);
-    setProcessedPdfUrl(null);
+    resetDownloadState();
   };
 
-  const handleFlipkartFileChange = (file: File | undefined) => {
-    dispatch(setFlipkartFile(file || null));
+  const handleAddFlipkartFile = (file: File) => {
+    dispatch(addFlipkartFile(file));
     // Reset download link when files change
+    resetDownloadState();
+  };
+
+  const handleRemoveAmazonFile = (index: number) => {
+    dispatch(removeAmazonFile(index));
+    resetDownloadState();
+  };
+
+  const handleRemoveFlipkartFile = (index: number) => {
+    dispatch(removeFlipkartFile(index));
+    resetDownloadState();
+  };
+
+  const handleClearAmazonFiles = () => {
+    dispatch(clearAmazonFiles());
+    resetDownloadState();
+  };
+
+  const handleClearFlipkartFiles = () => {
+    dispatch(clearFlipkartFiles());
+    resetDownloadState();
+  };
+
+  const resetDownloadState = () => {
     setShowDownloadLink(false);
     setUploadResult(null);
     setProcessedPdfUrl(null);
@@ -447,248 +337,147 @@ export const HomePage: React.FC = () => {
             boxShadow: theme.shadows[2]
           }}
         >
-          <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-            <Box sx={{ 
-              display: "flex", 
-              alignItems: "center", 
-              mb: 2,
-              justifyContent: isMobile ? 'center' : 'flex-start'
-            }}>
-              <UploadFile sx={{ color: "primary.main", mr: 1 }} />
-              <Typography
-                variant={isMobile ? "subtitle1" : "h6"}
-                sx={{ fontWeight: "bold", color: "primary.dark" }}
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography variant={isMobile ? "h6" : "h5"} gutterBottom>
+              <PictureAsPdf sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Upload PDF Files
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Upload PDF files from Amazon and/or Flipkart. The tool will merge them into a unified PDF document sorted by product categories.
+            </Typography>
+            
+            {/* Render enhanced FileUploadSection component */}
+            <FileUploadSection 
+              amazonFiles={amazonFiles}
+              flipkartFiles={flipkartFiles}
+              onAmazonAdd={handleAddAmazonFile}
+              onFlipkartAdd={handleAddFlipkartFile}
+              onAmazonRemove={handleRemoveAmazonFile}
+              onFlipkartRemove={handleRemoveFlipkartFile}
+              onAmazonClear={handleClearAmazonFiles}
+              onFlipkartClear={handleClearFlipkartFiles}
+            />
+            
+            <Box sx={{ mt: 3, textAlign: "center" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                disabled={amazonFiles.length === 0 && flipkartFiles.length === 0 || loading}
+                onClick={handleSubmit}
+                startIcon={loading ? <CircularProgress size={20} /> : <MergeOutlined />}
+                sx={{
+                  minWidth: 200,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
               >
-                Upload Files
-              </Typography>
+                {loading ? "Processing..." : "Generate PDF"}
+              </Button>
+              
+              <Collapse in={Boolean(error)}>
+                <Alert 
+                  severity="error" 
+                  sx={{ mt: 2, mx: 'auto', maxWidth: 600 }}
+                >
+                  {error}
+                </Alert>
+              </Collapse>
             </Box>
-
-            <Grid container spacing={isMobile ? 2 : 3}>
-              <Grid item xs={12} md={6}>
-                <FileUploadSectionWrapper
-                  type="amazon"
-                  value={amazonFile}
-                  onChange={handleAmazonFileChange}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FileUploadSectionWrapper
-                  type="flipkart"
-                  value={flipkartFile}
-                  onChange={handleFlipkartFileChange}
-                />
-              </Grid>
-            </Grid>
           </CardContent>
         </Card>
 
-        {/* Auto-sort message */}
-        <Collapse in={amazonFile !== null || flipkartFile !== null}>
-          <Alert 
-            severity="info" 
-            sx={{ 
+        {/* Success section */}
+        {finalPdf && (
+          <Card
+            sx={{
               mb: 3,
               borderRadius: 2,
-              boxShadow: 1
-            }}
-            icon={<CategoryOutlined />}
-          >
-            Products will be automatically sorted by category, then by SKU
-          </Alert>
-        </Collapse>
-
-        {/* Merge Button */}
-        <Box sx={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          my: isMobile ? 2 : 3,
-          position: 'relative'
-        }}>
-          <Button
-            variant="contained"
-            color="primary"
-            size={isMobile ? "large" : "large"}
-            startIcon={loading ? <CircularProgress size={24} color="inherit" /> : <MergeOutlined />}
-            onClick={handleSubmit}
-            disabled={(!amazonFile && !flipkartFile) || loading}
-            sx={{ 
-              py: isMobile ? 1.2 : 1.5, 
-              px: isMobile ? 3 : 4, 
-              borderRadius: 2,
-              fontWeight: 600,
-              fontSize: isMobile ? '0.9rem' : '1rem',
-              textTransform: 'none',
-              boxShadow: 3,
-              '&:hover': {
-                boxShadow: 5
-              }
+              border: "1px solid",
+              borderColor: "success.light",
+              backgroundColor: "success.lightest",
+              boxShadow: theme.shadows[2]
             }}
           >
-            {loading ? "Merging..." : "Merge PDFs"}
-          </Button>
-        </Box>
-
-        {/* Error Message */}
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mb: 3,
-              borderRadius: 2,
-              boxShadow: 1
-            }}
-          >
-            {error}
-          </Alert>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <Typography variant="h6" component="h3" color="success.main" sx={{ fontWeight: 600 }}>
+                  PDF Generated Successfully!
+                </Typography>
+                <Chip
+                  label={`${summary.length} Products`}
+                  color="success"
+                  size="small"
+                  sx={{ ml: 2 }}
+                />
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  onClick={handleSaveToCloud}
+                  disabled={isUploading || showDownloadLink}
+                  startIcon={<CloudUpload />}
+                  sx={{ ml: 'auto', borderRadius: 4 }}
+                >
+                  {isUploading ? 'Saving...' : 'Save to Cloud'}
+                </Button>
+              </Box>
+              
+              <DownloadButtons pdfUrl={finalPdf} />
+              
+              {showDownloadLink && uploadResult && uploadResult.fileId && (
+                <DownloadLinkDisplay 
+                  uploadResult={uploadResult} 
+                  onDelete={() => handleDeletePdf(uploadResult.fileId!)}
+                  onClose={() => setShowDownloadLink(false)}
+                />
+              )}
+            </CardContent>
+          </Card>
         )}
 
-        {/* Results Section */}
-        <Collapse in={finalPdf !== null}>
-          <Grid container spacing={isMobile ? 2 : 3}>
-            {/* Download Options */}
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                height: "100%",
-                borderRadius: 2,
-                boxShadow: 2,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: 4
-                }
-              }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    mb: 2,
-                    justifyContent: isMobile ? 'center' : 'flex-start'
-                  }}>
-                    <PictureAsPdf sx={{ color: "primary.main", mr: 1 }} />
-                    <Typography
-                      variant={isMobile ? "subtitle1" : "h6"}
-                      sx={{ fontWeight: "bold", color: "primary.dark" }}
-                    >
-                      Download Options
-                    </Typography>
-                  </Box>
-                  
-                  <Stack spacing={2}>
-                    <DownloadButtons pdfUrl={finalPdf} />
-                    
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      startIcon={<CloudUpload />}
-                      onClick={handleSaveToCloud}
-                      fullWidth
-                      sx={{
-                        borderRadius: 2,
-                        py: 1,
-                        textTransform: 'none',
-                        fontWeight: 600
-                      }}
-                    >
-                      Save to Cloud Storage
-                    </Button>
-                    
-                    <Box sx={{ 
-                      mt: 2,
-                      display: 'flex',
-                      justifyContent: isMobile ? 'center' : 'flex-start',
-                      flexWrap: 'wrap',
-                      gap: 1
-                    }}>
-                      <Chip 
-                        icon={<CategoryOutlined />} 
-                        label={`${categories.filter(c => !!c.name).length} Categories`}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                      <Chip 
-                        icon={<CategoryOutlined />} 
-                        label={`${summary.length} Products`}
-                        size="small"
-                        color="secondary"
-                        variant="outlined"
-                      />
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+        {/* PDF preview */}
+        {finalPdf && (
+          <Card
+            sx={{
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "primary.light",
+              overflow: 'hidden',
+              boxShadow: theme.shadows[2]
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <PDFViewer pdfUrl={finalPdf} />
+            </CardContent>
+          </Card>
+        )}
 
-            {/* PDF Preview */}
-            <Grid item xs={12} md={8}>
-              <Card sx={{ 
-                borderRadius: 2,
-                boxShadow: 2,
-                overflow: 'hidden'
-              }}>
-                <CardContent sx={{ 
-                  p: isMobile ? 2 : 3,
-                  pb: isMobile ? 2 : 3
-                }}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    mb: 2,
-                    justifyContent: isMobile ? 'center' : 'flex-start'
-                  }}>
-                    <PictureAsPdf sx={{ color: "primary.main", mr: 1 }} />
-                    <Typography
-                      variant={isMobile ? "subtitle1" : "h6"}
-                      sx={{ fontWeight: "bold", color: "primary.dark" }}
-                    >
-                      PDF Preview
-                    </Typography>
-                  </Box>
-                  <Box sx={{
-                    height: isMobile ? '50vh' : '70vh',
-                    borderRadius: 1,
-                    overflow: 'hidden'
-                  }}>
-                    <PDFViewer url={finalPdf} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Collapse>
-      </Paper>
-      
-      {/* Cloud Storage Confirmation Dialog */}
-      <StorageConfirmationDialog
-        open={storageDialogOpen}
-        onClose={() => setStorageDialogOpen(false)}
-        onConfirm={handleStorageConfirm}
-        fileName={`sorted_labels_${new Date().toISOString().slice(0, 10)}.pdf`}
-        products={products as Product[]}
-        categories={categories as Category[]}
-        isUploading={isUploading}
-      />
-      
-      {/* Download Link Display */}
-      {showDownloadLink && uploadResult && (
-        <DownloadLinkDisplay
-          uploadResult={uploadResult}
-          onClose={() => setShowDownloadLink(false)}
-          onDelete={handleDeletePdf}
+        {/* Storage confirmation dialog */}
+        <StorageConfirmationDialog
+          open={storageDialogOpen}
+          onClose={() => setStorageDialogOpen(false)}
+          onConfirm={handleStorageConfirm}
+          fileName={`sorted_labels_${new Date().toISOString().slice(0, 10)}.pdf`}
+          products={products}
+          categories={categories}
+          isUploading={isUploading}
         />
-      )}
-
-      {/* Error Snackbar */}
-      {errorMessage && (
+        
+        {/* Error snackbar */}
         <Snackbar
-          open={true}
+          open={Boolean(errorMessage)}
           autoHideDuration={6000}
           onClose={handleCloseError}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
             {errorMessage}
           </Alert>
         </Snackbar>
-      )}
+      </Paper>
     </Container>
   );
 };

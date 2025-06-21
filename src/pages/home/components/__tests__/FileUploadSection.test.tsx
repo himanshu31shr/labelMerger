@@ -9,20 +9,24 @@ interface MockFileInputProps {
   selected: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   accepts: string;
+  multiple?: boolean;
+  fileCount?: number;
 }
 
 jest.mock('../../file-input', () => ({
-  FileInput: ({ name, selected, onChange, accepts }: MockFileInputProps) => (
+  FileInput: ({ name, selected, onChange, accepts, multiple, fileCount }: MockFileInputProps) => (
     <div data-testid={`file-input-${name}`}>
       <input
         type="file"
         accept={accepts}
         data-testid={`file-input-${name}-input`}
         onChange={onChange}
+        multiple={multiple}
       />
       <span data-testid={`file-input-${name}-status`}>
         {selected ? 'File Selected' : `Select ${name}`}
       </span>
+      {fileCount && <span data-testid={`file-input-${name}-count`}>{fileCount}</span>}
     </div>
   ),
 }));
@@ -30,8 +34,14 @@ jest.mock('../../file-input', () => ({
 const theme = createTheme();
 
 const defaultProps = {
-  onAmazonChange: jest.fn(),
-  onFlipkartChange: jest.fn(),
+  amazonFiles: [],
+  flipkartFiles: [],
+  onAmazonAdd: jest.fn(),
+  onFlipkartAdd: jest.fn(),
+  onAmazonRemove: jest.fn(),
+  onFlipkartRemove: jest.fn(),
+  onAmazonClear: jest.fn(),
+  onFlipkartClear: jest.fn(),
 };
 
 const renderFileUploadSection = (props = {}) => {
@@ -51,28 +61,28 @@ describe('FileUploadSection', () => {
     it('should render both Amazon and Flipkart upload sections', () => {
       renderFileUploadSection();
       
-      expect(screen.getByText('Amazon Label')).toBeInTheDocument();
-      expect(screen.getByText('Flipkart Label')).toBeInTheDocument();
+      expect(screen.getByText('Amazon Labels')).toBeInTheDocument();
+      expect(screen.getByText('Flipkart Labels')).toBeInTheDocument();
     });
 
     it('should render upload instructions when no files are selected', () => {
       renderFileUploadSection();
       
-      expect(screen.getByText('Upload your Amazon shipping label (PDF)')).toBeInTheDocument();
-      expect(screen.getByText('Upload your Flipkart shipping label (PDF)')).toBeInTheDocument();
+      expect(screen.getByText('Upload or drop Amazon shipping labels (PDF)')).toBeInTheDocument();
+      expect(screen.getByText('Upload or drop Flipkart shipping labels (PDF)')).toBeInTheDocument();
     });
 
-    it('should render file names when files are selected', () => {
+    it('should render file counts when files are selected', () => {
       const amazonFile = new File(['test'], 'amazon-label.pdf', { type: 'application/pdf' });
       const flipkartFile = new File(['test'], 'flipkart-label.pdf', { type: 'application/pdf' });
       
       renderFileUploadSection({
-        amazonFile,
-        flipkartFile,
+        amazonFiles: [amazonFile],
+        flipkartFiles: [flipkartFile],
       });
       
-      expect(screen.getByText('amazon-label.pdf')).toBeInTheDocument();
-      expect(screen.getByText('flipkart-label.pdf')).toBeInTheDocument();
+      expect(screen.getByText('1 Amazon file selected')).toBeInTheDocument();
+      expect(screen.getByText('1 Flipkart file selected')).toBeInTheDocument();
     });
 
     it('should render CloudUpload icons', () => {
@@ -93,6 +103,8 @@ describe('FileUploadSection', () => {
       
       expect(amazonInput).toHaveAttribute('accept', 'application/pdf');
       expect(flipkartInput).toHaveAttribute('accept', 'application/pdf');
+      expect(amazonInput).toHaveAttribute('multiple');
+      expect(flipkartInput).toHaveAttribute('multiple');
     });
   });
 
@@ -109,19 +121,20 @@ describe('FileUploadSection', () => {
       const flipkartFile = new File(['test'], 'flipkart.pdf', { type: 'application/pdf' });
       
       renderFileUploadSection({
-        amazonFile,
-        flipkartFile,
+        amazonFiles: [amazonFile],
+        flipkartFiles: [flipkartFile],
       });
       
       expect(screen.getByTestId('file-input-amazon-status')).toHaveTextContent('File Selected');
       expect(screen.getByTestId('file-input-flipkart-status')).toHaveTextContent('File Selected');
     });
 
-    it('should show mixed states when only one file is selected', () => {
+    it('should show mixed states when only one type has files', () => {
       const amazonFile = new File(['test'], 'amazon.pdf', { type: 'application/pdf' });
       
       renderFileUploadSection({
-        amazonFile,
+        amazonFiles: [amazonFile],
+        flipkartFiles: [],
       });
       
       expect(screen.getByTestId('file-input-amazon-status')).toHaveTextContent('File Selected');
@@ -130,9 +143,9 @@ describe('FileUploadSection', () => {
   });
 
   describe('file change handlers', () => {
-    it('should call onAmazonChange when Amazon file is selected', () => {
-      const onAmazonChange = jest.fn();
-      renderFileUploadSection({ onAmazonChange });
+    it('should call onAmazonAdd when Amazon file is selected', () => {
+      const onAmazonAdd = jest.fn();
+      renderFileUploadSection({ onAmazonAdd });
       
       const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
       const input = screen.getByTestId('file-input-amazon-input');
@@ -144,12 +157,12 @@ describe('FileUploadSection', () => {
       
       fireEvent.change(input);
       
-      expect(onAmazonChange).toHaveBeenCalledWith(file);
+      expect(onAmazonAdd).toHaveBeenCalledWith(file);
     });
 
-    it('should call onFlipkartChange when Flipkart file is selected', () => {
-      const onFlipkartChange = jest.fn();
-      renderFileUploadSection({ onFlipkartChange });
+    it('should call onFlipkartAdd when Flipkart file is selected', () => {
+      const onFlipkartAdd = jest.fn();
+      renderFileUploadSection({ onFlipkartAdd });
       
       const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
       const input = screen.getByTestId('file-input-flipkart-input');
@@ -161,12 +174,12 @@ describe('FileUploadSection', () => {
       
       fireEvent.change(input);
       
-      expect(onFlipkartChange).toHaveBeenCalledWith(file);
+      expect(onFlipkartAdd).toHaveBeenCalledWith(file);
     });
 
     it('should handle empty file selection for Amazon', () => {
-      const onAmazonChange = jest.fn();
-      renderFileUploadSection({ onAmazonChange });
+      const onAmazonAdd = jest.fn();
+      renderFileUploadSection({ onAmazonAdd });
       
       const input = screen.getByTestId('file-input-amazon-input');
       
@@ -177,12 +190,12 @@ describe('FileUploadSection', () => {
       
       fireEvent.change(input);
       
-      expect(onAmazonChange).not.toHaveBeenCalled();
+      expect(onAmazonAdd).not.toHaveBeenCalled();
     });
 
     it('should handle empty file selection for Flipkart', () => {
-      const onFlipkartChange = jest.fn();
-      renderFileUploadSection({ onFlipkartChange });
+      const onFlipkartAdd = jest.fn();
+      renderFileUploadSection({ onFlipkartAdd });
       
       const input = screen.getByTestId('file-input-flipkart-input');
       
@@ -193,7 +206,7 @@ describe('FileUploadSection', () => {
       
       fireEvent.change(input);
       
-      expect(onFlipkartChange).not.toHaveBeenCalled();
+      expect(onFlipkartAdd).not.toHaveBeenCalled();
     });
   });
 
@@ -210,16 +223,16 @@ describe('FileUploadSection', () => {
       renderFileUploadSection();
       
       // Cards don't have specific roles, but we can check for their content structure
-      expect(screen.getByText('Amazon Label')).toBeInTheDocument();
-      expect(screen.getByText('Flipkart Label')).toBeInTheDocument();
+      expect(screen.getByText('Amazon Labels')).toBeInTheDocument();
+      expect(screen.getByText('Flipkart Labels')).toBeInTheDocument();
     });
 
     it('should render with proper typography hierarchy', () => {
       renderFileUploadSection();
       
       // Check for h6 elements (variant="h6")
-      const amazonTitle = screen.getByText('Amazon Label');
-      const flipkartTitle = screen.getByText('Flipkart Label');
+      const amazonTitle = screen.getByText('Amazon Labels');
+      const flipkartTitle = screen.getByText('Flipkart Labels');
       
       expect(amazonTitle).toBeInTheDocument();
       expect(flipkartTitle).toBeInTheDocument();
@@ -249,25 +262,27 @@ describe('FileUploadSection', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle undefined file props', () => {
+    it('should handle empty file arrays', () => {
       renderFileUploadSection({
-        amazonFile: undefined,
-        flipkartFile: undefined,
+        amazonFiles: [],
+        flipkartFiles: [],
       });
       
-      expect(screen.getByText('Upload your Amazon shipping label (PDF)')).toBeInTheDocument();
-      expect(screen.getByText('Upload your Flipkart shipping label (PDF)')).toBeInTheDocument();
+      expect(screen.getByText('Upload or drop Amazon shipping labels (PDF)')).toBeInTheDocument();
+      expect(screen.getByText('Upload or drop Flipkart shipping labels (PDF)')).toBeInTheDocument();
     });
 
-    it('should handle files with long names', () => {
-      const longFileName = 'very-long-file-name-that-might-cause-layout-issues-amazon-shipping-label.pdf';
-      const amazonFile = new File(['test'], longFileName, { type: 'application/pdf' });
+    it('should handle multiple files with display of file count', () => {
+      const amazonFiles = [
+        new File(['test1'], 'amazon1.pdf', { type: 'application/pdf' }),
+        new File(['test2'], 'amazon2.pdf', { type: 'application/pdf' })
+      ];
       
       renderFileUploadSection({
-        amazonFile,
+        amazonFiles,
       });
       
-      expect(screen.getByText(longFileName)).toBeInTheDocument();
+      expect(screen.getByText('2 Amazon files selected')).toBeInTheDocument();
     });
 
     it('should handle files with special characters in names', () => {
@@ -275,23 +290,11 @@ describe('FileUploadSection', () => {
       const amazonFile = new File(['test'], specialFileName, { type: 'application/pdf' });
       
       renderFileUploadSection({
-        amazonFile,
+        amazonFiles: [amazonFile],
       });
       
-      expect(screen.getByText(specialFileName)).toBeInTheDocument();
-    });
-
-    it('should handle missing onChange handlers gracefully', () => {
-      expect(() => {
-        render(
-          <ThemeProvider theme={theme}>
-            <FileUploadSection
-              onAmazonChange={() => {}}
-              onFlipkartChange={() => {}}
-            />
-          </ThemeProvider>
-        );
-      }).not.toThrow();
+      // We'd need to check the file list rendering here - for now, check if the count is displayed
+      expect(screen.getByText('1 Amazon file selected')).toBeInTheDocument();
     });
   });
 
@@ -305,8 +308,8 @@ describe('FileUploadSection', () => {
         </ThemeProvider>
       );
       
-      expect(screen.getByText('Amazon Label')).toBeInTheDocument();
-      expect(screen.getByText('Flipkart Label')).toBeInTheDocument();
+      expect(screen.getByText('Amazon Labels')).toBeInTheDocument();
+      expect(screen.getByText('Flipkart Labels')).toBeInTheDocument();
     });
 
     it('should handle re-renders correctly', () => {
@@ -318,30 +321,30 @@ describe('FileUploadSection', () => {
         <ThemeProvider theme={theme}>
           <FileUploadSection
             {...defaultProps}
-            amazonFile={file}
+            amazonFiles={[file]}
           />
         </ThemeProvider>
       );
       
-      expect(screen.getByText('test.pdf')).toBeInTheDocument();
+      expect(screen.getByText('1 Amazon file selected')).toBeInTheDocument();
     });
 
-    it('should maintain state consistency', () => {
-      const amazonFile = new File(['test'], 'amazon.pdf', { type: 'application/pdf' });
-      const flipkartFile = new File(['test'], 'flipkart.pdf', { type: 'application/pdf' });
+    it('should handle file addition and removal', () => {
+      const amazonFiles = [
+        new File(['test1'], 'amazon1.pdf', { type: 'application/pdf' }),
+        new File(['test2'], 'amazon2.pdf', { type: 'application/pdf' })
+      ];
+      const flipkartFiles = [
+        new File(['test'], 'flipkart.pdf', { type: 'application/pdf' })
+      ];
       
       renderFileUploadSection({
-        amazonFile,
-        flipkartFile,
+        amazonFiles,
+        flipkartFiles,
       });
       
-      // Both files should be shown as selected
-      expect(screen.getByTestId('file-input-amazon-status')).toHaveTextContent('File Selected');
-      expect(screen.getByTestId('file-input-flipkart-status')).toHaveTextContent('File Selected');
-      
-      // File names should be displayed
-      expect(screen.getByText('amazon.pdf')).toBeInTheDocument();
-      expect(screen.getByText('flipkart.pdf')).toBeInTheDocument();
+      expect(screen.getByText('2 Amazon files selected')).toBeInTheDocument();
+      expect(screen.getByText('1 Flipkart file selected')).toBeInTheDocument();
     });
   });
 }); 

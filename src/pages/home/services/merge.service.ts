@@ -27,8 +27,8 @@ export class PDFMergerService {
     flp,
     sortConfig
   }: {
-    amzon: Uint8Array | null;
-    flp: Uint8Array | null;
+    amzon: Uint8Array[];
+    flp: Uint8Array[];
     sortConfig?: CategorySortConfig;
   }): Promise<PDFDocument | undefined> {
     await this.initialize();
@@ -37,8 +37,15 @@ export class PDFMergerService {
       return;
     }
 
-    await this.amazon(amzon, sortConfig);
-    await this.flipkart(flp, sortConfig);
+    // Process all Amazon files
+    for (const amazonFile of amzon) {
+      await this.processAmazonFile(amazonFile, sortConfig);
+    }
+
+    // Process all Flipkart files
+    for (const flipkartFile of flp) {
+      await this.processFlipkartFile(flipkartFile, sortConfig);
+    }
 
     await new TodaysOrder().updateTodaysOrder({
       orders: this.summaryText,
@@ -49,11 +56,11 @@ export class PDFMergerService {
     return this.outpdf;
   }
 
-  private async amazon(amzon: Uint8Array | null, sortConfig?: CategorySortConfig) {
-    if (!amzon || !this.outpdf) {
+  private async processAmazonFile(amazonFile: Uint8Array, sortConfig?: CategorySortConfig) {
+    if (!amazonFile || !this.outpdf) {
       return;
     }
-    const amz = new AmazonPDFTransformer(amzon, this.products, this.categories, sortConfig);
+    const amz = new AmazonPDFTransformer(amazonFile, this.products, this.categories, sortConfig);
     const pages = await amz.transform();
     for (let i = 0; i < pages.getPageIndices().length; i++) {
       const [page] = await this.outpdf.copyPages(pages, [i]);
@@ -62,11 +69,11 @@ export class PDFMergerService {
     this.summaryText.push(...amz.summary);
   }
 
-  private async flipkart(flp: Uint8Array | null, sortConfig?: CategorySortConfig) {
-    if (!flp || !this.outpdf) {
+  private async processFlipkartFile(flipkartFile: Uint8Array, sortConfig?: CategorySortConfig) {
+    if (!flipkartFile || !this.outpdf) {
       return;
     }
-    const flipkartService = new FlipkartPageTransformer(flp, this.products, this.categories, sortConfig);
+    const flipkartService = new FlipkartPageTransformer(flipkartFile, this.products, this.categories, sortConfig);
     const pages = await flipkartService.transformPages();
     for (let i = 0; i < pages.getPageIndices().length; i++) {
       const [page] = await this.outpdf.copyPages(pages, [i]);

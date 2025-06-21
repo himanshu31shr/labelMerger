@@ -1,9 +1,9 @@
-import { pdfMergerReducer, setAmazonFile, setFlipkartFile, clearFiles, mergePDFs } from '../pdfMergerSlice';
+import { pdfMergerReducer, addAmazonFile, addFlipkartFile, removeAmazonFile, removeFlipkartFile, clearAmazonFiles, clearFlipkartFiles, clearFiles, mergePDFs } from '../pdfMergerSlice';
 
 describe('pdfMergerSlice', () => {
   const initialState = {
-    amazonFile: null,
-    flipkartFile: null,
+    amazonFiles: [],
+    flipkartFiles: [],
     finalPdf: null,
     summary: [],
     loading: false,
@@ -11,6 +11,7 @@ describe('pdfMergerSlice', () => {
   };
 
   const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+  const mockFile2 = new File(['test2'], 'test2.pdf', { type: 'application/pdf' });
   const mockSummary = [
     { sku: 'TEST-SKU-1', name: 'Test Product 1', quantity: 5, price: 100, type: 'amazon' },
     { sku: 'TEST-SKU-2', name: 'Test Product 2', quantity: 3, price: 200, type: 'flipkart' },
@@ -21,25 +22,77 @@ describe('pdfMergerSlice', () => {
       expect(pdfMergerReducer(undefined, { type: 'unknown' })).toEqual(initialState);
     });
 
-    it('should handle setAmazonFile', () => {
-      const action = setAmazonFile(mockFile);
+    it('should handle addAmazonFile', () => {
+      const action = addAmazonFile(mockFile);
       const state = pdfMergerReducer(initialState, action);
       
-      expect(state.amazonFile).toBe(mockFile);
+      expect(state.amazonFiles).toHaveLength(1);
+      expect(state.amazonFiles[0]).toBe(mockFile);
     });
 
-    it('should handle setFlipkartFile', () => {
-      const action = setFlipkartFile(mockFile);
+    it('should handle addFlipkartFile', () => {
+      const action = addFlipkartFile(mockFile);
       const state = pdfMergerReducer(initialState, action);
       
-      expect(state.flipkartFile).toBe(mockFile);
+      expect(state.flipkartFiles).toHaveLength(1);
+      expect(state.flipkartFiles[0]).toBe(mockFile);
+    });
+
+    it('should handle removeAmazonFile', () => {
+      const stateWithFiles = {
+        ...initialState,
+        amazonFiles: [mockFile, mockFile2]
+      };
+      
+      const action = removeAmazonFile(0);
+      const state = pdfMergerReducer(stateWithFiles, action);
+      
+      expect(state.amazonFiles).toHaveLength(1);
+      expect(state.amazonFiles[0]).toBe(mockFile2);
+    });
+
+    it('should handle removeFlipkartFile', () => {
+      const stateWithFiles = {
+        ...initialState,
+        flipkartFiles: [mockFile, mockFile2]
+      };
+      
+      const action = removeFlipkartFile(0);
+      const state = pdfMergerReducer(stateWithFiles, action);
+      
+      expect(state.flipkartFiles).toHaveLength(1);
+      expect(state.flipkartFiles[0]).toBe(mockFile2);
+    });
+
+    it('should handle clearAmazonFiles', () => {
+      const stateWithFiles = {
+        ...initialState,
+        amazonFiles: [mockFile, mockFile2]
+      };
+      
+      const action = clearAmazonFiles();
+      const state = pdfMergerReducer(stateWithFiles, action);
+      
+      expect(state.amazonFiles).toHaveLength(0);
+    });
+
+    it('should handle clearFlipkartFiles', () => {
+      const stateWithFiles = {
+        ...initialState,
+        flipkartFiles: [mockFile, mockFile2]
+      };
+      
+      const action = clearFlipkartFiles();
+      const state = pdfMergerReducer(stateWithFiles, action);
+      
+      expect(state.flipkartFiles).toHaveLength(0);
     });
 
     it('should handle clearFiles', () => {
       const stateWithFiles = {
         ...initialState,
-        amazonFile: mockFile,
-        flipkartFile: mockFile,
+        amazonFiles: [mockFile],
+        flipkartFiles: [mockFile],
         finalPdf: 'blob:test-url',
         summary: mockSummary,
       };
@@ -47,8 +100,8 @@ describe('pdfMergerSlice', () => {
       const action = clearFiles();
       const state = pdfMergerReducer(stateWithFiles, action);
       
-      expect(state.amazonFile).toBeNull();
-      expect(state.flipkartFile).toBeNull();
+      expect(state.amazonFiles).toHaveLength(0);
+      expect(state.flipkartFiles).toHaveLength(0);
       expect(state.finalPdf).toBeNull();
       expect(state.summary).toEqual([]);
     });
@@ -93,8 +146,8 @@ describe('pdfMergerSlice', () => {
     it('should maintain correct state structure', () => {
       const state = pdfMergerReducer(undefined, { type: 'unknown' });
       
-      expect(state).toHaveProperty('amazonFile');
-      expect(state).toHaveProperty('flipkartFile');
+      expect(state).toHaveProperty('amazonFiles');
+      expect(state).toHaveProperty('flipkartFiles');
       expect(state).toHaveProperty('finalPdf');
       expect(state).toHaveProperty('summary');
       expect(state).toHaveProperty('loading');
@@ -104,8 +157,8 @@ describe('pdfMergerSlice', () => {
     it('should have correct initial values', () => {
       const state = pdfMergerReducer(undefined, { type: 'unknown' });
       
-      expect(state.amazonFile).toBeNull();
-      expect(state.flipkartFile).toBeNull();
+      expect(state.amazonFiles).toEqual([]);
+      expect(state.flipkartFiles).toEqual([]);
       expect(state.finalPdf).toBeNull();
       expect(state.summary).toEqual([]);
       expect(state.loading).toBe(false);
