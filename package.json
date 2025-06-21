@@ -36,8 +36,6 @@
     "test:storage-rules": "firebase emulators:exec --only storage \"npm run test\"",
     "pre-commit": "lint-staged",
     "prepare": "husky",
-    "migrate:cost-price": "node src/scripts/migrateCostPrice.js",
-    "migrate:cost-price:rollback": "node src/scripts/migrateCostPrice.js rollback",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish",
