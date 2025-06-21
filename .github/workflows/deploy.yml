@@ -15,7 +15,9 @@ on:
           - staging
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
@@ -28,6 +30,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Use PAT if available for better permissions, otherwise use GITHUB_TOKEN
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
 
       - name: Setup Environment
         uses: ./.github/actions/setup
@@ -48,6 +53,8 @@ jobs:
           branch: gh-pages
           clean: true
           single-commit: true
+          # Use PAT if available for better permissions
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
 
       - name: Deployment Success Notification
         if: success()
@@ -59,4 +66,6 @@ jobs:
         if: failure()
         run: |
           echo "❌ Deployment failed to ${{ github.event.inputs.environment || 'production' }}"
+          echo "::notice::If deployment failed due to permissions, configure a Personal Access Token (PAT) in repository secrets."
+          echo "::notice::See docs/RELEASE_SETUP.md for setup instructions."
           exit 1 
