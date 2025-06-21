@@ -32,33 +32,35 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          # This expects you to have a script called release which does a build for your packages and calls changeset publish
-          publish: npm run release
+          # For frontend apps, we don't publish to npm, so we remove the publish step
+          # This will only create release PRs when there are changesets
           title: "chore: release packages"
           commit: "chore: release packages"
-          createGithubReleases: true
+          createGithubReleases: false
         env:
           # Use PAT if available for better permissions, otherwise use GITHUB_TOKEN
           GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/create-release@v1
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.changesets.outputs.pullRequestNumber == ''
+        run: |
+          # Get current version from package.json
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Creating release for version v$VERSION"
+          
+          # Create GitHub release
+          gh release create "v$VERSION" \
+            --title "Release v$VERSION" \
+            --notes "## Changes
+
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+
+          ## Deployment
+
+          This release will be automatically deployed to production." \
+            --latest
         env:
           GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          release_name: Release v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          body: |
-            ## Changes
-            
-            ${{ steps.changesets.outputs.changelog }}
-            
-            ## Deployment
-            
-            This release will be automatically deployed to production.
-          draft: false
-          prerelease: false
 
       - name: Manual PR Creation Fallback
         if: failure() && steps.changesets.outputs.hasChangesets == 'true'

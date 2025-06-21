@@ -413,6 +413,19 @@ Implement a comprehensive changesets and automated release management system wit
 
 **Verification**: ✅ CI workflow now only contains the test job with build and testing steps
 
+### [Level 1] ✅ Fix Release Workflow to Trigger Deployments
+**Status**: ✅ **COMPLETE**  
+**Completed**: December 23, 2024  
+**Duration**: 4 minutes  
+
+**Issue**: Release workflow not creating GitHub releases after merging release PRs, preventing deployment triggers
+**Solution**: Updated release workflow to create GitHub releases for frontend apps (removed npm publish dependency)
+**Files Changed**: 
+- `.github/workflows/release.yml` - Removed npm publish requirement, added GitHub release creation for version changes
+- Manually created `v6.0.1` release to trigger deployment
+
+**Verification**: ✅ GitHub release created at https://github.com/himanshu31shr/flipkart-amazon-tools/releases/tag/v6.0.1, deployment should trigger automatically
+
 ---
 
 ## 🎯 PREVIOUS TASK: Changesets & Automated Release Management
