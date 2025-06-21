@@ -8,6 +8,7 @@ import AnalyticsIcon from "@mui/icons-material/Analytics";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CategoryIcon from "@mui/icons-material/Category";
 import WarningIcon from "@mui/icons-material/Warning";
+import StorageIcon from "@mui/icons-material/Storage";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import {
@@ -126,7 +127,7 @@ export const DefaultContainer = ({
     const path = location.pathname;
     setOrdersOpen(path.includes('/home/') || path.includes('/activeOrders/'));
     setProductsOpen(path.includes('/products/') || path.includes('/hidden-products/') || path.includes('/uncategorized-products/'));
-    setManagementOpen(path.includes('/categories/') || path.includes('/inventory/'));
+    setManagementOpen(path.includes('/categories/') || path.includes('/inventory/') || path.includes('/storage-management/'));
   }, [location.pathname]);
 
   const toggleDrawer = (newOpen: boolean) => () => {
@@ -320,6 +321,22 @@ export const DefaultContainer = ({
                     <CategoryIcon />
                   </StyledListItemIcon>
                   <StyledListItemText primary={"Categories & Inventory"} />
+                </StyledListItemButton>
+              </ListItem>
+            </Link>
+            <Link
+              component={RouterLink}
+              to={"/flipkart-amazon-tools/storage-management/"}
+              data-testid="storage-management"
+              style={{ textDecoration: 'none', color: 'inherit' }}
+              onClick={handleNavigation}
+            >
+              <ListItem key={"Storage Management"} disablePadding>
+                <StyledListItemButton selected={isActiveRoute("/flipkart-amazon-tools/storage-management/")}>
+                  <StyledListItemIcon>
+                    <StorageIcon />
+                  </StyledListItemIcon>
+                  <StyledListItemText primary={"Storage Management"} />
                 </StyledListItemButton>
               </ListItem>
             </Link>

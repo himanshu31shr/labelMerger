@@ -25,6 +25,7 @@ import { SummaryTable } from "../home/components/SummaryTable";
 import { CategoryGroupedTable } from "./components/CategoryGroupedTable";
 import { groupOrdersByCategory } from "./utils/groupingUtils";
 import { exportNativeCategorySummaryToPDF } from "./utils/nativePdfExport";
+import { TodaysFilesWidget } from "../storage-management/components/TodaysFilesWidget";
 
 type ViewMode = 'individual' | 'grouped';
 
@@ -182,6 +183,9 @@ export const TodaysOrderPage: React.FC = () => {
             </Paper>
           </Grid>
         </Grid>
+
+        {/* Today's Files - Quick Access */}
+        <TodaysFilesWidget />
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.dark', mb: 2 }}>

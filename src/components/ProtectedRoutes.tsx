@@ -63,6 +63,12 @@ const UncategorizedProductsPage = React.lazy(() =>
   }))
 );
 
+const StorageManagementPage = React.lazy(() =>
+  import("../pages/storage-management/storage-management.page").then((module) => ({
+    default: module.StorageManagementPage,
+  }))
+);
+
 interface ProtectedRoutesProps {
   toggleTheme: () => void;
   mode: "light" | "dark";
@@ -84,6 +90,7 @@ export const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
         <Route path="/categories/" element={<CategoriesPage />} />
         <Route path="/order-analytics/" element={<OrderAnalytics />} />
         <Route path="/uncategorized-products/" element={<UncategorizedProductsPage />} />
+        <Route path="/storage-management/" element={<StorageManagementPage />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>

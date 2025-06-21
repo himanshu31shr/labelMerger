@@ -7,6 +7,16 @@ service firebase.storage {
       allow read, write: if false;
     }
     
+    // Allow users to access their own root folder for listing
+    match /pdfs/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow users to access their own date-based folders for listing
+    match /pdfs/{userId}/{dateFolder} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+    }
+    
     // PDF files storage rules with date-based folder structure
     match /pdfs/{userId}/{dateFolder}/{fileName} {
       // Allow authenticated users to read and write their own files
