@@ -11,11 +11,11 @@
 
 The PDF Category Sorting & Firebase Storage feature has been successfully implemented, tested, and archived. The feature provides category-based sorting for PDFs, secure storage in Firebase with a simplified date-based folder structure, and enhanced multiple file upload support with drag-and-drop functionality.
 
-## 🆕 NEXT TASK: PDF Auto-Deletion Feature
+## 🆕 NEXT TASK: TBD
 
-The next feature to be implemented is the PDF Auto-Deletion Feature, which will provide automated lifecycle management for stored PDFs.
+No specific task is currently assigned. Awaiting next feature assignment.
 
-**To begin work on this feature, please enter VAN Mode.**
+**To begin work on the next feature, please enter VAN Mode.**
 
 ---
 
