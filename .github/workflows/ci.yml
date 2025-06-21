@@ -40,23 +40,4 @@ jobs:
         with:
           name: build-artifacts
           path: dist/
-          retention-days: 7
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup
-        env:
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-
-      - name: Run Security Audit
-        run: npm audit --audit-level high
-
-      - name: Check for Vulnerabilities
-        run: npm audit --audit-level moderate --dry-run 
+          retention-days: 7 
