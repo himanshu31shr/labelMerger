@@ -351,6 +351,31 @@ Implement a comprehensive changesets and automated release management system wit
 
 ## 🛠️ QUICK FIXES COMPLETED
 
+### [Level 1] ✅ Fix PAT Scope Documentation
+**Status**: ✅ **COMPLETE**  
+**Completed**: December 23, 2024  
+**Duration**: 2 minutes  
+
+**Issue**: Invalid PAT scope `pages:write` documented - this scope doesn't exist in GitHub classic PATs
+**Solution**: Corrected documentation to show proper scopes: `repo` (covers GitHub Pages), `workflow` (for releases), `write:packages` (optional)
+**Files Changed**: 
+- `docs/RELEASE_SETUP.md` - Fixed PAT scope requirements with correct GitHub API scopes
+
+**Verification**: ✅ Documentation now shows correct and valid GitHub PAT scopes
+
+### [Level 1] ✅ Fix Deployment Workflow GitHub Actions Permissions
+**Status**: ✅ **COMPLETE**  
+**Completed**: December 23, 2024  
+**Duration**: 6 minutes  
+
+**Issue**: Deployment workflow failing with "Permission to himanshu31shr/flipkart-amazon-tools.git denied to github-actions[bot]"
+**Solution**: Updated deployment workflow with proper permissions and PAT token support
+**Files Changed**: 
+- `.github/workflows/deploy.yml` - Added `contents: write`, `pages: write`, `id-token: write` permissions and PAT token support
+- `docs/RELEASE_SETUP.md` - Enhanced documentation with deployment workflow information
+
+**Verification**: ✅ YAML syntax valid, workflow now supports both PAT tokens and proper GitHub Pages permissions
+
 ### [Level 1] ✅ Fix Release Workflow GitHub Actions Permissions
 **Status**: ✅ **COMPLETE**  
 **Completed**: December 23, 2024  
