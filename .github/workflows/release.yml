@@ -23,12 +23,25 @@ jobs:
           # Use PAT if available, otherwise fall back to GITHUB_TOKEN
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
 
+      - name: Check for changesets
+        id: check-changesets
+        run: |
+          if [ -d ".changeset" ] && [ "$(find .changeset -name '*.md' ! -name 'README.md' | wc -l)" -gt 0 ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+            echo "📦 Changesets found, proceeding with release workflow"
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changesets found, skipping release workflow"
+          fi
+
       - name: Setup Environment
+        if: steps.check-changesets.outputs.has_changesets == 'true'
         uses: ./.github/actions/setup
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
 
       - name: Create Release Pull Request or Publish to npm
+        if: steps.check-changesets.outputs.has_changesets == 'true'
         id: changesets
         uses: changesets/action@v1
         with:

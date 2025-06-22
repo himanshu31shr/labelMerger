@@ -31,16 +31,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Use PAT if available for better permissions, otherwise use GITHUB_TOKEN
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
 
-      - name: Setup Environment
-        uses: ./.github/actions/setup
+      - name: Try to download existing build artifacts
+        id: download-artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: build-artifacts-${{ github.sha }}
+          path: dist/
+
+      - name: Build if no artifacts found
+        if: steps.download-artifacts.outcome == 'failure'
+        run: |
+          echo "🔨 No build artifacts found, building from source..."
+          
+          # Setup environment only if needed
+          if [ ! -d "node_modules" ]; then
+            echo "📦 Installing dependencies..."
+            npm ci
+          fi
+          
+          # Create .env file if ENV_FILE secret exists
+          if [ -n "${{ secrets.ENV_FILE }}" ]; then
+            echo "${{ secrets.ENV_FILE }}" > .env
+          fi
+          
+          # Build application
+          npm run build
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
 
-      - name: Build Application
-        run: npm run build
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ Build output directory is empty or missing"
+            exit 1
+          fi
+          echo "✅ Build output verified"
+          ls -la dist/
 
       - name: Copy index.html to 404.html
         run: cp dist/index.html dist/404.html
@@ -53,7 +82,6 @@ jobs:
           branch: gh-pages
           clean: true
           single-commit: true
-          # Use PAT if available for better permissions
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
 
       - name: Deployment Success Notification

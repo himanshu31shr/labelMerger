@@ -32,12 +32,14 @@ jobs:
       - name: Run Tests
         run: npm run test:ci
 
-      - name: Build Application
+      - name: Build Application (only on master)
+        if: github.ref == 'refs/heads/master'
         run: npm run build
 
-      - name: Upload Build Artifacts
+      - name: Upload Build Artifacts (only on master)
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-${{ github.sha }}
           path: dist/
           retention-days: 7 

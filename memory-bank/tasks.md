@@ -426,6 +426,4 @@ Implement a comprehensive changesets and automated release management system wit
 
 **Verification**: ✅ GitHub release created at https://github.com/himanshu31shr/flipkart-amazon-tools/releases/tag/v6.0.1, deployment should trigger automatically
 
----
-
 ## 🎯 PREVIOUS TASK: Changesets & Automated Release Management
